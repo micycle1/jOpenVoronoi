@@ -1,0 +1,6 @@
+- Split into sub-packages where suitable
+- Convert some comments into proper Javadoc comments
+- Variable max-site distance (previously all points had be less than 1)
+- Switch language version to Java 11
+- Include tests as generators in *generate* sub-package
+- Bring LindenmayerCurve, RandomLabyrinth from old tests into the library under *generate* sub-package
