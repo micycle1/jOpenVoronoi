@@ -8,6 +8,7 @@ import org.rogach.jopenvoronoi.offset.Ofs;
 
 //line segment Site
 public class LineSite extends Site {
+
 	Point _start; // < start Point of LineSite
 	Point _end; // < end Point of LineSite
 	public Edge e; // < edge_descriptor to the ::LINESITE pseudo-edge

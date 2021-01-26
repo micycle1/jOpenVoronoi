@@ -8,6 +8,7 @@ import org.rogach.jopenvoronoi.vertex.Vertex;
 
 //vertex Site
 public class PointSite extends Site {
+
 	private Point _p; // < position
 	public Vertex v; // < vertex descriptor of this PointSite
 

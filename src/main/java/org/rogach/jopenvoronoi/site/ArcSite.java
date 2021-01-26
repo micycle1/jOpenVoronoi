@@ -8,6 +8,7 @@ import org.rogach.jopenvoronoi.util.Numeric;
 
 //circular arc Site
 public class ArcSite extends Site {
+
 	Point _start; // < start Point of arc
 	Point _end; // < end Point of arc
 	Point _center; // < center Point of arc

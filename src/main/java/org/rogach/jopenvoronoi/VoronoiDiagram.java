@@ -59,9 +59,18 @@ public class VoronoiDiagram {
 
 	protected HalfEdgeDiagram g = new HalfEdgeDiagram(); // < the half-edge diagram of the vd
 	protected double far_radius; // < sites must fall within a circle with radius far_radius
-	protected int num_psites; // < the number of point sites
-	protected int num_lsites; // < the number of line-segment sites
-	protected int num_asites; // < the number of arc-sites
+	/**
+	 * number of point sites
+	 */
+	protected int num_psites;
+	/**
+	 * number of line-segment sites
+	 */
+	protected int num_lsites;
+	/**
+	 * number of arc-sites
+	 */
+	protected int num_asites;
 	protected List<Face> incident_faces = new ArrayList<>(); // < temporary variable for ::INCIDENT faces, will be
 																// reset to ::NONINCIDENT after a site has been
 																// inserted

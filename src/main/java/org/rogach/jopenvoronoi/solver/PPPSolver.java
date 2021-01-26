@@ -8,8 +8,11 @@ import org.rogach.jopenvoronoi.geometry.Point;
 import org.rogach.jopenvoronoi.site.Site;
 import org.rogach.jopenvoronoi.vertex.Solution;
 
-//point-point-point Solver (based on Sugihara & Iri paper)
+/**
+ * point-point-point Solver (based on Sugihara & Iri paper)
+ */
 public class PPPSolver extends Solver {
+
 	@Override
 	public int solve(Site s1, double k1, Site s2, double k2, Site s3, double k3, List<Solution> slns) {
 		assert (s1.isPoint() && s2.isPoint() && s3.isPoint()) : "s1.isPoint() && s2.isPoint() && s3.isPoint()";

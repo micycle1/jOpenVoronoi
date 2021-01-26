@@ -8,6 +8,13 @@ import java.util.Set;
 
 public class RandomLabyrinth {
 
+	/**
+	 * 
+	 * @param size
+	 * @param loadFactor [0...1] at 0 and 1 labyrinth is regular; at 0.5, the most
+	 *                   cells are merged
+	 * @return
+	 */
 	public static PlanarGraph generateLabyrinth(int size, double loadFactor) {
 		// stores bitwise fields to indicate connections between cells
 		// 1 - up, 2 - right, 4 - down, 8 - left
@@ -46,6 +53,7 @@ public class RandomLabyrinth {
 	private static void extractSegments(int x, int y, int size, int dx, int dy, int maskA, int maskB,
 			int[][] directions, Set<Point2D> points, List<PlanarGraph.Segment> segments) {
 		var sideLength = 0.7 * 2 / (size * 2 - 1);
+		sideLength *= 572; // TODO
 		Point2D stt = new Point2D.Double(-0.7 + x * sideLength, -0.7 + y * sideLength);
 		var end = stt;
 		while (x < size * 2 && y < size * 2) {

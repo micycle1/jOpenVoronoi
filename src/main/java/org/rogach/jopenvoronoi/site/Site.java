@@ -9,6 +9,11 @@ import org.rogach.jopenvoronoi.vertex.Vertex;
 
 //Base-class for a voronoi-diagram site, or generator.
 public abstract class Site {
+
+	protected Site() {
+
+	}
+
 	// the HEFace of this Site
 	public Face face;
 	// equation parameters

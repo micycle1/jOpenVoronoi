@@ -5,10 +5,12 @@ import java.util.List;
 import org.rogach.jopenvoronoi.site.Site;
 import org.rogach.jopenvoronoi.vertex.Solution;
 
-//\brief abstract base-class for voronoi vertex position solvers
-///
-//The input to the solver is three Sites (s1,s2,s3) and three offset-directions (k1,k2,k3).
-//The optput is a vector with one or more Solution.
+/**
+ * Abstract base-class for voronoi vertex position solvers
+ * 
+ * The input to the solver is three Sites (s1,s2,s3) and three offset-directions
+ * (k1,k2,k3). The optput is a vector with one or more Solution.
+ */
 public abstract class Solver {
 
 	// \brief solve for position of VoronoiVertex with given adjacent sites and

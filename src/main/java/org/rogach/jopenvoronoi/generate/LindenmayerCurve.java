@@ -8,10 +8,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Generates space-filling curves using Lindenmayer systems
+ * Generates space-filling curves using Lindenmayer (L) systems
  */
 public class LindenmayerCurve {
 
+	// TODO other L-Systems
+
+	/**
+	 * 
+	 * @param k fractal depth
+	 * @return
+	 */
 	public static PlanarGraph generateMooreCurve(int k) {
 		var axiom = "LFL+F+LFL";
 		Map<Character, String> rules = new HashMap<>();
@@ -23,8 +30,23 @@ public class LindenmayerCurve {
 		} else {
 			length = 1.4;
 		}
-		return generateCurve(produce(axiom, rules, k - 1), Math.PI / 2, new Point2D.Double(0 - length / 2, 0.7),
-				length);
+		length *= 400;// TODO effectively zoom
+		return generateCurve(produce(axiom, rules, k - 1), Math.PI / 2, new Point2D.Double(400, 600), length);
+	}
+
+	public static PlanarGraph generateDragonCurve(int k) {
+		var axiom = "FX";
+		Map<Character, String> rules = new HashMap<>();
+		rules.put('X', "X+YF+");
+		rules.put('Y', "-FX-Y");
+		double length;
+		if (k > 1) {
+			length = 1.4 / (k * k - 1);
+		} else {
+			length = 1.4;
+		}
+		length *= 400;// TODO effectively zoom
+		return generateCurve(produce(axiom, rules, k - 1), Math.PI / 2, new Point2D.Double(400, 600), length);
 	}
 
 	public static PlanarGraph generateGosperCurve(int k) {
@@ -38,7 +60,9 @@ public class LindenmayerCurve {
 		} else {
 			length = 0.15;
 		}
-		return generateCurve(produce(axiom, rules, k - 1), Math.PI / 3, new Point2D.Double(0.7, 0), length);
+		length *= 400;// TODO effectively zoom
+		return generateCurve(produce(axiom, rules, k - 1), Math.PI / 3, new Point2D.Double(400 + 300, 300), length);
+		// TODO offset
 	}
 
 	private static String produce(String input, Map<Character, String> rules, int k) {
@@ -71,7 +95,7 @@ public class LindenmayerCurve {
 		points.add(p1);
 		for (var q = 0; q < curve.length(); q++) {
 			var c = curve.charAt(q);
-			if (c == 'F' || c == 'A' || c == 'B') {
+			if (c == 'F' || c == 'A' || c == 'B' || c == 'X' || c == 'Y') {
 				Point2D next = new Point2D.Double(p2.getX() + Math.cos(angle) * length,
 						p2.getY() + Math.sin(angle) * length);
 				Line2D l = new Line2D.Double(p1, p2);
