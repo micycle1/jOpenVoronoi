@@ -11,6 +11,7 @@ public class LineSite extends Site {
 
 	Point _start; // < start Point of LineSite
 	Point _end; // < end Point of LineSite
+	private Point _p; // < position
 	public Edge e; // < edge_descriptor to the ::LINESITE pseudo-edge
 
 	public LineSite(Point st, Point en, double koff) {
@@ -22,12 +23,14 @@ public class LineSite extends Site {
 		this.face = s.face;
 		this._start = s.start();
 		this._end = s.end();
+		this._p = s.position(); // inherit position
 	}
 
 	// create line-site between start and end Point.
 	public LineSite(Point st, Point en, double koff, Face f) {
 		this._start = st;
 		this._end = en;
+		this._p = new Point((start().add(end()).mult(0.5)));
 		face = f;
 		eq.q = false;
 		eq.a = _end.y - _start.y;
@@ -96,6 +99,11 @@ public class LineSite extends Site {
 	@Override
 	public boolean isLine() {
 		return true;
+	}
+
+	@Override
+	public Point position() {
+		return _p;
 	}
 
 	@Override

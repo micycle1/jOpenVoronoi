@@ -1,6 +1,13 @@
 package org.rogach.jopenvoronoi.geometry;
 
 public enum FaceStatus {
-	INCIDENT, /* !< INCIDENT faces contain one or more IN-vertex */
-	NONINCIDENT /* !< NONINCIDENT faces contain only OUT/UNDECIDED-vertices */
+
+	/**
+	 * INCIDENT faces contain one or more IN-vertex
+	 */
+	INCIDENT,
+	/**
+	 * NONINCIDENT faces contain only OUT/UNDECIDED-vertices
+	 */
+	NONINCIDENT
 }

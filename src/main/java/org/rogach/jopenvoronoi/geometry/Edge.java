@@ -17,6 +17,7 @@ import org.rogach.jopenvoronoi.vertex.Vertex;
 */
 
 public class Edge {
+
 	public Vertex source;
 	public Vertex target;
 	public Edge twin;

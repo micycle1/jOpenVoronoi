@@ -11,7 +11,6 @@ import org.rogach.jopenvoronoi.vertex.Vertex;
 public abstract class Site {
 
 	protected Site() {
-
 	}
 
 	// the HEFace of this Site
@@ -26,9 +25,7 @@ public abstract class Site {
 	public abstract Ofs offset(Point p1, Point p2);
 
 	// position of site for PointSite
-	public Point position() {
-		throw new UnsupportedOperationException();
-	}
+	public abstract Point position();
 
 	// start point of site (for LineSite and ArcSite)
 	public Point start() {

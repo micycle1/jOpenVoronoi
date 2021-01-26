@@ -44,9 +44,18 @@ import ags.utils.dataStructures.trees.thirdGenKD.SquareEuclideanDistanceFunction
 public class VoronoiDiagram {
 
 	// HELPER-CLASSES
-	protected VoronoiDiagramChecker vd_checker; // < sanity-checks on the diagram are done by this helper class
-	protected KdTree<KdPoint> kd_tree; // < kd-tree for nearest neighbor search during point Site insertion
-	protected VertexPositioner vpos; // < an algorithm for positioning vertices
+	/**
+	 * sanity-checks on the diagram are done by this helper class
+	 */
+	protected VoronoiDiagramChecker vd_checker;
+	/**
+	 * kd-tree for nearest neighbour search during point Site insertion
+	 */
+	protected KdTree<KdPoint> kd_tree;
+	/**
+	 * an algorithm for positioning vertices
+	 */
+	protected VertexPositioner vpos;
 
 	// DATA
 
@@ -57,8 +66,14 @@ public class VoronoiDiagram {
 	 */
 	protected PriorityQueue<Pair<Vertex, Double>> vertexQueue = new PriorityQueue<>(1, new abs_comparison());
 
-	protected HalfEdgeDiagram g = new HalfEdgeDiagram(); // < the half-edge diagram of the vd
-	protected double far_radius; // < sites must fall within a circle with radius far_radius
+	/**
+	 * the half-edge diagram of the vd
+	 */
+	protected HalfEdgeDiagram g = new HalfEdgeDiagram();
+	/**
+	 * sites must fall within a circle with radius far_radius
+	 */
+	protected double far_radius; // <
 	/**
 	 * number of point sites
 	 */
@@ -71,22 +86,28 @@ public class VoronoiDiagram {
 	 * number of arc-sites
 	 */
 	protected int num_asites;
-	protected List<Face> incident_faces = new ArrayList<>(); // < temporary variable for ::INCIDENT faces, will be
-																// reset to ::NONINCIDENT after a site has been
-																// inserted
-	protected Set<Vertex> modified_vertices = new HashSet<>(); // < temporary variable for in-vertices, out-vertices
-																// that need to be reset after a site has been inserted
-	protected List<Vertex> v0 = new ArrayList<>(); // < IN-vertices, i.e. to-be-deleted
+	/**
+	 * temporary variable for ::INCIDENT faces, will be reset to ::NONINCIDENT after
+	 * a site has been inserted
+	 */
+	protected List<Face> incident_faces = new ArrayList<>();
+	/**
+	 * temporary variable for in-vertices, out-vertices that need to be reset after
+	 * a site has been inserted
+	 */
+	protected Set<Vertex> modified_vertices = new HashSet<>();
+	/**
+	 * IN-vertices, i.e. to-be-deleted
+	 */
+	protected List<Vertex> v0 = new ArrayList<>();
 	protected boolean debug; // < turn debug output on/off
-	protected boolean silent; // < no warnings emitted when silent==true
 
-	// \brief
-	// \param far is
-	// use far==1.0
+	public VoronoiDiagram() {
+		this(5000);
+	}
 
 	/**
-	 *
-	 * Create a VoronoiDiagram
+	 * Creates an empty VoronoiDiagram
 	 *
 	 * @param farRadius the radius of a circle within which all sites must be
 	 *                  located.
@@ -102,14 +123,6 @@ public class VoronoiDiagram {
 		num_asites = 0;
 		reset_vertex_count();
 		debug = false;
-	}
-
-	public VoronoiDiagram() {
-		this(5000);
-	}
-
-	public Vertex insert_point_site(Point p) {
-		return insert_point_site(p, 0);
 	}
 
 	/**
@@ -135,12 +148,11 @@ public class VoronoiDiagram {
 	 * IN-NEW edges, see remove_vertex_set() -# reset vertex/face status to be ready
 	 * for next incremental operation, see reset_status()
 	 *
-	 * @param p    position of site
-	 * @param step (optional, for debugging) stop at this step
+	 * @param p position of site
 	 * @return integer handle to the inserted point. use this integer when inserting
 	 *         lines/arcs with insert_line_site
 	 */
-	public Vertex insert_point_site(Point p, int step) {
+	public Vertex insert_point_site(Point p) {
 
 		num_psites++;
 		// int current_step=1;
@@ -179,52 +191,40 @@ public class VoronoiDiagram {
 		return new_vert;
 	}
 
-	public boolean insert_line_site(Vertex v1, Vertex v2) {
-		// default step should make algorithm run until the end!
-		return insert_line_site(v1, v2, 99);
-	}
+	/**
+	 * Inserts a LineSite into the diagram
+	 * <p>
+	 * All PointSites must be inserted before any LineSites are inserted. All
+	 * LineSites should be inserted before any ArcSitess are inserted. It is an
+	 * error to insert a LineSite that intersects an existing LineSite in the
+	 * diagram!
+	 * <p>
+	 * The basic idea of the incremental diagram update is similar to that in
+	 * insert_point_site(). The major differences are: - the handling of null-faces
+	 * at the endpoints of the LineSite. - addition of ::SEPARATOR edges - addition
+	 * of ::SPLIT vertices during augment_vertex_set() - removal of ::SPLIT vertices
+	 * at the end
+	 * <p>
+	 * The steps of the algorithm are: -# based on \a idx1 and \a idx2, look up the
+	 * corresponding vertex descriptors. It is an error if these are not found. -#
+	 * find a seed-vertex -# grow the delete-tree of ::IN vertices. -# create or
+	 * modify the null-faces at the startpoint and endpoint of the LineSite -#
+	 * create and add ::LINESITE pseudo-edges -# add ::NEW vertices on all
+	 * ::IN-::OUT edges. -# add up to four ::SEPARATOR edges, where applicable -#
+	 * add non-separator edges by calling add_edges() on all ::INCIDENT faces -#
+	 * repair the next-pointers of faces that have been modified. see repair_face()
+	 * -# remove IN-IN edges and IN-NEW edges, see remove_vertex_set() -# remove
+	 * ::SPLIT vertices -# reset vertex/face status to be ready for next incremental
+	 * operation, see reset_status()
+	 * 
+	 * @param start startpoint of line-segment
+	 * @param end   endpoint of line-segment
+	 * @return
+	 */
+	public boolean insert_line_site(Vertex start, Vertex end) {
 
-	public boolean insert_line_site(Vertex start, Vertex end, int step) {
-		// \brief insert a LineSite into the diagram
-		///
-		// \param idx1 int handle to startpoint of line-segment
-		// \param idx2 int handle to endpoint of line-segment
-		// \param step (optional, for debug) stop at step
-		///
-		// \details
-		// \attention All PointSite:s must be inserted before any LineSite:s are
-		// inserted.
-		// All LineSite:s should be inserted before any ArcSite:s are inserted.
-		// \attention It is an error to insert a LineSite that intersects an existing
-		// LineSite in the diagram!
-		///
-		// The basic idea of the incremental diagram update is similar to that in
-		// insert_point_site().
-		// The major differences are:
-		// - the handling of null-faces at the endpoints of the LineSite.
-		// - addition of ::SEPARATOR edges
-		// - addition of ::SPLIT vertices during augment_vertex_set()
-		// - removal of ::SPLIT vertices at the end
-		///
-		// The steps of the algorithm are:
-		// -# based on \a idx1 and \a idx2, look up the corresponding vertex
-		// descriptors. It is an error if these are not found.
-		// -# find a seed-vertex
-		// -# grow the delete-tree of ::IN vertices.
-		// -# create or modify the null-faces at the startpoint and endpoint of the
-		// LineSite
-		// -# create and add ::LINESITE pseudo-edges
-		// -# add ::NEW vertices on all ::IN-::OUT edges.
-		// -# add up to four ::SEPARATOR edges, where applicable
-		// -# add non-separator edges by calling add_edges() on all ::INCIDENT faces
-		// -# repair the next-pointers of faces that have been modified. see
-		// repair_face()
-		// -# remove IN-IN edges and IN-NEW edges, see remove_vertex_set()
-		// -# remove ::SPLIT vertices
-		// -# reset vertex/face status to be ready for next incremental operation, see
-		// reset_status()
 		num_lsites++;
-		var current_step = 1;
+
 		// find the vertices corresponding to idx1 and idx2
 		start.status = VertexStatus.OUT;
 		end.status = VertexStatus.OUT;
@@ -239,18 +239,8 @@ public class VoronoiDiagram {
 		var left = src_se.add(trg_se).mult(0.5).add(trg_se.sub(src_se).xy_perp()); // this is used below and in
 																					// find_null_face()
 
-		if (step == current_step) {
-			return false;
-		}
-		current_step++;
-
 		var pos_site = new LineSite(end.position, start.position, +1);
 		var neg_site = new LineSite(start.position, end.position, -1);
-
-		if (step == current_step) {
-			return false;
-		}
-		current_step++;
 
 		var seed_face = start.face; // assumes this point-site has a face!
 
@@ -258,20 +248,10 @@ public class VoronoiDiagram {
 		var v_seed = find_seed_vertex(seed_face, pos_site);
 		mark_vertex(v_seed, pos_site);
 
-		if (step == current_step) {
-			return false;
-		}
-		current_step++;
-
 		augment_vertex_set(pos_site); // it should not matter if we use pos_site or neg_site here
 		// todo(?) sanity checks:
 		// check that end_face is INCIDENT?
 		// check that tree (i.e. v0) includes end_face_seed ?
-
-		if (step == current_step) {
-			return false;
-		}
-		current_step++;
 
 		// process the null-faces here
 		// returns new seg_start/end vertices, new or existing null-faces, and separator
@@ -303,11 +283,6 @@ public class VoronoiDiagram {
 			end_to_null.edge = end_null_face.edge;
 		}
 
-		if (step == current_step) {
-			return false;
-		}
-		current_step++;
-
 		// create LINESITE pseudo edges and faces
 		var twin_edges = g.add_twin_edges(seg_end, seg_start);
 		var pos_edge = twin_edges.getFirst();
@@ -330,17 +305,7 @@ public class VoronoiDiagram {
 		pos_site.e = pos_edge;
 		neg_site.e = neg_edge;
 
-		if (step == current_step) {
-			return false;
-		}
-		current_step++;
-
 		add_vertices(pos_site); // add NEW vertices on all IN-OUT edges.
-
-		if (step == current_step) {
-			return false;
-		}
-		current_step++;
 
 		// add SEPARATORS
 		// find SEPARATOR targets first
@@ -350,40 +315,20 @@ public class VoronoiDiagram {
 		// add positive separator edge at start
 		add_separator(start.face, start_null_face, pos_start_target, pos_sep_start, pos_face.site, neg_face.site);
 
-		if (step == current_step) {
-			return false;
-		}
-		current_step++;
-
 		// add negative separator edge at start
 		add_separator(start.face, start_null_face, neg_start_target, neg_sep_start, pos_face.site, neg_face.site);
 		start.face.status = FaceStatus.NONINCIDENT; // face is now done.
 		assert (vd_checker.face_ok(start.face)) : " vd_checker.face_ok( start.face ) ";
-
-		if (step == current_step) {
-			return false;
-		}
-		current_step++;
 
 		var pos_end_target = find_separator_target(end.face, pos_sep_end);
 		var neg_end_target = find_separator_target(end.face, neg_sep_end);
 		// add positive separator edge at end
 		add_separator(end.face, end_null_face, pos_end_target, pos_sep_end, pos_face.site, neg_face.site);
 
-		if (step == current_step) {
-			return false;
-		}
-		current_step++;
-
 		// add negative separator edge at end
 		add_separator(end.face, end_null_face, neg_end_target, neg_sep_end, pos_face.site, neg_face.site);
 		end.face.status = FaceStatus.NONINCIDENT;
 		assert (vd_checker.face_ok(end.face)) : " vd_checker.face_ok( end.face ) ";
-
-		if (step == current_step) {
-			return false;
-		}
-		current_step++;
 
 		// add non-separator edges by calling add_edges on all INCIDENT faces
 		for (Face f : incident_faces) {
@@ -393,11 +338,6 @@ public class VoronoiDiagram {
 																								// newface and f
 			}
 		}
-
-		if (step == current_step) {
-			return false;
-		}
-		current_step++;
 
 		// new vertices and edges inserted. remove the delete-set, repair faces.
 
@@ -410,11 +350,6 @@ public class VoronoiDiagram {
 		repair_face(neg_face, new Pair<Vertex, Vertex>(seg_start, seg_end),
 				new Pair<Face, Face>(start_to_null, end_to_null), new Pair<Face, Face>(start_null_face, end_null_face));
 		assert (vd_checker.face_ok(neg_face)) : " vd_checker.face_ok( neg_face ) ";
-
-		if (step == current_step) {
-			return false;
-		}
-		current_step++;
 
 		// we are done and can remove split-vertices
 		for (Face f : incident_faces) {
@@ -488,11 +423,6 @@ public class VoronoiDiagram {
 		debug = true;
 	}
 
-	// set silent mode on/off
-	public void set_silent(boolean b) {
-		silent = b;
-	}
-
 	// run topology/geometry check on diagram
 	public boolean check() {
 		if (vd_checker.is_valid()) {
@@ -553,10 +483,10 @@ public class VoronoiDiagram {
 		}
 	};
 
-	// \brief initialize the diagram with three generators
-	///
-	// add one vertex at origo and three vertices at 'infinity' and their
-	// associated edges
+	/**
+	 * Initializes the diagram with three generators. Add one vertex at origin and
+	 * three vertices at 'infinity' and their associated edges
+	 */
 	protected void initialize() {
 		var far_multiplier = 6D;
 		// initial generators/sites:

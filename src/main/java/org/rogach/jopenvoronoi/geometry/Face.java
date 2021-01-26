@@ -3,6 +3,7 @@ package org.rogach.jopenvoronoi.geometry;
 import org.rogach.jopenvoronoi.site.Site;
 
 public class Face {
+
 	public Edge edge;
 	public Site site;
 	public FaceStatus status;

@@ -129,6 +129,11 @@ public class ArcSite extends Site {
 		return _center;
 	}
 
+	@Override
+	public Point position() {
+		return center();
+	}
+
 	// return radius of ArcSite
 	public double radius() {
 		return _radius;

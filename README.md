@@ -1,30 +1,21 @@
-JOpenVoronoi
-============
+# JOpenVoronoi+
 
-A quick-and-dirty port of [openvoronoi](https://github.com/aewallin/openvoronoi) library from C++ to Java.
-Capable of creating 2D Voronoi segment diagrams and medial axes.
+A fork of *Rogach*'s [port](https://github.com/Rogach/jopenvoronoi) of the original C++ library [openvoronoi](https://github.com/aewallin/openvoronoi) — a library capable of creating 2D Voronoi segment diagrams and medial axes.
 
-Code is in a mess - the port was done in 4 days, don't have the time to clean it up, but it works and is fast -
-approximately a second to create diagram from 20000 points.
+# Fork Changes
 
-Building
-========
-Currently the project is built using Maven, but since it's just a bunch
-of java files and a single jar dependency, you can quickly build it with whatever is at hand.
+This fork has the following changes:
 
-Source files are located in `jopenvoronoi-main/src` directory, jar dependency - `lib/commons-math3-3.4.1.jar`.
-
-You can build a jar of the project with:
-```
-cd jopenjoronoi-main
-mvn package
-```
-
-and run benchmarks:
-```
-./run.sh BenchmarkRandomPoints
-./run.sh BenchmarkRandomPolygon
-```
+- Converts source code to Java 11
+- Removes the *tests* maven sub-module and brings the main library up to the top level (so it's easily hostable as an artifact via JitPack)
+- Splits the library into appropriate sub-packages
+- Converts source comments into proper Javadoc comments (only the most important comments converted so far...)
+- Removes the constraint that point sites had to be placed within a unit-circle centered on (0,0) — now points can have any coordinate!
+- Introduces *LindenmayerCurve*, *RandomLabyrinth* and *RandomPolygon* diagram generators (from the original's tests) into the main library under the *generate* sub-package
+- Adds Javadoc comments to important arguments on generator classes
+- Removes SVG output functionality
+- Removes the debugging `step` argument (that was left in the code) from the main point/site insert methods
+- Implements `position()` on `LineSite` and `Pointsite` classes
 
 Example code
 ============
