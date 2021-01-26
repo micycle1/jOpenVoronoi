@@ -146,8 +146,8 @@ public class IntervalHeap<T> implements MinHeap<T>, MaxHeap<T> {
 	}
 
 	private int swap(int x, int y) {
-		Object yData = data[y];
-		double yDist = keys[y];
+		var yData = data[y];
+		var yDist = keys[y];
 		data[y] = data[x];
 		keys[y] = keys[x];
 		data[x] = yData;
@@ -164,7 +164,7 @@ public class IntervalHeap<T> implements MinHeap<T>, MaxHeap<T> {
 	 */
 
 	private void siftInsertedValueUp() {
-		int u = size - 1;
+		var u = size - 1;
 		if (u == 0) {
 			// Do nothing if it's the only element!
 		} else if (u == 1) {
@@ -174,7 +174,7 @@ public class IntervalHeap<T> implements MinHeap<T>, MaxHeap<T> {
 			}
 		} else if (u % 2 == 1) {
 			// Already paired. Ensure pair is ordered right
-			int p = (u / 2 - 1) | 1; // The larger value of the parent pair
+			var p = (u / 2 - 1) | 1; // The larger value of the parent pair
 			if (keys[u] < keys[u - 1]) { // If less than it's pair
 				u = swap(u, u - 1); // Swap with it's pair
 				if (keys[u] < keys[p - 1]) { // If smaller than smaller parent pair
@@ -189,7 +189,7 @@ public class IntervalHeap<T> implements MinHeap<T>, MaxHeap<T> {
 			}
 		} else {
 			// Inserted in the lower-value slot without a partner
-			int p = (u / 2 - 1) | 1; // The larger value of the parent pair
+			var p = (u / 2 - 1) | 1; // The larger value of the parent pair
 			if (keys[u] > keys[p]) { // If larger that larger parent pair
 				// Swap into max-heap side
 				u = swap(u, p);
@@ -204,20 +204,20 @@ public class IntervalHeap<T> implements MinHeap<T>, MaxHeap<T> {
 
 	private void siftUpMin(int c) {
 		// Min-side parent: (x/2-1)&~1
-		for (int p = (c / 2 - 1) & ~1; p >= 0 && keys[c] < keys[p]; c = p, p = (c / 2 - 1) & ~1) {
+		for (var p = (c / 2 - 1) & ~1; p >= 0 && keys[c] < keys[p]; c = p, p = (c / 2 - 1) & ~1) {
 			swap(c, p);
 		}
 	}
 
 	private void siftUpMax(int c) {
 		// Max-side parent: (x/2-1)|1
-		for (int p = (c / 2 - 1) | 1; p >= 0 && keys[c] > keys[p]; c = p, p = (c / 2 - 1) | 1) {
+		for (var p = (c / 2 - 1) | 1; p >= 0 && keys[c] > keys[p]; c = p, p = (c / 2 - 1) | 1) {
 			swap(c, p);
 		}
 	}
 
 	private void siftDownMin(int p) {
-		for (int c = p * 2 + 2; c < size; p = c, c = p * 2 + 2) {
+		for (var c = p * 2 + 2; c < size; p = c, c = p * 2 + 2) {
 			if (c + 2 < size && keys[c + 2] < keys[c]) {
 				c += 2;
 			}
@@ -234,7 +234,7 @@ public class IntervalHeap<T> implements MinHeap<T>, MaxHeap<T> {
 	}
 
 	private void siftDownMax(int p) {
-		for (int c = p * 2 + 1; c <= size; p = c, c = p * 2 + 1) {
+		for (var c = p * 2 + 1; c <= size; p = c, c = p * 2 + 1) {
 			if (c == size) {
 				// If the left child only has half a pair
 				if (keys[c - 1] > keys[p]) {
@@ -278,12 +278,12 @@ public class IntervalHeap<T> implements MinHeap<T>, MaxHeap<T> {
 
 	@Override
 	public String toString() {
-		java.text.DecimalFormat twoPlaces = new java.text.DecimalFormat("0.00");
-		StringBuffer str = new StringBuffer(IntervalHeap.class.getCanonicalName());
+		var twoPlaces = new java.text.DecimalFormat("0.00");
+		var str = new StringBuffer(IntervalHeap.class.getCanonicalName());
 		str.append(", size: ").append(size()).append(" capacity: ").append(capacity());
 		int i = 0, p = 2;
 		while (i < size()) {
-			int x = 0;
+			var x = 0;
 			str.append("\t");
 			while ((i + x) < size() && x < p) {
 				str.append(twoPlaces.format(keys[i + x])).append(", ");
@@ -298,15 +298,15 @@ public class IntervalHeap<T> implements MinHeap<T>, MaxHeap<T> {
 
 	private boolean validateHeap() {
 		// Validate left-right
-		for (int i = 0; i < size - 1; i += 2) {
+		for (var i = 0; i < size - 1; i += 2) {
 			if (keys[i] > keys[i + 1]) {
 				return false;
 			}
 		}
 		// Validate within parent interval
-		for (int i = 2; i < size; i++) {
-			double maxParent = keys[(i / 2 - 1) | 1];
-			double minParent = keys[(i / 2 - 1) & ~1];
+		for (var i = 2; i < size; i++) {
+			var maxParent = keys[(i / 2 - 1) | 1];
+			var minParent = keys[(i / 2 - 1) & ~1];
 			if (keys[i] > maxParent || keys[i] < minParent) {
 				return false;
 			}

@@ -1,0 +1,5 @@
+- Split into sub-packages where suitable
+- Convert some comments into proper Javadoc comments
+- Variable max-site distance (previously all points had be less than 1)
+- Swap asserts for debug flag
+- Include tests as generators in *generate* sub-package

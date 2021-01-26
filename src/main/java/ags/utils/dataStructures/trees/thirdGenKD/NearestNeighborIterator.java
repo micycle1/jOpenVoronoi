@@ -50,7 +50,7 @@ public class NearestNeighborIterator<T> implements Iterator<T>, Iterable<T> {
 		// Return the smallest distance point
 		pointsRemaining--;
 		lastDistanceReturned = evaluatedPoints.getMinKey();
-		T value = evaluatedPoints.getMin();
+		var value = evaluatedPoints.getMin();
 		evaluatedPoints.removeMin();
 		return value;
 	}

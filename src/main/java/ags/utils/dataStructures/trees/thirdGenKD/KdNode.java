@@ -2,9 +2,6 @@ package ags.utils.dataStructures.trees.thirdGenKD;
 
 import java.util.Arrays;
 
-/**
- *
- */
 class KdNode<T> {
 	// All types
 	protected int dimensions;
@@ -49,7 +46,7 @@ class KdNode<T> {
 	/* -------- OPERATIONS -------- */
 
 	public void addPoint(double[] point, T value) {
-		KdNode<T> cursor = this;
+		var cursor = this;
 		while (!cursor.isLeaf()) {
 			cursor.extendBounds(point);
 			cursor.size++;
@@ -84,7 +81,7 @@ class KdNode<T> {
 	}
 
 	private boolean checkBounds(double[] point) {
-		for (int i = 0; i < dimensions; i++) {
+		for (var i = 0; i < dimensions; i++) {
 			if (point[i] > maxBound[i]) {
 				return false;
 			}
@@ -102,7 +99,7 @@ class KdNode<T> {
 			return;
 		}
 
-		for (int i = 0; i < dimensions; i++) {
+		for (var i = 0; i < dimensions; i++) {
 			if (Double.isNaN(point[i])) {
 				if (!Double.isNaN(minBound[i]) || !Double.isNaN(maxBound[i])) {
 					singlePoint = false;
@@ -129,9 +126,9 @@ class KdNode<T> {
 			return false;
 		}
 
-		double width = 0;
-		for (int i = 0; i < dimensions; i++) {
-			double dwidth = (maxBound[i] - minBound[i]);
+		var width = 0D;
+		for (var i = 0; i < dimensions; i++) {
+			var dwidth = (maxBound[i] - minBound[i]);
 			if (Double.isNaN(dwidth)) {
 				dwidth = 0;
 			}
@@ -173,9 +170,9 @@ class KdNode<T> {
 		left = new KdNode<T>(dimensions, bucketCapacity);
 
 		// Move locations into children
-		for (int i = 0; i < size; i++) {
-			double[] oldLocation = points[i];
-			Object oldData = data[i];
+		for (var i = 0; i < size; i++) {
+			var oldLocation = points[i];
+			var oldData = data[i];
 			if (oldLocation[splitDimension] > splitValue) {
 				right.addLeafPoint(oldLocation, (T) oldData);
 			} else {

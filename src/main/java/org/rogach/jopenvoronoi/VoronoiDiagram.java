@@ -10,6 +10,24 @@ import java.util.Set;
 
 import org.apache.commons.math3.analysis.solvers.AllowedSolution;
 import org.apache.commons.math3.analysis.solvers.BracketingNthOrderBrentSolver;
+import org.rogach.jopenvoronoi.filter.Filter;
+import org.rogach.jopenvoronoi.geometry.Edge;
+import org.rogach.jopenvoronoi.geometry.EdgeType;
+import org.rogach.jopenvoronoi.geometry.Face;
+import org.rogach.jopenvoronoi.geometry.FaceStatus;
+import org.rogach.jopenvoronoi.geometry.Point;
+import org.rogach.jopenvoronoi.site.LineSite;
+import org.rogach.jopenvoronoi.site.PointSite;
+import org.rogach.jopenvoronoi.site.Site;
+import org.rogach.jopenvoronoi.util.KdPoint;
+import org.rogach.jopenvoronoi.util.Numeric;
+import org.rogach.jopenvoronoi.util.Pair;
+import org.rogach.jopenvoronoi.util.SplitPointError;
+import org.rogach.jopenvoronoi.util.VoronoiDiagramChecker;
+import org.rogach.jopenvoronoi.vertex.Vertex;
+import org.rogach.jopenvoronoi.vertex.VertexPositioner;
+import org.rogach.jopenvoronoi.vertex.VertexStatus;
+import org.rogach.jopenvoronoi.vertex.VertexType;
 
 import ags.utils.dataStructures.trees.thirdGenKD.KdTree;
 import ags.utils.dataStructures.trees.thirdGenKD.SquareEuclideanDistanceFunction;
@@ -58,7 +76,7 @@ public class VoronoiDiagram {
 	// use far==1.0
 
 	/**
-	 * 
+	 *
 	 * Create a VoronoiDiagram
 	 *
 	 * @param farRadius the radius of a circle within which all sites must be
@@ -87,7 +105,7 @@ public class VoronoiDiagram {
 
 	/**
 	 * Insert a PointSite into the diagram
-	 * 
+	 *
 	 * <p>
 	 * All PointSites must be inserted before any LineSites or ArcSites are
 	 * inserted.
@@ -95,7 +113,7 @@ public class VoronoiDiagram {
 	 * It is an error to insert duplicate PointSites (i.e. points with the same x,y
 	 * coordinates). All PointSites must be inserted before any LineSites or
 	 * ArcSites are inserted.
-	 * 
+	 *
 	 * <p>
 	 * This is roughly "algorithm A" from the Sugihara-Iri 1994 paper, page 15/50 /
 	 * -# find the face that is closest to the new site, see FaceGrid -# among the
@@ -107,7 +125,7 @@ public class VoronoiDiagram {
 	 * faces that have been modified. see repair_face() -# remove IN-IN edges and
 	 * IN-NEW edges, see remove_vertex_set() -# reset vertex/face status to be ready
 	 * for next incremental operation, see reset_status()
-	 * 
+	 *
 	 * @param p    position of site
 	 * @param step (optional, for debugging) stop at this step
 	 * @return integer handle to the inserted point. use this integer when inserting
@@ -124,19 +142,19 @@ public class VoronoiDiagram {
 		}
 		assert (p.norm() < far_radius) : " p.norm() < far_radius ";
 
-		Vertex new_vert = g.add_vertex(new Vertex(p, VertexStatus.OUT, VertexType.POINTSITE));
-		PointSite new_site = new PointSite(p);
+		var new_vert = g.add_vertex(new Vertex(p, VertexStatus.OUT, VertexType.POINTSITE));
+		var new_site = new PointSite(p);
 		new_site.v = new_vert;
-		KdPoint nearest = kd_tree
-				.findNearestNeighbors(new double[] { p.x, p.y }, 1, new SquareEuclideanDistanceFunction()).getMax();
-		Vertex v_seed = find_seed_vertex(nearest.face, new_site);
+		var nearest = kd_tree.findNearestNeighbors(new double[] { p.x, p.y }, 1, new SquareEuclideanDistanceFunction())
+				.getMax();
+		var v_seed = find_seed_vertex(nearest.face, new_site);
 		mark_vertex(v_seed, new_site);
 		// if (step==current_step) return -1; current_step++;
 		augment_vertex_set(new_site); // grow the tree to maximum size
 		// if (step==current_step) return -1; current_step++;
 		add_vertices(new_site); // insert new vertices on IN-OUT edges
 		// if (step==current_step) return -1; current_step++;
-		Face newface = add_face(new_site);
+		var newface = add_face(new_site);
 		new_vert.face = newface; // Vertices that correspond to point-sites have their .face property set!
 		for (Face f : incident_faces) {
 			// add NEW-NEW edges on all INCIDENT faces
@@ -197,7 +215,7 @@ public class VoronoiDiagram {
 		// -# reset vertex/face status to be ready for next incremental operation, see
 		// reset_status()
 		num_lsites++;
-		int current_step = 1;
+		var current_step = 1;
 		// find the vertices corresponding to idx1 and idx2
 		start.status = VertexStatus.OUT;
 		end.status = VertexStatus.OUT;
@@ -207,28 +225,28 @@ public class VoronoiDiagram {
 		// create a point which is left of src->trg
 		// determine k (offset-dir) for this point
 		// then we know which site/face is the k==+1 and which is k==-1
-		Point src_se = start.position;
-		Point trg_se = end.position;
-		Point left = src_se.add(trg_se).mult(0.5).add(trg_se.sub(src_se).xy_perp()); // this is used below and in
-																						// find_null_face()
+		var src_se = start.position;
+		var trg_se = end.position;
+		var left = src_se.add(trg_se).mult(0.5).add(trg_se.sub(src_se).xy_perp()); // this is used below and in
+																					// find_null_face()
 
 		if (step == current_step) {
 			return false;
 		}
 		current_step++;
 
-		LineSite pos_site = new LineSite(end.position, start.position, +1);
-		LineSite neg_site = new LineSite(start.position, end.position, -1);
+		var pos_site = new LineSite(end.position, start.position, +1);
+		var neg_site = new LineSite(start.position, end.position, -1);
 
 		if (step == current_step) {
 			return false;
 		}
 		current_step++;
 
-		Face seed_face = start.face; // assumes this point-site has a face!
+		var seed_face = start.face; // assumes this point-site has a face!
 
 		// on the face of start-point, find the seed vertex
-		Vertex v_seed = find_seed_vertex(seed_face, pos_site);
+		var v_seed = find_seed_vertex(seed_face, pos_site);
 		mark_vertex(v_seed, pos_site);
 
 		if (step == current_step) {
@@ -249,22 +267,22 @@ public class VoronoiDiagram {
 		// process the null-faces here
 		// returns new seg_start/end vertices, new or existing null-faces, and separator
 		// endpoints (if separators should be added)
-		Point dir2 = start.position.sub(end.position);
-		Point dir1 = end.position.sub(start.position);
+		var dir2 = start.position.sub(end.position);
+		var dir1 = end.position.sub(start.position);
 
-		FiveTuple1 null_face_start = find_null_face(start, end, left, dir1, pos_site);
-		Vertex seg_start = null_face_start.get1;
-		Face start_null_face = null_face_start.get2;
-		Vertex pos_sep_start = null_face_start.get3;
-		Vertex neg_sep_start = null_face_start.get4;
-		Face start_to_null = null_face_start.get5;
+		var null_face_start = find_null_face(start, end, left, dir1, pos_site);
+		var seg_start = null_face_start.get1;
+		var start_null_face = null_face_start.get2;
+		var pos_sep_start = null_face_start.get3;
+		var neg_sep_start = null_face_start.get4;
+		var start_to_null = null_face_start.get5;
 
-		FiveTuple1 null_face_end = find_null_face(end, start, left, dir2, pos_site);
-		Vertex seg_end = null_face_end.get1;
-		Face end_null_face = null_face_end.get2;
-		Vertex pos_sep_end = null_face_end.get3;
-		Vertex neg_sep_end = null_face_end.get4;
-		Face end_to_null = null_face_end.get5;
+		var null_face_end = find_null_face(end, start, left, dir2, pos_site);
+		var seg_end = null_face_end.get1;
+		var end_null_face = null_face_end.get2;
+		var pos_sep_end = null_face_end.get3;
+		var neg_sep_end = null_face_end.get4;
+		var end_to_null = null_face_end.get5;
 
 		// now safe to set the zero-face edge
 		// in the collinear case, set the edge for the face that "disappears" to a null
@@ -282,9 +300,9 @@ public class VoronoiDiagram {
 		current_step++;
 
 		// create LINESITE pseudo edges and faces
-		Pair<Edge, Edge> twin_edges = g.add_twin_edges(seg_end, seg_start);
-		Edge pos_edge = twin_edges.getFirst();
-		Edge neg_edge = twin_edges.getSecond();
+		var twin_edges = g.add_twin_edges(seg_end, seg_start);
+		var pos_edge = twin_edges.getFirst();
+		var neg_edge = twin_edges.getSecond();
 
 		pos_edge.inserted_direction = false;
 		neg_edge.inserted_direction = true;
@@ -292,8 +310,8 @@ public class VoronoiDiagram {
 		neg_edge.type = EdgeType.LINESITE;
 		pos_edge.k = +1;
 		neg_edge.k = -1;
-		Face pos_face = add_face(pos_site); // this face to the left of start->end edge
-		Face neg_face = add_face(neg_site); // this face is to the left of end->start edge
+		var pos_face = add_face(pos_site); // this face to the left of start->end edge
+		var neg_face = add_face(neg_site); // this face is to the left of end->start edge
 		pos_face.edge = pos_edge;
 		neg_face.edge = neg_edge;
 		pos_edge.face = pos_face;
@@ -317,8 +335,8 @@ public class VoronoiDiagram {
 
 		// add SEPARATORS
 		// find SEPARATOR targets first
-		SeparatorTarget pos_start_target = find_separator_target(start.face, pos_sep_start);
-		SeparatorTarget neg_start_target = find_separator_target(start.face, neg_sep_start);
+		var pos_start_target = find_separator_target(start.face, pos_sep_start);
+		var neg_start_target = find_separator_target(start.face, neg_sep_start);
 
 		// add positive separator edge at start
 		add_separator(start.face, start_null_face, pos_start_target, pos_sep_start, pos_face.site, neg_face.site);
@@ -338,8 +356,8 @@ public class VoronoiDiagram {
 		}
 		current_step++;
 
-		SeparatorTarget pos_end_target = find_separator_target(end.face, pos_sep_end);
-		SeparatorTarget neg_end_target = find_separator_target(end.face, neg_sep_end);
+		var pos_end_target = find_separator_target(end.face, pos_sep_end);
+		var neg_end_target = find_separator_target(end.face, neg_sep_end);
 		// add positive separator edge at end
 		add_separator(end.face, end_null_face, pos_end_target, pos_sep_end, pos_face.site, neg_face.site);
 
@@ -437,7 +455,7 @@ public class VoronoiDiagram {
 
 	// return number of ::SPLIT vertices
 	public int num_split_vertices() {
-		int count = 0;
+		var count = 0;
 		for (Vertex v : g.vertices) {
 			if (v.type == VertexType.SPLIT) {
 				count++;
@@ -531,63 +549,63 @@ public class VoronoiDiagram {
 	// add one vertex at origo and three vertices at 'infinity' and their
 	// associated edges
 	protected void initialize() {
-		double far_multiplier = 6;
+		var far_multiplier = 6D;
 		// initial generators/sites:
-		Point gen1 = new Point(0, 3.0 * far_radius);
-		Point gen2 = new Point(-3.0 * Math.sqrt(3.0) * far_radius / 2.0, -3.0 * far_radius / 2.0);
-		Point gen3 = new Point(+3.0 * Math.sqrt(3.0) * far_radius / 2.0, -3.0 * far_radius / 2.0);
+		var gen1 = new Point(0, 3.0 * far_radius);
+		var gen2 = new Point(-3.0 * Math.sqrt(3.0) * far_radius / 2.0, -3.0 * far_radius / 2.0);
+		var gen3 = new Point(+3.0 * Math.sqrt(3.0) * far_radius / 2.0, -3.0 * far_radius / 2.0);
 		// initial vd-vertices
-		Point vd1 = new Point(0, -3.0 * far_radius * far_multiplier);
-		Point vd2 = new Point(+3.0 * Math.sqrt(3.0) * far_radius * far_multiplier / 2.0,
+		var vd1 = new Point(0, -3.0 * far_radius * far_multiplier);
+		var vd2 = new Point(+3.0 * Math.sqrt(3.0) * far_radius * far_multiplier / 2.0,
 				+3.0 * far_radius * far_multiplier / 2.0);
-		Point vd3 = new Point(-3.0 * Math.sqrt(3.0) * far_radius * far_multiplier / 2.0,
+		var vd3 = new Point(-3.0 * Math.sqrt(3.0) * far_radius * far_multiplier / 2.0,
 				+3.0 * far_radius * far_multiplier / 2.0);
 		// add init vertices
-		Vertex v00 = g.add_vertex(new Vertex(new Point(0, 0), VertexStatus.UNDECIDED, VertexType.NORMAL, gen1));
-		Vertex v01 = g.add_vertex(new Vertex(vd1, VertexStatus.OUT, VertexType.OUTER, gen3));
-		Vertex v02 = g.add_vertex(new Vertex(vd2, VertexStatus.OUT, VertexType.OUTER, gen1));
-		Vertex v03 = g.add_vertex(new Vertex(vd3, VertexStatus.OUT, VertexType.OUTER, gen2));
+		var v00 = g.add_vertex(new Vertex(new Point(0, 0), VertexStatus.UNDECIDED, VertexType.NORMAL, gen1));
+		var v01 = g.add_vertex(new Vertex(vd1, VertexStatus.OUT, VertexType.OUTER, gen3));
+		var v02 = g.add_vertex(new Vertex(vd2, VertexStatus.OUT, VertexType.OUTER, gen1));
+		var v03 = g.add_vertex(new Vertex(vd3, VertexStatus.OUT, VertexType.OUTER, gen2));
 		// add initial sites to graph
-		Vertex vert1 = g.add_vertex(new Vertex(gen1, VertexStatus.OUT, VertexType.POINTSITE));
-		Vertex vert2 = g.add_vertex(new Vertex(gen2, VertexStatus.OUT, VertexType.POINTSITE));
-		Vertex vert3 = g.add_vertex(new Vertex(gen3, VertexStatus.OUT, VertexType.POINTSITE));
+		var vert1 = g.add_vertex(new Vertex(gen1, VertexStatus.OUT, VertexType.POINTSITE));
+		var vert2 = g.add_vertex(new Vertex(gen2, VertexStatus.OUT, VertexType.POINTSITE));
+		var vert3 = g.add_vertex(new Vertex(gen3, VertexStatus.OUT, VertexType.POINTSITE));
 
 		// apex-points on the three edges:
-		Vertex a1 = g.add_vertex(new Vertex(gen2.add(gen3).mult(0.5), VertexStatus.UNDECIDED, VertexType.APEX, gen2));
-		Vertex a2 = g.add_vertex(new Vertex(gen1.add(gen3).mult(0.5), VertexStatus.UNDECIDED, VertexType.APEX, gen3));
-		Vertex a3 = g.add_vertex(new Vertex(gen1.add(gen2).mult(0.5), VertexStatus.UNDECIDED, VertexType.APEX, gen1));
+		var a1 = g.add_vertex(new Vertex(gen2.add(gen3).mult(0.5), VertexStatus.UNDECIDED, VertexType.APEX, gen2));
+		var a2 = g.add_vertex(new Vertex(gen1.add(gen3).mult(0.5), VertexStatus.UNDECIDED, VertexType.APEX, gen3));
+		var a3 = g.add_vertex(new Vertex(gen1.add(gen2).mult(0.5), VertexStatus.UNDECIDED, VertexType.APEX, gen1));
 
 		// add face 1: v0-v1-v2 which encloses gen3
-		Edge e1_1 = g.add_edge(v00, a1);
-		Edge e1_2 = g.add_edge(a1, v01);
-		Edge e2 = g.add_edge(v01, v02);
-		Edge e3_1 = g.add_edge(v02, a2);
-		Edge e3_2 = g.add_edge(a2, v00);
-		Face f1 = g.add_face();
+		var e1_1 = g.add_edge(v00, a1);
+		var e1_2 = g.add_edge(a1, v01);
+		var e2 = g.add_edge(v01, v02);
+		var e3_1 = g.add_edge(v02, a2);
+		var e3_2 = g.add_edge(a2, v00);
+		var f1 = g.add_face();
 		f1.site = new PointSite(gen3, f1, vert3);
 		f1.status = FaceStatus.NONINCIDENT;
 		kd_tree.addPoint(new double[] { gen3.x, gen3.y }, new KdPoint(gen3, f1));
 		g.set_next_cycle(Arrays.asList(e1_1, e1_2, e2, e3_1, e3_2), f1, 1);
 
 		// add face 2: v0-v02-v03 which encloses gen1
-		Edge e4_1 = g.add_edge(v00, a2);
-		Edge e4_2 = g.add_edge(a2, v02);
-		Edge e5 = g.add_edge(v02, v03);
-		Edge e6_1 = g.add_edge(v03, a3);
-		Edge e6_2 = g.add_edge(a3, v00);
-		Face f2 = g.add_face();
+		var e4_1 = g.add_edge(v00, a2);
+		var e4_2 = g.add_edge(a2, v02);
+		var e5 = g.add_edge(v02, v03);
+		var e6_1 = g.add_edge(v03, a3);
+		var e6_2 = g.add_edge(a3, v00);
+		var f2 = g.add_face();
 		f2.site = new PointSite(gen1, f2, vert1);
 		f2.status = FaceStatus.NONINCIDENT;
 		kd_tree.addPoint(new double[] { gen1.x, gen1.y }, new KdPoint(gen1, f2));
 		g.set_next_cycle(Arrays.asList(e4_1, e4_2, e5, e6_1, e6_2), f2, 1);
 
 		// add face 3: v0-v3-v1 which encloses gen2
-		Edge e7_1 = g.add_edge(v00, a3);
-		Edge e7_2 = g.add_edge(a3, v03);
-		Edge e8 = g.add_edge(v03, v01);
-		Edge e9_1 = g.add_edge(v01, a1);
-		Edge e9_2 = g.add_edge(a1, v00);
-		Face f3 = g.add_face();
+		var e7_1 = g.add_edge(v00, a3);
+		var e7_2 = g.add_edge(a3, v03);
+		var e8 = g.add_edge(v03, v01);
+		var e9_1 = g.add_edge(v01, a1);
+		var e9_2 = g.add_edge(a1, v00);
+		var f3 = g.add_face();
 		f3.site = new PointSite(gen2, f3, vert2); // this constructor needs f3...
 		f3.status = FaceStatus.NONINCIDENT;
 		kd_tree.addPoint(new double[] { gen2.x, gen2.y }, new KdPoint(gen2, f3));
@@ -640,15 +658,15 @@ public class VoronoiDiagram {
 	// find amount of clearance-disk violation on all vertices of face f
 	// \return vertex with the largest clearance-disk violation
 	protected Vertex find_seed_vertex(Face f, Site site) {
-		double minPred = 0.0;
+		var minPred = 0.0;
 		Vertex minimalVertex = null;
-		boolean first = true;
-		Edge current = f.edge;
-		Edge start = current;
+		var first = true;
+		var current = f.edge;
+		var start = current;
 		do {
-			Vertex q = current.target;
+			var q = current.target;
 			if ((q.status != VertexStatus.OUT) && (q.type == VertexType.NORMAL)) {
-				double h = q.in_circle(site.apex_point(q.position));
+				var h = q.in_circle(site.apex_point(q.position));
 				if (first || ((h < minPred) && (site.in_region(q.position)))) {
 					minPred = h;
 					minimalVertex = q;
@@ -694,21 +712,20 @@ public class VoronoiDiagram {
 	// (these vertices are needed to ensure finding correct points around
 	// sites/null-edges)
 	protected EdgeData find_edge_data(Face f, List<Vertex> startverts, Pair<Vertex, Vertex> segment) {
-		EdgeData ed = new EdgeData();
+		var ed = new EdgeData();
 		ed.f = f;
-		Edge current_edge = f.edge; // start on some edge of the face
-		Edge start_edge = current_edge;
-		boolean found = false;
+		var current_edge = f.edge; // start on some edge of the face
+		var start_edge = current_edge;
+		var found = false;
 		do { // find OUT-NEW-IN vertices in this loop
-			Edge next_edge = current_edge.next;
+			var next_edge = current_edge.next;
 
-			Vertex previous_vertex = current_edge.source;
-			Vertex current_vertex = current_edge.target;
-			Vertex next_vertex = next_edge.target;
-			boolean previous_not_endpoint = (!previous_vertex.equals(segment.getFirst())
+			var previous_vertex = current_edge.source;
+			var current_vertex = current_edge.target;
+			var next_vertex = next_edge.target;
+			var previous_not_endpoint = (!previous_vertex.equals(segment.getFirst())
 					&& !previous_vertex.equals(segment.getSecond()));
-			boolean next_is_endpoint = (next_vertex.equals(segment.getFirst())
-					|| next_vertex.equals(segment.getSecond()));
+			var next_is_endpoint = (next_vertex.equals(segment.getFirst()) || next_vertex.equals(segment.getSecond()));
 
 			if ((current_vertex.status == VertexStatus.NEW) && (current_vertex.type != VertexType.SEPPOINT)
 					&& (((previous_vertex.status == VertexStatus.OUT
@@ -716,7 +733,7 @@ public class VoronoiDiagram {
 							|| (next_is_endpoint))) {
 				// slow? linear search through vector. but startverts.size() should not be too
 				// large..
-				boolean v_in_startverts = startverts.contains(current_vertex);
+				var v_in_startverts = startverts.contains(current_vertex);
 				if (!v_in_startverts) {
 					ed.v1 = current_vertex;
 					ed.v1_prv = current_edge;
@@ -732,7 +749,7 @@ public class VoronoiDiagram {
 		start_edge = current_edge; // note that this search starts where we ended in the loop above!
 		found = false;
 		do { // find IN-NEW-OUT vertices in this loop
-			Vertex current_vertex = current_edge.target;
+			var current_vertex = current_edge.target;
 			if (current_vertex.status == VertexStatus.NEW && current_vertex.type != VertexType.SEPPOINT) {
 				if (!current_vertex.equals(ed.v1)) { // -IN-NEW(v2)
 					ed.v2 = current_vertex;
@@ -756,14 +773,14 @@ public class VoronoiDiagram {
 	protected List<Edge> find_split_edges(Face f, Point pt1, Point pt2) {
 		assert (vd_checker.face_ok(f)) : " vd_checker.face_ok(f) ";
 		List<Edge> out = new ArrayList<>();
-		Edge current_edge = f.edge;
-		Edge start_edge = current_edge;
+		var current_edge = f.edge;
+		var start_edge = current_edge;
 		// int count=0;
 		do { // FIND ALL! not just one.
-			Vertex trg = current_edge.target;
-			Vertex src = current_edge.source;
-			boolean src_is_right = src.position.is_right(pt1, pt2);
-			boolean trg_is_right = trg.position.is_right(pt1, pt2);
+			var trg = current_edge.target;
+			var src = current_edge.source;
+			var src_is_right = src.position.is_right(pt1, pt2);
+			var trg_is_right = trg.position.is_right(pt1, pt2);
 			if (src.type == VertexType.NORMAL || src.type == VertexType.APEX || src.type == VertexType.SPLIT) { // ?
 																												// check
 																												// edge-type
@@ -818,8 +835,8 @@ public class VoronoiDiagram {
 	// to be more reliable the larger fabs(in_circle()) is.
 	protected void augment_vertex_set(Site site) {
 		while (!vertexQueue.isEmpty()) {
-			Pair<Vertex, Double> nextVertexDet = vertexQueue.poll();
-			Vertex v = nextVertexDet.getFirst();
+			var nextVertexDet = vertexQueue.poll();
+			var v = nextVertexDet.getFirst();
 			double h = nextVertexDet.getSecond();
 			assert (v.status == VertexStatus.UNDECIDED) : " v.status == VertexStatus.UNDECIDED ";
 			if (h < 0.0) { // try to mark IN if h<0 and passes (C4) and (C5) tests and in_region().
@@ -846,9 +863,9 @@ public class VoronoiDiagram {
 	// predicate C4 i.e. "adjacent in-count" from Sugihara&Iri 1992 "one million"
 	// paper
 	protected boolean predicate_c4(Vertex v) {
-		int in_count = 0;
+		var in_count = 0;
 		for (Edge e : v.out_edges) {
-			Vertex w = e.target;
+			var w = e.target;
 			if (w.status == VertexStatus.IN) {
 				in_count++;
 				if (in_count >= 2) {
@@ -880,11 +897,11 @@ public class VoronoiDiagram {
 
 		for (Face f : adjacent_incident_faces) {
 			// check each adjacent face f for an IN-vertex
-			boolean face_ok = false;
-			Edge current = f.edge;
-			Edge start = current;
+			var face_ok = false;
+			var current = f.edge;
+			var start = current;
 			do {
-				Vertex w = current.target;
+				var w = current.target;
 				if (!w.equals(v) && w.status == VertexStatus.IN && g.has_edge(w, v)) { // v should be adjacent to an IN
 																						// vertex on the face
 					face_ok = true;
@@ -919,7 +936,7 @@ public class VoronoiDiagram {
 	// so use the slower adjacent_faces() instead.
 	protected void mark_adjacent_faces(Vertex v, Site site) {
 		assert (v.status == VertexStatus.IN) : "v.status == VertexStatus.IN ";
-		List<Face> new_adjacent_faces = g.adjacent_faces(v);
+		var new_adjacent_faces = g.adjacent_faces(v);
 
 		assert ((v.type == VertexType.APEX && new_adjacent_faces.size() == 2)
 				|| (v.type == VertexType.SPLIT && new_adjacent_faces.size() == 2) || new_adjacent_faces.size() == 3);
@@ -943,7 +960,7 @@ public class VoronoiDiagram {
 	protected void mark_adjacent_faces_p(Vertex v) {
 		assert (v.status == VertexStatus.IN) : "v.status == VertexStatus.IN ";
 		for (Edge e : v.out_edges) {
-			Face adj_face = e.face;
+			var adj_face = e.face;
 			if (adj_face.status != FaceStatus.INCIDENT) {
 				adj_face.status = FaceStatus.INCIDENT;
 				incident_faces.add(adj_face);
@@ -966,7 +983,7 @@ public class VoronoiDiagram {
 
 		// push the v-adjacent vertices onto the queue
 		for (Edge e : v.out_edges) {
-			Vertex w = e.target;
+			var w = e.target;
 			if ((w.status == VertexStatus.UNDECIDED) && (!w.in_queue)) {
 				// when pushing onto queue we also evaluate in_circle predicate so that we
 				// process vertices in the correct order
@@ -982,10 +999,10 @@ public class VoronoiDiagram {
 	// Note: used only by insert_point_site() !!
 	protected void add_vertices(Site new_site) {
 		assert (!v0.isEmpty()) : " !v0.isEmpty() ";
-		List<Edge> q_edges = find_in_out_edges(); // new vertices generated on these IN-OUT edges
+		var q_edges = find_in_out_edges(); // new vertices generated on these IN-OUT edges
 		for (Edge e : q_edges) {
-			Solution sl = vpos.position(e, new_site); // vertex_positioner.cpp
-			Vertex q = g.add_vertex(
+			var sl = vpos.position(e, new_site); // vertex_positioner.cpp
+			var q = g.add_vertex(
 					new Vertex(sl.p, VertexStatus.NEW, VertexType.NORMAL, new_site.apex_point(sl.p), sl.k3));
 			modified_vertices.add(q);
 			g.add_vertex_in_edge(q, e);
@@ -997,7 +1014,7 @@ public class VoronoiDiagram {
 	///
 	// call add_new_edge() on all the incident_faces that should be split
 	protected Face add_face(Site s) {
-		Face newface = g.add_face();
+		var newface = g.add_face();
 		newface.site = s;
 		s.face = newface;
 		newface.status = FaceStatus.NONINCIDENT;
@@ -1019,13 +1036,13 @@ public class VoronoiDiagram {
 	// k=-1 face newface2
 	// the segment endpoints are passed to find_edge_data()
 	protected void add_edges(Face newface, Face f, Face newface2, Pair<Vertex, Vertex> segment) {
-		int new_count = num_new_vertices(f);
+		var new_count = num_new_vertices(f);
 		assert (new_count > 0) : " new_count > 0 ";
 		assert ((new_count % 2) == 0) : " (new_count % 2) == 0 ";
-		int new_pairs = new_count / 2; // we add one NEW-NEW edge for each pair found
+		var new_pairs = new_count / 2; // we add one NEW-NEW edge for each pair found
 		List<Vertex> startverts = new ArrayList<>(); // this holds ed.v1 vertices for edges already added
-		for (int m = 0; m < new_pairs; m++) {
-			EdgeData ed = find_edge_data(f, startverts, segment);
+		for (var m = 0; m < new_pairs; m++) {
+			var ed = find_edge_data(f, startverts, segment);
 			add_edge(ed, newface, newface2);
 			startverts.add(ed.v1);
 		}
@@ -1035,16 +1052,16 @@ public class VoronoiDiagram {
 	// newface = the k=+1 positive offset face
 	// newface2 = the k=-1 negative offset face
 	protected void add_edge(EdgeData ed, Face newface, Face newface2) {
-		Edge new_previous = ed.v1_prv;
-		Vertex new_source = ed.v1; // -OUT-NEW(v1)-IN-...
-		Edge twin_next = ed.v1_nxt;
+		var new_previous = ed.v1_prv;
+		var new_source = ed.v1; // -OUT-NEW(v1)-IN-...
+		var twin_next = ed.v1_nxt;
 
-		Edge twin_previous = ed.v2_prv;
-		Vertex new_target = ed.v2; // -IN-NEW(v2)-OUT-
-		Edge new_next = ed.v2_nxt;
+		var twin_previous = ed.v2_prv;
+		var new_target = ed.v2; // -IN-NEW(v2)-OUT-
+		var new_next = ed.v2_nxt;
 
-		Face f = ed.f;
-		Site f_site = f.site;
+		var f = ed.f;
+		var f_site = f.site;
 		Site new_site;
 		Face new_face;
 		if (new_source.k3 == 1) { // find out if newface or newface2 should be used
@@ -1068,19 +1085,19 @@ public class VoronoiDiagram {
 		// the new quadratic edge
 		// we can set the src_sign and trg_sign with is_right where we compare to a line
 		// through the apex
-		boolean src_sign = true;
-		boolean trg_sign = true;
+		var src_sign = true;
+		var trg_sign = true;
 		if (f_site.isPoint() && new_site.isLine()) { // PL or PA
-			Point pt2 = f_site.position();
-			Point pt1 = new_site.apex_point(pt2); // projection of pt2 onto LineSite or ArcSite
+			var pt2 = f_site.position();
+			var pt1 = new_site.apex_point(pt2); // projection of pt2 onto LineSite or ArcSite
 			src_sign = new_source.position.is_right(pt1, pt2);
 			trg_sign = new_target.position.is_right(pt1, pt2);
 		} else if (f_site.isPoint() && new_site.isArc()) {
-			Point pt2 = f_site.position();
+			var pt2 = f_site.position();
 			// project p2 onto circle
-			Point cen = new Point(new_site.x(), new_site.y());
-			Point cen_pt2 = pt2.sub(cen);
-			Point pt1 = cen.add(cen_pt2.mult(new_site.r() / cen_pt2.norm()));
+			var cen = new Point(new_site.x(), new_site.y());
+			var cen_pt2 = pt2.sub(cen);
+			var pt1 = cen.add(cen_pt2.mult(new_site.r() / cen_pt2.norm()));
 			src_sign = new_source.position.is_right(pt1, pt2);
 			trg_sign = new_target.position.is_right(pt1, pt2);
 		} else if (f_site.isPoint() && new_site.isPoint()) { // PP
@@ -1111,8 +1128,8 @@ public class VoronoiDiagram {
 						: " !new_target.position.is_right( new_site.start(), new_site.end() ) ";
 			}
 		} else if (f_site.isLine() && new_site.isArc()) { // LA
-			Point pt2 = new Point(new_site.x(), new_site.y());
-			Point pt1 = f_site.apex_point(pt2);
+			var pt2 = new Point(new_site.x(), new_site.y());
+			var pt1 = f_site.apex_point(pt2);
 			src_sign = new_source.position.is_right(pt1, pt2);
 			trg_sign = new_target.position.is_right(pt1, pt2);
 			// if one vertex is on a null-face, we cannot trust the sign
@@ -1130,9 +1147,9 @@ public class VoronoiDiagram {
 		// both src and trg are on the same side of the new site.
 		// so no apex-split is required, just add a single edge.
 		if (src_sign == trg_sign) { // add a single src-trg edge
-			Pair<Edge, Edge> twin_edges = g.add_twin_edges(new_source, new_target);
-			Edge e_new = twin_edges.getFirst();
-			Edge e_twin = twin_edges.getSecond();
+			var twin_edges = g.add_twin_edges(new_source, new_target);
+			var e_new = twin_edges.getFirst();
+			var e_twin = twin_edges.getSecond();
 			e_new.next = new_next;
 			assert (new_next.k == new_previous.k) : " new_next.k == new_previous.k ";
 			e_new.k = new_next.k; // the next edge is on the same face, so has the correct k-value
@@ -1157,13 +1174,13 @@ public class VoronoiDiagram {
 			// twn_nxt <- NEW <- e1_tw -- APEX <-e2_tw-- NEW <- twn_prv
 			// new1/new2 new1/new2
 			//
-			Vertex apex = g.add_vertex(new Vertex(new Point(0, 0), VertexStatus.NEW, VertexType.APEX));
-			Pair<Edge, Edge> twin_edges1 = g.add_twin_edges(new_source, apex);
-			Edge e1 = twin_edges1.getFirst();
-			Edge e1_tw = twin_edges1.getSecond();
-			Pair<Edge, Edge> twin_edges2 = g.add_twin_edges(apex, new_target);
-			Edge e2 = twin_edges2.getFirst();
-			Edge e2_tw = twin_edges2.getSecond();
+			var apex = g.add_vertex(new Vertex(new Point(0, 0), VertexStatus.NEW, VertexType.APEX));
+			var twin_edges1 = g.add_twin_edges(new_source, apex);
+			var e1 = twin_edges1.getFirst();
+			var e1_tw = twin_edges1.getSecond();
+			var twin_edges2 = g.add_twin_edges(apex, new_target);
+			var e2 = twin_edges2.getFirst();
+			var e2_tw = twin_edges2.getSecond();
 			e1.set_parameters(f_site, new_site, !src_sign);
 			e2.set_parameters(f_site, new_site, !trg_sign);
 
@@ -1204,7 +1221,7 @@ public class VoronoiDiagram {
 					: " vd_checker.check_edge(e2) && vd_checker.check_edge(e2_tw) ";
 
 			// position the apex
-			double min_t = e1.minimum_t(f_site, new_site);
+			var min_t = e1.minimum_t(f_site, new_site);
 			apex.position = e1.point(min_t);
 			apex.init_dist(f_site.apex_point(apex.position));
 			modified_vertices.add(apex);
@@ -1245,20 +1262,20 @@ public class VoronoiDiagram {
 		assert ((sep_endp.k3 == 1) || (sep_endp.k3 == -1)) : " (sep_endp.k3==1) || (sep_endp.k3==-1) ";
 		sep_endp.zero_dist();
 
-		Pair<Edge, Edge> next_prev = g.find_next_prev(null_face, sep_endp);
-		Edge endp_next_tw = next_prev.getFirst();
-		Edge endp_prev_tw = next_prev.getSecond();
-		Edge endp_prev = endp_next_tw.twin; // NOTE twin!
-		Edge endp_next = endp_prev_tw.twin; // NOTE twin!
+		var next_prev = g.find_next_prev(null_face, sep_endp);
+		var endp_next_tw = next_prev.getFirst();
+		var endp_prev_tw = next_prev.getSecond();
+		var endp_prev = endp_next_tw.twin; // NOTE twin!
+		var endp_next = endp_prev_tw.twin; // NOTE twin!
 		assert (endp_next != null) : " endp_next != null ";
 		assert (endp_prev != null) : " endp_prev != null ";
 
 		// find NEW vertex on the old face f
 		// this vertex has the correct alfa angle for this endp/separator
-		Edge v_previous = target.v_previous;
-		Vertex v_target = target.v_target;
-		Edge v_next = target.v_next;
-		boolean out_new_in = target.out_new_in;
+		var v_previous = target.v_previous;
+		var v_target = target.v_target;
+		var v_next = target.v_next;
+		var out_new_in = target.out_new_in;
 		assert ((v_target.k3 == 1) || (v_target.k3 == -1)) : " (v_target.k3==1) || (v_target.k3==-1) ";
 		assert (sep_endp.k3 == v_target.k3) : " sep_endp.k3 == v_target.k3 ";
 		// can't assert about in_region - numerical error is always present
@@ -1268,9 +1285,9 @@ public class VoronoiDiagram {
 		// ) ";
 
 		// add new separator edge, and its twin
-		Pair<Edge, Edge> twin_edges = g.add_twin_edges(sep_endp, v_target);
-		Edge e2 = twin_edges.getFirst();
-		Edge e2_tw = twin_edges.getSecond();
+		var twin_edges = g.add_twin_edges(sep_endp, v_target);
+		var e2 = twin_edges.getFirst();
+		var e2_tw = twin_edges.getSecond();
 		e2.type = EdgeType.SEPARATOR;
 		e2_tw.type = EdgeType.SEPARATOR;
 
@@ -1350,7 +1367,7 @@ public class VoronoiDiagram {
 	protected void add_split_vertex(Face f, Site s) {
 		assert (!s.isPoint()) : "!s.isPoint()";
 
-		Site fs = f.site;
+		var fs = f.site;
 
 		// don't search for split-vertex on the start or end face
 		if (fs.isPoint() && s.isLine()) {
@@ -1361,12 +1378,12 @@ public class VoronoiDiagram {
 
 		if (fs.isPoint() && s.isLine() && s.in_region(fs.position())) {
 			// 1) find the correct edge
-			Point pt1 = fs.position();
-			Point pt2 = pt1.sub(new Point(s.a(), s.b()));
+			var pt1 = fs.position();
+			var pt2 = pt1.sub(new Point(s.a(), s.b()));
 
 			assert ((pt1.sub(pt2)).norm() > 0) : " (pt1.sub(pt2)).norm() > 0 ";
 
-			List<Edge> split_edges = find_split_edges(f, pt1, pt2);
+			var split_edges = find_split_edges(f, pt1, pt2);
 			// the sought edge should have src on one side of pt1-pt2
 			// and trg on the other side of pt1-pt2
 
@@ -1380,24 +1397,23 @@ public class VoronoiDiagram {
 
 				Point split_pt_pos;
 
-				Vertex split_src = split_edge.source;
-				Vertex split_trg = split_edge.target;
-				SplitPointError errFunctr = new SplitPointError(g, split_edge, pt1, pt2); // error functor
-				double min_t = Math.min(split_src.dist(), split_trg.dist());
-				double max_t = Math.max(split_src.dist(), split_trg.dist());
+				var split_src = split_edge.source;
+				var split_trg = split_edge.target;
+				var errFunctr = new SplitPointError(g, split_edge, pt1, pt2); // error functor
+				var min_t = Math.min(split_src.dist(), split_trg.dist());
+				var max_t = Math.max(split_src.dist(), split_trg.dist());
 				// require that min_t and max_t bracket the root
 				if (errFunctr.value(min_t) * errFunctr.value(max_t) >= 0) {
 					return;
 				}
 
-				BracketingNthOrderBrentSolver solver = new BracketingNthOrderBrentSolver(1e-20, 5);
-				int max_iter = 500;
-				double result = solver.solve(max_iter, errFunctr, min_t, max_t, AllowedSolution.ANY_SIDE);
+				var solver = new BracketingNthOrderBrentSolver(1e-20, 5);
+				var max_iter = 500;
+				var result = solver.solve(max_iter, errFunctr, min_t, max_t, AllowedSolution.ANY_SIDE);
 
 				split_pt_pos = split_edge.point(result);
 
-				Vertex v = g
-						.add_vertex(new Vertex(split_pt_pos, VertexStatus.UNDECIDED, VertexType.SPLIT, fs.position()));
+				var v = g.add_vertex(new Vertex(split_pt_pos, VertexStatus.UNDECIDED, VertexType.SPLIT, fs.position()));
 
 				assert (vd_checker.check_edge(split_edge)) : " vd_checker.check_edge(split_edge) ";
 				// 3) insert new SPLIT vertex into the edge
@@ -1448,7 +1464,7 @@ public class VoronoiDiagram {
 		Face face_to_null = null; // invalid face is default
 
 		// this works for LineSite
-		boolean k3_sign = true;
+		var k3_sign = true;
 		if (new_site.isLine()) {
 			k3_sign = left.is_right(start.position, other.position);
 		} else if (new_site.isArc()) {
@@ -1466,12 +1482,12 @@ public class VoronoiDiagram {
 			seg_start = g.add_vertex(new Vertex(start.position, VertexStatus.OUT, VertexType.ENDPOINT, 0));
 			// find the edge on the null-face where we insert seg_start
 			Edge insert_edge = null;
-			Edge current2 = start_null_face.edge;
-			Edge start_edge2 = current2;
+			var current2 = start_null_face.edge;
+			var start_edge2 = current2;
 			seg_start.set_alfa(dir);
-			boolean found = false;
+			var found = false;
 			do {
-				boolean face_incident = (current2.twin.face.status == FaceStatus.INCIDENT);
+				var face_incident = (current2.twin.face.status == FaceStatus.INCIDENT);
 				if (face_incident) { // pick any incident face!
 					insert_edge = current2;
 					found = true;
@@ -1483,13 +1499,13 @@ public class VoronoiDiagram {
 			g.add_vertex_in_edge(seg_start, insert_edge); // insert endpoint in null-edge
 
 			// "process" the adjacent null-edges
-			Pair<Edge, Edge> next_prev = g.find_next_prev(start_null_face, seg_start);
-			Edge next_edge = next_prev.getFirst();
-			Edge prev_edge = next_prev.getSecond();
-			Pair<Vertex, Face> neg_null_edge = process_null_edge(dir, next_edge, k3_sign, true);
+			var next_prev = g.find_next_prev(start_null_face, seg_start);
+			var next_edge = next_prev.getFirst();
+			var prev_edge = next_prev.getSecond();
+			var neg_null_edge = process_null_edge(dir, next_edge, k3_sign, true);
 			neg_sep_start = neg_null_edge.getFirst();
 			face_to_null = neg_null_edge.getSecond();
-			Pair<Vertex, Face> pos_null_edge = process_null_edge(dir, prev_edge, k3_sign, false);
+			var pos_null_edge = process_null_edge(dir, prev_edge, k3_sign, false);
 			pos_sep_start = pos_null_edge.getFirst();
 			face_to_null = pos_null_edge.getSecond();
 			return new FiveTuple1(seg_start, start_null_face, pos_sep_start, neg_sep_start, face_to_null);
@@ -1521,21 +1537,21 @@ public class VoronoiDiagram {
 			pos_sep_start.set_alfa(dir.xy_perp().mult(+1));
 			neg_sep_start.set_alfa(dir.xy_perp().mult(-1));
 			// null-edges around the face
-			Pair<Edge, Edge> twin_edges1 = g.add_twin_edges(seg_start, pos_sep_start);
-			Edge e1 = twin_edges1.getFirst();
-			Edge e1_tw = twin_edges1.getSecond();
-			Pair<Edge, Edge> twin_edges2 = g.add_twin_edges(pos_sep_start, neg_sep_start);
-			Edge e2 = twin_edges2.getFirst();
-			Edge e2_tw = twin_edges2.getSecond();
-			Pair<Edge, Edge> twin_edges3 = g.add_twin_edges(neg_sep_start, seg_start);
-			Edge e3 = twin_edges3.getFirst();
-			Edge e3_tw = twin_edges3.getSecond();
+			var twin_edges1 = g.add_twin_edges(seg_start, pos_sep_start);
+			var e1 = twin_edges1.getFirst();
+			var e1_tw = twin_edges1.getSecond();
+			var twin_edges2 = g.add_twin_edges(pos_sep_start, neg_sep_start);
+			var e2 = twin_edges2.getFirst();
+			var e2_tw = twin_edges2.getSecond();
+			var twin_edges3 = g.add_twin_edges(neg_sep_start, seg_start);
+			var e3 = twin_edges3.getFirst();
+			var e3_tw = twin_edges3.getSecond();
 
 			// e1 -> e2 -> e3 on start_null_face, k=1
 			// e1t <- e2t <- e3t on g[start].face, k=1
 			g.set_next_cycle(Arrays.asList(e1, e2, e3), start_null_face, 1);
-			Face start_face = start.face;
-			Edge start_face_edge = start_face.edge; // crazy workaround, because set_next_cycles sets g[face].edge wrong
+			var start_face = start.face;
+			var start_face_edge = start_face.edge; // crazy workaround, because set_next_cycles sets g[face].edge wrong
 													// here!
 			g.set_next_cycle(Arrays.asList(e3_tw, e2_tw, e1_tw), start.face, 1);
 			start_null_face.edge = e1;
@@ -1574,21 +1590,21 @@ public class VoronoiDiagram {
 			return new SeparatorTarget(null, null, null, false);
 		}
 
-		Edge current_edge = f.edge; // start on some edge of the face
-		Edge start_edge = current_edge;
-		boolean found = false;
+		var current_edge = f.edge; // start on some edge of the face
+		var start_edge = current_edge;
+		var found = false;
 		Vertex v_target = null;
 		Edge v_previous = null, v_next = null;
-		boolean flag = true;
+		var flag = true;
 		do {
-			Edge next_edge = current_edge.next;
-			Vertex previous_vertex = current_edge.source;
-			Vertex current_vertex = current_edge.target;
-			Vertex next_vertex = next_edge.target;
-			boolean out_new_in = (((previous_vertex.status == VertexStatus.OUT)
+			var next_edge = current_edge.next;
+			var previous_vertex = current_edge.source;
+			var current_vertex = current_edge.target;
+			var next_vertex = next_edge.target;
+			var out_new_in = (((previous_vertex.status == VertexStatus.OUT)
 					|| (previous_vertex.status == VertexStatus.UNDECIDED)) && current_vertex.status == VertexStatus.NEW
 					&& next_vertex.status == VertexStatus.IN);
-			boolean in_new_out = (previous_vertex.status == VertexStatus.IN && current_vertex.status == VertexStatus.NEW
+			var in_new_out = (previous_vertex.status == VertexStatus.IN && current_vertex.status == VertexStatus.NEW
 					&& (next_vertex.status == VertexStatus.OUT || (next_vertex.status == VertexStatus.UNDECIDED)));
 			if (out_new_in || in_new_out) {
 				if ((endp.k3 == current_vertex.k3) && !endp.equals(current_vertex)) {
@@ -1615,17 +1631,17 @@ public class VoronoiDiagram {
 	// or if we are dealing with the previous edge (next_prev=false)
 	protected Pair<Vertex, Face> process_null_edge(Point dir, Edge next_edge, boolean k3, boolean next_prev) {
 		assert (next_edge.type == EdgeType.NULLEDGE) : " next_edge.type == EdgeType.NULLEDGE ";
-		Vertex trg = next_edge.target;
-		Vertex src = next_edge.source;
+		var trg = next_edge.target;
+		var src = next_edge.source;
 
-		Vertex adj = next_prev ? trg : src; // this is the vertex adjacent to the end-point, on the null face
+		var adj = next_prev ? trg : src; // this is the vertex adjacent to the end-point, on the null face
 		assert ((next_prev ? src : trg).type == VertexType.ENDPOINT)
 				: " (next_prev ? src : trg).type == VertexType.ENDPOINT ";
 
 		Vertex sep_point = null;
 		double dir_mult = next_prev ? +1 : -1;
-		Point sep_dir = dir.xy_perp().mult(dir_mult);
-		double sep_alfa = Numeric.diangle(sep_dir.x, sep_dir.y); // alfa of potential SEPPOINT
+		var sep_dir = dir.xy_perp().mult(dir_mult);
+		var sep_alfa = Numeric.diangle(sep_dir.x, sep_dir.y); // alfa of potential SEPPOINT
 
 		double new_k3; // k3-value of a new or pushed vertex
 		if (next_prev) {
@@ -1636,8 +1652,8 @@ public class VoronoiDiagram {
 
 		if (adj.type == VertexType.ENDPOINT) { // target is endpoint
 			// insert a normal vertex, positioned at mid-alfa between src/trg.
-			Vertex new_v = g.add_vertex(new Vertex(src.position, VertexStatus.NEW, VertexType.NORMAL, src.position));
-			double mid = Numeric.diangle_mid(src.alfa, trg.alfa);
+			var new_v = g.add_vertex(new Vertex(src.position, VertexStatus.NEW, VertexType.NORMAL, src.position));
+			var mid = Numeric.diangle_mid(src.alfa, trg.alfa);
 			new_v.alfa = mid;
 			modified_vertices.add(new_v);
 			g.add_vertex_in_edge(new_v, next_edge);
@@ -1647,19 +1663,19 @@ public class VoronoiDiagram {
 		} else {
 			// Not an ENDPOINT vertex.
 			assert (adj.type != VertexType.ENDPOINT) : " adj.type != VertexType.ENDPOINT ";
-			double mid = 0;
-			boolean seppoint_pred = false;
-			boolean parallel_pred = false;
+			var mid = 0D;
+			var seppoint_pred = false;
+			var parallel_pred = false;
 
 			// set the two predicates
 			if (next_prev) {
-				Edge next_next = next_edge.next;
-				Edge next_previous = g.previous_edge(next_edge);
-				Vertex next_trg = next_next.target; // source
+				var next_next = next_edge.next;
+				var next_previous = g.previous_edge(next_edge);
+				var next_trg = next_next.target; // source
 				mid = Numeric.diangle_mid(src.alfa, next_trg.alfa); // prev_src, trg
 				seppoint_pred = (next_trg.type != VertexType.ENDPOINT);
-				Vertex next_out_trg = null_vertex_target(next_edge.target);
-				Vertex prev_out_trg = null_vertex_target(next_previous.source);
+				var next_out_trg = null_vertex_target(next_edge.target);
+				var prev_out_trg = null_vertex_target(next_previous.source);
 				if (next_out_trg != null && prev_out_trg != null) {
 					parallel_pred = (((next_out_trg.status == VertexStatus.OUT)
 							|| (next_out_trg.status == VertexStatus.NEW)
@@ -1668,14 +1684,14 @@ public class VoronoiDiagram {
 									|| (prev_out_trg.status == VertexStatus.UNDECIDED)));
 				}
 			} else { // !next_prev
-				Edge prev_prev = g.previous_edge(next_edge);
-				Edge next_next2 = next_edge.next;
-				Vertex prev_src = prev_prev.source;
+				var prev_prev = g.previous_edge(next_edge);
+				var next_next2 = next_edge.next;
+				var prev_src = prev_prev.source;
 				mid = Numeric.diangle_mid(prev_src.alfa, trg.alfa);
 				seppoint_pred = (prev_src.type != VertexType.ENDPOINT);
 
-				Vertex next_out_trg2 = null_vertex_target(next_edge.source);
-				Vertex prev_out_trg2 = null_vertex_target(next_next2.target);
+				var next_out_trg2 = null_vertex_target(next_edge.source);
+				var prev_out_trg2 = null_vertex_target(next_next2.target);
 				if (next_out_trg2 != null && prev_out_trg2 != null) {
 					parallel_pred = (((next_out_trg2.status == VertexStatus.OUT)
 							|| (next_out_trg2.status == VertexStatus.NEW)
@@ -1686,7 +1702,7 @@ public class VoronoiDiagram {
 
 			} // predicates now set.
 
-			Vertex adj_out = null_vertex_target(adj);
+			var adj_out = null_vertex_target(adj);
 			assert (adj_out != null) : "adj_out != null";
 
 			if (adj_out.status == VertexStatus.OUT || adj_out.status == VertexStatus.UNDECIDED) {
@@ -1721,7 +1737,7 @@ public class VoronoiDiagram {
 	// \param edge the null-edge into which we insert the new vertex
 	// \param sep_dir direction for setting alfa of the new vertex
 	protected Vertex add_separator_vertex(Vertex endp, Edge edge, Point sep_dir) {
-		Vertex sep = g.add_vertex(new Vertex(endp.position, VertexStatus.OUT, VertexType.SEPPOINT));
+		var sep = g.add_vertex(new Vertex(endp.position, VertexStatus.OUT, VertexType.SEPPOINT));
 		sep.set_alfa(sep_dir);
 		g.add_vertex_in_edge(sep, edge);
 		modified_vertices.add(sep);
@@ -1741,15 +1757,15 @@ public class VoronoiDiagram {
 	// added
 	protected void repair_face(Face f, Pair<Vertex, Vertex> segment, Pair<Face, Face> nulled_faces,
 			Pair<Face, Face> null_face) {
-		Edge current_edge = f.edge;
-		Edge start_edge = current_edge;
-		int c = 0;
+		var current_edge = f.edge;
+		var start_edge = current_edge;
+		var c = 0;
 		do {
 			assert (vd_checker.check_edge(current_edge)) : " vd_checker.check_edge(current_edge) ";
-			Vertex current_target = current_edge.target; // an edge on the new face
-			Vertex current_source = current_edge.source;
+			var current_target = current_edge.target; // an edge on the new face
+			var current_source = current_edge.source;
 			for (Edge e : current_target.out_edges) {
-				Vertex out_target = e.target;
+				var out_target = e.target;
 				if ((!out_target.equals(current_source)) && ((out_target.status == VertexStatus.NEW)
 						|| (out_target.type == VertexType.ENDPOINT) || (out_target.type == VertexType.SEPPOINT))) { // these
 																													// are
@@ -1858,29 +1874,16 @@ public class VoronoiDiagram {
 
 	// count number of ::NEW vertices on the given face \a f
 	protected int num_new_vertices(Face f) {
-		Edge current = f.edge;
-		Edge start = current;
-		int count = 0;
+		var current = f.edge;
+		var start = current;
+		var count = 0;
 		do {
-			Vertex v = current.target;
+			var v = current.target;
 			if ((v.status == VertexStatus.NEW) && (v.type != VertexType.SEPPOINT)) {
 				count++;
 			}
 			current = current.next;
 		} while (!current.equals(start));
 		return count;
-	}
-
-	public void outputToSvg(String fname) {
-		SvgOutput.output(this, fname);
-	}
-
-	public void outputToSvg(String fname, double cx, double cy, double scale, double width) {
-		SvgOutput s = new SvgOutput(this);
-		s.CX = cx;
-		s.CY = cy;
-		s.SCALE = scale;
-		s.WIDTH = width;
-		s.writeTo(fname);
 	}
 }

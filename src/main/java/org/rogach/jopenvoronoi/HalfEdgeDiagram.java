@@ -5,46 +5,44 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-// bundled BGL properties, see: http://www.boost.org/doc/libs/1_44_0/libs/graph/doc/bundles.html
+import org.rogach.jopenvoronoi.geometry.Edge;
+import org.rogach.jopenvoronoi.geometry.Face;
+import org.rogach.jopenvoronoi.util.Pair;
+import org.rogach.jopenvoronoi.vertex.Vertex;
 
-// dcel notes from http://www.holmes3d.net/graphics/dcel/
-
-// vertex (boost::out_edges)
-//  -leaving pointer to HalfEdge that has this vertex as origin
-//   if many HalfEdges have this vertex as origin, choose one arbitrarily
-
-// HalfEdge
-//  - origin pointer to vertex (boost::source)
-//  - face to the left of halfedge
-//  - twin pointer to HalfEdge (on the right of this edge)
-//  - next pointer to HalfEdge
-//     this edge starts from h->twin->origin and ends at next vertex in h->face
-//     traveling ccw around boundary
-//     (allows face traverse, follow h->next until we arrive back at h)
-
-// Face
-//  - edge pointer to HalfEdge
-//    this edge has this Face object as face
-//    half-edge can be any one on the boundary of face
-// special "infinite face", face on "outside" of boundary
-// may or may not store edge pointer
-
-//\brief half-edge diagram, based on the boost graph-library
-///
-//half_edge_diagram is a half-edge diagram class.
-//Templated on Vertex/Edge/Face property classes which allow
-//attaching information to vertices/edges/faces that is
-//required for a particular algorithm.
-///
-//Inherits from boost::adjacency_list
-//minor additions allow storing face-properties.
-///
-//the hedi namespace contains functions for manipulating HEDIGraphs
-///
-//For a general description of the half-edge data structure see e.g.:
-// - http://www.holmes3d.net/graphics/dcel/
-// - http://openmesh.org/index.php?id=228
-
+/**
+ * bundled BGL properties, see:
+ * http:www.boost.org/doc/libs/1_44_0/libs/graph/doc/bundles.html
+ *
+ * dcel notes from http:www.holmes3d.net/graphics/dcel/
+ * <p>
+ * vertex (boost::out_edges) -leaving pointer to HalfEdge that has this vertex
+ * as origin if many HalfEdges have this vertex as origin, choose one
+ * arbitrarily
+ * <p>
+ * HalfEdge - origin pointer to vertex (boost::source) - face to the left of
+ * halfedge - twin pointer to HalfEdge (on the right of this edge) - next
+ * pointer to HalfEdge this edge starts from h->twin->origin and ends at next
+ * vertex in h->face traveling ccw around boundary (allows face traverse, follow
+ * h->next until we arrive back at h)
+ * <p>
+ * Face - edge pointer to HalfEdge this edge has this Face object as face
+ * half-edge can be any one on the boundary of face special "infinite face",
+ * face on "outside" of boundary may or may not store edge pointer
+ * <p>
+ * \brief half-edge diagram, based on the boost graph-library /
+ * half_edge_diagram is a half-edge diagram class. Templated on Vertex/Edge/Face
+ * property classes which allow attaching information to vertices/edges/faces
+ * that is required for a particular algorithm.
+ * <p>
+ * Inherits from boost::adjacency_list minor additions allow storing
+ * face-properties.
+ * <p>
+ * the hedi namespace contains functions for manipulating HEDIGraphs
+ * <p>
+ * For a general description of the half-edge data structure see e.g.: -
+ * http:www.holmes3d.net/graphics/dcel/ - http:openmesh.org/index.php?id=228
+ */
 public class HalfEdgeDiagram {
 
 	public Set<Vertex> vertices = new HashSet<>();
@@ -52,7 +50,7 @@ public class HalfEdgeDiagram {
 	public Set<Face> faces = new HashSet<>();
 
 	public Vertex add_vertex() {
-		Vertex v = new Vertex();
+		var v = new Vertex();
 		vertices.add(v);
 		return v;
 	}
@@ -85,7 +83,7 @@ public class HalfEdgeDiagram {
 
 	// add an edge between vertices v1-v2
 	public Edge add_edge(Vertex v1, Vertex v2) {
-		Edge e = new Edge(v1, v2);
+		var e = new Edge(v1, v2);
 		v1.out_edges.add(e);
 		v2.in_edges.add(e);
 		edges.add(e);
@@ -144,7 +142,9 @@ public class HalfEdgeDiagram {
 		remove_vertex(v);
 	}
 
-	// insert Vertex \a v into the middle of Edge \a e
+	/**
+	 * Insert vertex v into the middle of Edge e
+	 */
 	public void add_vertex_in_edge(Vertex v, Edge e) {
 		// the vertex v is inserted into the middle of edge e
 		// edge e and its twin are replaced by four new edges: e1,e2 and their twins
@@ -164,25 +164,25 @@ public class HalfEdgeDiagram {
 		// twin_face
 		//
 
-		Edge e_twin = e.twin;
+		var e_twin = e.twin;
 		assert (e_twin != null) : " e_twin != null ";
-		Vertex esource = e.source;
-		Vertex etarget = e.target;
-		Face face = e.face;
-		Face twin_face = e_twin.face;
-		Edge previous = previous_edge(e);
-		Edge twin_previous = previous_edge(e_twin);
+		var esource = e.source;
+		var etarget = e.target;
+		var face = e.face;
+		var twin_face = e_twin.face;
+		var previous = previous_edge(e);
+		var twin_previous = previous_edge(e_twin);
 
 		assert (previous.face == e.face) : " previous.face == e.face ";
 		assert (twin_previous.face == e_twin.face) : " twin_previous.face == e_twin.face ";
 
-		Edge e1 = add_edge(esource, v);
-		Edge te2 = add_edge(v, esource);
+		var e1 = add_edge(esource, v);
+		var te2 = add_edge(v, esource);
 		e1.twin = te2;
 		te2.twin = e1;
 
-		Edge e2 = add_edge(v, etarget);
-		Edge te1 = add_edge(etarget, v);
+		var e2 = add_edge(v, etarget);
+		var te1 = add_edge(etarget, v);
 		e2.twin = te1;
 		te1.twin = e2;
 
@@ -210,10 +210,14 @@ public class HalfEdgeDiagram {
 		remove_edge(e_twin);
 	}
 
-	// add two edges, one from \a v1 to \a v2 and one from \a v2 to \a v1
+	/**
+	 * Adds two edges: one from v1 to v2, and one from v2 to v1
+	 *
+	 * @return
+	 */
 	public Pair<Edge, Edge> add_twin_edges(Vertex v1, Vertex v2) {
-		Edge e1 = add_edge(v1, v2);
-		Edge e2 = add_edge(v2, v1);
+		var e1 = add_edge(v1, v2);
+		var e2 = add_edge(v2, v1);
 		e1.twin = e2;
 		e2.twin = e1;
 		return new Pair<Edge, Edge>(e1, e2);
@@ -229,7 +233,7 @@ public class HalfEdgeDiagram {
 
 	// add a face, with given properties
 	public Face add_face() {
-		Face f = new Face();
+		var f = new Face();
 		faces.add(f);
 		return f;
 	}
@@ -246,14 +250,14 @@ public class HalfEdgeDiagram {
 	// return all vertices of given face
 	public List<Vertex> face_vertices(Face face) {
 		List<Vertex> verts = new ArrayList<>();
-		Edge startedge = face.edge; // the edge where we start
-		Vertex start_target = startedge.target;
+		var startedge = face.edge; // the edge where we start
+		var start_target = startedge.target;
 		verts.add(start_target);
 
-		Edge current = startedge.next;
-		int count = 0;
+		var current = startedge.next;
+		var count = 0;
 		do {
-			Vertex current_target = current.target;
+			var current_target = current.target;
 			verts.add(current_target);
 			assert (current.face == current.next.face) : "current.face == current.next.face";
 			current = current.next;
@@ -269,8 +273,8 @@ public class HalfEdgeDiagram {
 	// NOTE: it is faster to write a do-while loop in client code than to call this
 	// function!
 	public List<Edge> face_edges(Face f) {
-		Edge start_edge = f.edge;
-		Edge current_edge = start_edge;
+		var start_edge = f.edge;
+		var current_edge = start_edge;
 		List<Edge> out = new ArrayList<>();
 		do {
 			out.add(current_edge);
@@ -281,7 +285,7 @@ public class HalfEdgeDiagram {
 
 	// return the previous edge. traverses all edges in face until previous found.
 	public Edge previous_edge(Edge e) {
-		Edge previous = e.next;
+		var previous = e.next;
 		while (previous.next != e) {
 			previous = previous.next;
 		}
@@ -324,23 +328,23 @@ public class HalfEdgeDiagram {
 		// v1_next <- v1 <---------- v2 <- v2_prev
 		// face2
 
-		List<Edge> v_edges = v.out_edges;
+		var v_edges = v.out_edges;
 		assert (v_edges.size() == 2) : " v_edges.size() == 2";
 		assert (v_edges.get(0).source == v && v_edges.get(1).source == v)
 				: " v_edges.get(0).source == v && v_edges.get(1).source == v ";
 
-		Vertex v1 = v_edges.get(0).target;
-		Vertex v2 = v_edges.get(1).target;
-		Edge v1_next = v_edges.get(0).next;
-		Edge v1_prev = previous_edge(v_edges.get(0).twin);
-		Edge v2_next = v_edges.get(1).next;
-		Edge v2_prev = previous_edge(v_edges.get(1).twin);
-		Face face1 = v_edges.get(1).face;
-		Face face2 = v_edges.get(0).face;
+		var v1 = v_edges.get(0).target;
+		var v2 = v_edges.get(1).target;
+		var v1_next = v_edges.get(0).next;
+		var v1_prev = previous_edge(v_edges.get(0).twin);
+		var v2_next = v_edges.get(1).next;
+		var v2_prev = previous_edge(v_edges.get(1).twin);
+		var face1 = v_edges.get(1).face;
+		var face2 = v_edges.get(0).face;
 
-		Pair<Edge, Edge> twin_edges = add_twin_edges(v1, v2);
-		Edge new1 = twin_edges.getFirst();
-		Edge new2 = twin_edges.getSecond();
+		var twin_edges = add_twin_edges(v1, v2);
+		var new1 = twin_edges.getFirst();
+		var new2 = twin_edges.getSecond();
 		set_next(new1, v2_next);
 		set_next(new2, v1_next);
 		set_next(v2_prev, new2);
@@ -365,8 +369,8 @@ public class HalfEdgeDiagram {
 	// for all edges, set edge.face=f, and edge.k=k
 	public void set_next_cycle(List<Edge> list, Face f, double k) {
 		f.edge = list.get(0);
-		for (int q = 0; q < list.size(); q++) {
-			Edge e = list.get(q);
+		for (var q = 0; q < list.size(); q++) {
+			var e = list.get(q);
 			e.face = f;
 			e.k = k;
 			if (q == list.size() - 1) {
@@ -381,8 +385,8 @@ public class HalfEdgeDiagram {
 	// also set face and k properties for edge
 	public void set_next_chain(List<Edge> list, Face f, double k) {
 		f.edge = list.get(0);
-		for (int q = 0; q < list.size(); q++) {
-			Edge e = list.get(q);
+		for (var q = 0; q < list.size(); q++) {
+			var e = list.get(q);
 			e.face = f;
 			e.k = k;
 			if (q != list.size() - 1) {
@@ -393,8 +397,8 @@ public class HalfEdgeDiagram {
 
 	// set next-pointers for the list
 	public void set_next_chain(List<Edge> list) {
-		for (int q = 0; q < list.size(); q++) {
-			Edge e = list.get(q);
+		for (var q = 0; q < list.size(); q++) {
+			var e = list.get(q);
 			if (q != list.size() - 1) {
 				set_next(e, list.get(q + 1));
 			}
@@ -403,13 +407,13 @@ public class HalfEdgeDiagram {
 
 	// on a face, search and return the left/right edge from endp
 	public Pair<Edge, Edge> find_next_prev(Face f, Vertex endp) {
-		Edge current = f.edge;
-		Edge start_edge = current;
+		var current = f.edge;
+		var start_edge = current;
 		Edge next_edge = null;
 		Edge prev_edge = null;
 		do {
-			Vertex src = current.source;
-			Vertex trg = current.target;
+			var src = current.source;
+			var trg = current.target;
 			if (src == endp) {
 				next_edge = current;
 			}

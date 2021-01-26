@@ -77,9 +77,9 @@ public abstract class BinaryHeap<T> {
 	}
 
 	private void siftUp(int c) {
-		for (int p = (c - 1) / 2; c != 0 && direction * keys[c] > direction * keys[p]; c = p, p = (c - 1) / 2) {
-			Object pData = data[p];
-			double pDist = keys[p];
+		for (var p = (c - 1) / 2; c != 0 && direction * keys[c] > direction * keys[p]; c = p, p = (c - 1) / 2) {
+			var pData = data[p];
+			var pDist = keys[p];
 			data[p] = data[c];
 			keys[p] = keys[c];
 			data[c] = pData;
@@ -88,14 +88,14 @@ public abstract class BinaryHeap<T> {
 	}
 
 	private void siftDown(int p) {
-		for (int c = p * 2 + 1; c < size; p = c, c = p * 2 + 1) {
+		for (var c = p * 2 + 1; c < size; p = c, c = p * 2 + 1) {
 			if (c + 1 < size && direction * keys[c] < direction * keys[c + 1]) {
 				c++;
 			}
 			if (direction * keys[p] < direction * keys[c]) {
 				// Swap the points
-				Object pData = data[p];
-				double pDist = keys[p];
+				var pData = data[p];
+				var pDist = keys[p];
 				data[p] = data[c];
 				keys[p] = keys[c];
 				data[c] = pData;
