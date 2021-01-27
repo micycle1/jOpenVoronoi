@@ -154,20 +154,28 @@ public class VoronoiDiagram {
 	 */
 	public Vertex insert_point_site(Point p) {
 
-		num_psites++;
-		// int current_step=1;
 		if (p.norm() >= far_radius) {
 			System.out.printf(
 					"openvoronoi error. All points must lie within unit-circle. You are trying to add p= %s with p.norm()= %f\n",
 					p, p.norm());
+			return null;
 		}
 		assert (p.norm() < far_radius) : " p.norm() < far_radius ";
+
+		var nearest = kd_tree.findNearestNeighbors(new double[] { p.x, p.y }, 1, new SquareEuclideanDistanceFunction())
+				.getMax();
+
+		if (nearest.p.equals(p)) {
+			System.err.println(
+					"Cannot insert point site " + p.toString() + ". A point with the same coordiantes already exists.");
+			return null;
+		}
+
+		num_psites++;
 
 		var new_vert = g.add_vertex(new Vertex(p, VertexStatus.OUT, VertexType.POINTSITE));
 		var new_site = new PointSite(p);
 		new_site.v = new_vert;
-		var nearest = kd_tree.findNearestNeighbors(new double[] { p.x, p.y }, 1, new SquareEuclideanDistanceFunction())
-				.getMax();
 		var v_seed = find_seed_vertex(nearest.face, new_site);
 		mark_vertex(v_seed, new_site);
 		// if (step==current_step) return -1; current_step++;
@@ -409,7 +417,7 @@ public class VoronoiDiagram {
 	}
 
 	// return reference to graph \todo not elegant. only used by vd2svg ?
-	public HalfEdgeDiagram get_graph_reference() {
+	public HalfEdgeDiagram getDiagram() {
 		return g;
 	}
 
@@ -487,7 +495,7 @@ public class VoronoiDiagram {
 	 * Initializes the diagram with three generators. Add one vertex at origin and
 	 * three vertices at 'infinity' and their associated edges
 	 */
-	protected void initialize() {
+	private void initialize() {
 		var far_multiplier = 6D;
 		// initial generators/sites:
 		var gen1 = new Point(0, 3.0 * far_radius);

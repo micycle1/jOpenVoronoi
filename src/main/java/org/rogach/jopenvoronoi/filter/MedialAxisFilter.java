@@ -5,22 +5,32 @@ import org.rogach.jopenvoronoi.geometry.EdgeType;
 import org.rogach.jopenvoronoi.vertex.Vertex;
 import org.rogach.jopenvoronoi.vertex.VertexType;
 
-//\brief Filter for retaining the medial-axis of a voronoi diagram
-///
-//(approximate) medial-axis Filter.
-//marks the valid-property true for edges belonging to the medial axis
-//and false for other edges.
+/**
+ * Filter for retaining the medial-axis of a voronoi diagram (approximate).
+ * 
+ * Marks the valid-property true for edges belonging to the medial axis and
+ * false for other edges.
+ * 
+ * @author MCarleton
+ *
+ */
 public class MedialAxisFilter extends Filter {
 
-	double _dot_product_threshold; // < a dot-product threshold in [0,1] for filtering out edges between nearly
-									// parallel LineSite segments
+	/**
+	 * A dot-product threshold in [0,1] for filtering out edges between nearly
+	 * parallel LineSite segments
+	 */
+	double _dot_product_threshold;
 
-	// \param thr dot-product threshold used to decide whether the segments
-	// that connect to a given Edge are nearly parallel
 	public MedialAxisFilter() {
 		_dot_product_threshold = 0.8;
 	}
 
+	/**
+	 * 
+	 * @param thr A dot-product threshold in [0,1] for filtering out edges between
+	 *            nearly parallel LineSite segments
+	 */
 	public MedialAxisFilter(double thr) {
 		_dot_product_threshold = thr;
 	}

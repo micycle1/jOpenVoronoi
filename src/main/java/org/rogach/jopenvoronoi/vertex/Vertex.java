@@ -16,17 +16,7 @@ import org.rogach.jopenvoronoi.util.Numeric;
  */
 public class Vertex {
 
-	public List<Edge> out_edges = new ArrayList<>();
-	public List<Edge> in_edges = new ArrayList<>();
-
-	public Vertex() {
-	}
-
-	public int degree() {
-		return out_edges.size() + in_edges.size();
-	}
-
-	public static int count = 0; // < global vertex count \todo hold this in hedigraph instead?
+	public static int count = 0; // < global vertex count TODO hold this in hedigraph instead?
 
 	// A map of this type is used by VoronoiDiagramChecker to check that all
 	// vertices
@@ -42,6 +32,9 @@ public class Vertex {
 		expected_degree.put(VertexType.SPLIT, 4); // split point, to avoid loops in delete-tree
 		expected_degree.put(VertexType.APEX, 4); // apex point on quadratic bisector
 	}
+
+	public List<Edge> out_edges = new ArrayList<>();
+	public List<Edge> in_edges = new ArrayList<>();
 
 	/**
 	 * vertex status. updated/changed during an incremental graph update
@@ -59,6 +52,13 @@ public class Vertex {
 	public Face null_face; // < if this is a null-face, a handle to the null-face
 	public Face face; // < the face of this vertex, if the vertex is a point-site
 	public double r; // < clearance-disk radius, i.e. the closest Site is at this distance
+
+	public Vertex() {
+	}
+
+	public int degree() {
+		return out_edges.size() + in_edges.size();
+	}
 
 	// ctor with given status and type
 	public Vertex(Point p, VertexStatus st, VertexType t) {

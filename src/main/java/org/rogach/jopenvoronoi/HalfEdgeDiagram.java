@@ -45,9 +45,9 @@ import org.rogach.jopenvoronoi.vertex.Vertex;
  */
 public class HalfEdgeDiagram {
 
-	public Set<Vertex> vertices = new HashSet<>();
-	public Set<Edge> edges = new HashSet<>();
-	public Set<Face> faces = new HashSet<>();
+	public ArrayList<Vertex> vertices = new ArrayList<>();
+	public ArrayList<Edge> edges = new ArrayList<>();
+	public ArrayList<Face> faces = new ArrayList<>();
 
 	public Vertex add_vertex() {
 		var v = new Vertex();

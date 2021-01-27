@@ -1,6 +1,6 @@
 # JOpenVoronoi+
 
-A fork of *Rogach*'s [port](https://github.com/Rogach/jopenvoronoi) of the original C++ library [openvoronoi](https://github.com/aewallin/openvoronoi) — a library capable of creating 2D Voronoi segment diagrams and medial axes.
+A fork of *Rogach*'s [port](https://github.com/Rogach/jopenvoronoi) of the original C++ library [openvoronoi](https://github.com/aewallin/openvoronoi) — a library capable of creating 2D point & line-segment Voronoi diagrams and medial axes.
 
 # Fork Changes
 
@@ -15,7 +15,9 @@ This fork has the following changes:
 - Adds Javadoc comments to important arguments on generator classes
 - Removes SVG output functionality
 - Removes the debugging `step` argument (that was left in the code) from the main point/site insert methods
-- Implements `position()` on `LineSite` and `Pointsite` classes
+- Implements `position()` on `Edge`, `LineSite` and `Pointsite` classes
+- Replace diagram's `HashSets` with `ArrayLists` for easier iteration
+- More error handling
 
 Example code
 ============

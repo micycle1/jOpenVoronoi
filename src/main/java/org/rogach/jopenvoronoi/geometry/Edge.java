@@ -104,6 +104,15 @@ public class Edge {
 		}
 	}
 
+	/**
+	 * Returns the midpoint of the edge source and target positions
+	 * 
+	 * @return
+	 */
+	public Point position() {
+		return (source.position.add(target.position)).mult(0.5); // TODO pre-calculate?
+	}
+
 	// dispatch to setter functions based on type of \a s1 and \a s2
 	public void set_parameters(Site s1, Site s2, boolean sig) {
 		sign = sig; // sqrt() sign for edge-parametrization

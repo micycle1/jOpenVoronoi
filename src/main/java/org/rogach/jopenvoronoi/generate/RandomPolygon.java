@@ -6,21 +6,29 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
-// random polygon generator
-// uses space partitioning algorithm, described here: http://www.geometrylab.de/applet-29-en#space
+/**
+ * Random polygon generator uses space partitioning algorithm, described here:
+ * http://www.geometrylab.de/applet-29-en#space
+ */
 public class RandomPolygon {
 
 	public static List<Point2D> generate_points(int nPoints, int min, int max) {
 
 		List<Point2D> points = new ArrayList<>();
 		for (var i = 0; i < nPoints; i++) {
-
 			points.add(new Point2D.Double(ThreadLocalRandom.current().nextDouble(min, max),
 					ThreadLocalRandom.current().nextDouble(min, max)));
 		}
 		return points;
 	}
 
+	/**
+	 * 
+	 * @param nPoints
+	 * @param min     minimum bound of x and y coordinates
+	 * @param max     maximum bound of x and y coordinates
+	 * @return
+	 */
 	public static List<Point2D> generate_polygon(int nPoints, int min, int max) {
 		var points = generate_points(nPoints, min, max);
 		var p1 = removeRandom(points);
@@ -41,7 +49,7 @@ public class RandomPolygon {
 		return result;
 	}
 
-	public static List<Point2D> buildPath(Point2D p1, Point2D p2, List<Point2D> points) {
+	private static List<Point2D> buildPath(Point2D p1, Point2D p2, List<Point2D> points) {
 		if (points.isEmpty()) {
 			return new ArrayList<>();
 		} else {
@@ -67,7 +75,7 @@ public class RandomPolygon {
 	}
 
 	/** Split points into two groups by p1-p2 line */
-	public static void partition(List<Point2D> points, Point2D p1, Point2D p2, List<Point2D> group1,
+	private static void partition(List<Point2D> points, Point2D p1, Point2D p2, List<Point2D> group1,
 			List<Point2D> group2) {
 		for (Point2D p : points) {
 			if (isLeft(p1, p2, p)) {
@@ -78,18 +86,18 @@ public class RandomPolygon {
 		}
 	}
 
-	public static Point2D randomBetween(Point2D p1, Point2D p2) {
+	private static Point2D randomBetween(Point2D p1, Point2D p2) {
 		var t = Math.random();
 		return new Point2D.Double(p1.getX() * t + p2.getX() * (1 - t), p1.getY() * t + p2.getY() * (1 - t));
 	}
 
-	public static boolean isLeft(Point2D l1, Point2D l2, Point2D p) {
+	private static boolean isLeft(Point2D l1, Point2D l2, Point2D p) {
 		var lx = l2.getX() - l1.getX();
 		var ly = l2.getY() - l1.getY();
 		return lx * (p.getY() - l1.getY()) - ly * (p.getX() - l1.getX()) > 0;
 	}
 
-	public static Point2D removeRandom(List<Point2D> pts) {
+	private static Point2D removeRandom(List<Point2D> pts) {
 		return pts.remove(new Random().nextInt(pts.size()));
 	}
 }

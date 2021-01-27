@@ -4,10 +4,8 @@ import ags.utils.dataStructures.BinaryHeap;
 import ags.utils.dataStructures.MaxHeap;
 import ags.utils.dataStructures.MinHeap;
 
-/**
- *
- */
 public class KdTree<T> extends KdNode<T> {
+
 	public KdTree(int dimensions) {
 		this(dimensions, 24);
 	}
