@@ -33,7 +33,7 @@ import ags.utils.dataStructures.trees.thirdGenKD.KdTree;
 import ags.utils.dataStructures.trees.thirdGenKD.SquareEuclideanDistanceFunction;
 
 /**
- * Voronoi diagram.
+ * Voronoi diagram. The diagram builds incrementally as sites are added.
  * <p>
  * See http://en.wikipedia.org/wiki/Voronoi_diagram
  * <p>
@@ -126,7 +126,7 @@ public class VoronoiDiagram {
 	}
 
 	/**
-	 * Insert a PointSite into the diagram
+	 * Insert a PointSite into the voronoi diagram.
 	 *
 	 * <p>
 	 * All PointSites must be inserted before any LineSites or ArcSites are
@@ -168,6 +168,12 @@ public class VoronoiDiagram {
 		if (nearest.p.equals(p)) {
 			System.err.println(
 					"Cannot insert point site " + p.toString() + ". A point with the same coordiantes already exists.");
+			return null;
+		}
+
+		if (num_lsites > 0) {
+			System.err.println("Skipping inserting " + p.toString()
+					+ " because a line site has already been inserted. Insert all point sites first before inserting any line sites.");
 			return null;
 		}
 
@@ -377,6 +383,39 @@ public class VoronoiDiagram {
 	// return the far radius
 	public double get_far_radius() {
 		return far_radius;
+	}
+
+	public ArrayList<Face> getFaces() {
+		return g.faces;
+	}
+
+	public ArrayList<Edge> getEdges() {
+		return g.edges;
+	}
+
+	public ArrayList<Vertex> getVertices() {
+		return g.vertices;
+	}
+
+	/**
+	 * Returns the face nearest to the given point.
+	 */
+	public Face nearestFace(double x, double y) {
+		return nearestFaces(x, y, 1).get(0);
+	}
+
+	/**
+	 * Returns the N nearest faces to the given point.
+	 */
+	public List<Face> nearestFaces(double x, double y, int n) {
+		var heap = kd_tree.findNearestNeighbors(new double[] { x, y }, n, new SquareEuclideanDistanceFunction());
+		var faces = new ArrayList<Face>(heap.size());
+
+		while (heap.size() > 0) {
+			faces.add(heap.getMax().face);
+			heap.removeMax();
+		}
+		return faces;
 	}
 
 	// return number of point sites in diagram

@@ -83,6 +83,16 @@ public class PlanarGraph {
 		return vd;
 	}
 
+	public void buildIntoVoronoiDiagram(VoronoiDiagram v) {
+		Map<Point2D, Vertex> vertices = new HashMap<>();
+		for (Point2D p : points) {
+			vertices.put(p, v.insert_point_site(new Point(p.getX(), p.getY())));
+		}
+		for (Segment s : segments) {
+			v.insert_line_site(vertices.get(s.stt), vertices.get(s.end));
+		}
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) {
