@@ -7,6 +7,7 @@ import java.util.Arrays;
  * supported
  */
 public abstract class BinaryHeap<T> {
+
 	protected static final int defaultCapacity = 64;
 	private final int direction;
 	private Object[] data;
