@@ -1,11 +1,21 @@
 # JOpenVoronoi+
 
-A fork of *Rogach*'s [port](https://github.com/Rogach/jopenvoronoi) of the original C++ library [openvoronoi](https://github.com/aewallin/openvoronoi) — a library capable of creating 2D point & line-segment Voronoi diagrams and medial axes.
+A fork of *Rogach*'s [port](https://github.com/Rogach/jopenvoronoi) of the original C++ library [openvoronoi](https://github.com/aewallin/openvoronoi).
+
+# Features
+
+- Incremental Voronoi Point & Line Site Diagrams
+- L-System Voronoi Diagram Generators
+- Diagram Medial Axis
+- Nearest N cells to point
 
 # Fork Changes
 
 This fork has the following changes:
 
+<details>
+  <summary>Click to expand!</summary>
+  
 - Converts source code to Java 11
 - Introduces cell-point methods:
   - `nearestFace()` 
@@ -22,6 +32,9 @@ This fork has the following changes:
 - Implements `position()` on `Edge`, `LineSite` and `Pointsite` classes
 - Replace diagram's `HashSets` with `ArrayLists` for easier iteration
 - More error handling
+</details>
+
+
 
 # Example code
 
@@ -44,27 +57,32 @@ voronoi.getFaces().forEach(face -> {
 
 # Images
 
-### Labryinth
+## Voronoi
 
-<h1 align="center">
-  <img src="resources/labryinth3.png" alt="PeasyGradients"/></a>
-</h1>
-<h1 align="center">
-  <img src="resources/labryinth2.png" alt="PeasyGradients"/></a>
-</h1>
+<p float="middle">
+  <img src="resources/voronoi2.png" alt="" width="49%"/>
+  <img src="resources/voronoi1.png" alt="" width="49%"/>
+  <img src="resources/voronoi3.png" alt="" width="49%"/>
+  <img src="resources/rotating.gif" alt="" width="49%"/>
+</p>
 
-### Nearest Faces 
+## L-Systems
 
-<h1 align="center">
-  <img src="resources/neighbours/single.gif" alt="PeasyGradients"/></a>
-</h1>
+<p float="middle">
+  <img src="resources/lindenmayer.png" alt="" width="49%"/>
+  <img src="resources/labryinth.png" alt="" width="49%"/>
+  <img src="resources/moore.png" alt="" width="49%"/>
+  <img src="resources/medialAxis.png" alt="" width="49%"/>
+</p>
 
-n = 10
-<h1 align="center">
-  <img src="resources/neighbours/multi.gif" alt="PeasyGradients"/></a>
-</h1>
+## Nearest Faces 
+
+<p float="middle">
+  <img src="resources/neighbours/single.gif" alt="" width="49%"/>
+  <img src="resources/neighbours/multi.gif" alt="" width="49%"/>
+</p>
 
 License
 =======
-JOpenVoronoi is released under GPLv3 (see COPYING), same as it's parent
+JOpenVoronoi is released under GPLv3, just like its parent
  [openvoronoi](https://github.com/aewallin/openvoronoi) project.
