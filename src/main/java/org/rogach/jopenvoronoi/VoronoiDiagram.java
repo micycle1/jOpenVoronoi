@@ -126,6 +126,13 @@ public class VoronoiDiagram {
 	}
 
 	/**
+	 * {@link #insert_point_site(Point)}
+	 */
+	public Vertex insert_point_site(double x, double y) {
+		return insert_point_site(new Point(x, y));
+	}
+
+	/**
 	 * Insert a PointSite into the voronoi diagram.
 	 *
 	 * <p>

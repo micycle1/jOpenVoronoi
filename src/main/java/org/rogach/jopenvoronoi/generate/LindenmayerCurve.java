@@ -30,8 +30,8 @@ public class LindenmayerCurve {
 		} else {
 			length = 1.4;
 		}
-		length *= 400;// TODO effectively zoom
-		return generateCurve(produce(axiom, rules, k - 1), Math.PI / 2, new Point2D.Double(400, 600), length);
+		length *= 300;// TODO effectively zoom
+		return generateCurve(produce(axiom, rules, k - 1), Math.PI / 2, new Point2D.Double(237.5, 450), length);
 	}
 
 	public static PlanarGraph generateDragonCurve(int k) {
@@ -60,8 +60,8 @@ public class LindenmayerCurve {
 		} else {
 			length = 0.15;
 		}
-		length *= 400;// TODO effectively zoom
-		return generateCurve(produce(axiom, rules, k - 1), Math.PI / 3, new Point2D.Double(400 + 300, 300), length);
+		length *= 300;// TODO effectively zoom
+		return generateCurve(produce(axiom, rules, k - 1), Math.PI / 3, new Point2D.Double(0, 0), length);
 		// TODO offset
 	}
 

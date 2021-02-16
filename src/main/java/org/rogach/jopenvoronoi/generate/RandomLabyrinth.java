@@ -53,7 +53,7 @@ public class RandomLabyrinth {
 	private static void extractSegments(int x, int y, int size, int dx, int dy, int maskA, int maskB,
 			int[][] directions, Set<Point2D> points, List<PlanarGraph.Segment> segments) {
 		var sideLength = 0.7 * 2 / (size * 2 - 1);
-		sideLength *= 572; // TODO
+		sideLength *= 500 / 1.4; // TODO
 		Point2D stt = new Point2D.Double(-0.7 + x * sideLength, -0.7 + y * sideLength);
 		var end = stt;
 		while (x < size * 2 && y < size * 2) {

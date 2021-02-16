@@ -5,7 +5,7 @@ A fork of *Rogach*'s [port](https://github.com/Rogach/jopenvoronoi) of the origi
 # Features
 
 - Incremental Voronoi Point & Line Site Diagrams
-- L-System Voronoi Diagram Generators
+- Voronoi Diagram Generators: Labryinth, L-Systems
 - Diagram Medial Axis
 - Nearest N cells to point
 
@@ -43,10 +43,13 @@ This fork has the following changes:
 import org.rogach.jopenvoronoi.*;
 
 VoronoiDiagram voronoi = new VoronoiDiagram();
+for (int i = 0; i < 100; i++) {
+  voronoi.insert_point_site(Math.random(), Math.random());
+}
+
 HalfEdgeDiagram diagram = voronoi.getDiagram();
 
 voronoi.getFaces().forEach(face -> {
-
     Point pos = face.site.position();
     diagram.face_edges(face).forEach(edge -> {
         vertex(edge.source.position.x, edge.source.position.y);
@@ -59,21 +62,58 @@ voronoi.getFaces().forEach(face -> {
 
 ## Voronoi
 
-<p float="middle">
-  <img src="resources/voronoi2.png" alt="" width="49%"/>
-  <img src="resources/voronoi1.png" alt="" width="49%"/>
-  <img src="resources/voronoi3.png" alt="" width="49%"/>
-  <img src="resources/rotating.gif" alt="" width="49%"/>
-</p>
+<table>
+  <tr>
+    <td>Voronoi from poisson disc points</td>
+     <td>Voronoi from poisson disc points (bounded)</td>
+  </tr>
+  <tr>
+    <td valign="top"><img src="resources/voronoi2.png"></td>
+    <td valign="top"><img src="resources/voronoi1.png"></td>
+  </tr>
+ </table>
 
-## L-Systems
+ <table>
+  <tr>
+    <td>Voronoi from random points</td>
+     <td>3 line sites</td>
+  </tr>
+  <tr>
+    <td valign="top"><img src="resources/voronoi3.png" width=500 ></td>
+    <td valign="top"><img src="resources/rotating.gif" width=500></td>
+  </tr>
+ </table>
 
-<p float="middle">
+## Generators
+
+<table>
+  <tr>
+    <td>Gosper Curve</td>
+     <td>Moore Curve</td>
+  </tr>
+  <tr>
+    <td valign="top"><img src="resources/lindenmayer.png" width=500></td>
+    <td valign="top"><img src="resources/moore.png"></td>
+  </tr>
+ </table>
+
+ <table>
+  <tr>
+    <td>Labryinth</td>
+     <td>Medial Axis (green)</td>
+  </tr>
+  <tr>
+    <td valign="top"><img src="resources/labryinth.png" width=500 ></td>
+    <td valign="top"><img src="resources/medialAxis.png" width=500></td>
+  </tr>
+ </table>
+
+<!-- <p float="middle">
   <img src="resources/lindenmayer.png" alt="" width="49%"/>
   <img src="resources/labryinth.png" alt="" width="49%"/>
   <img src="resources/moore.png" alt="" width="49%"/>
   <img src="resources/medialAxis.png" alt="" width="49%"/>
-</p>
+</p> -->
 
 ## Nearest Faces 
 
