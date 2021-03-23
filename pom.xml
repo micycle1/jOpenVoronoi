@@ -8,6 +8,12 @@
 	<version>1.0-SNAPSHOT</version>
 	<name>jopenvoronoi</name>
 
+	<properties>
+		<sonar.projectKey>micycle1_jOpenVoronoi</sonar.projectKey>
+		<sonar.organization>micycle</sonar.organization>
+		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -62,5 +68,5 @@
 
 		</plugins>
 	</build>
-	
+
 </project>
