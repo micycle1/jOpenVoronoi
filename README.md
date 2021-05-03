@@ -64,8 +64,8 @@ voronoi.getFaces().forEach(face -> {
 
 <table>
   <tr>
-    <td>Voronoi from poisson disc points</td>
-     <td>Voronoi from poisson disc points (bounded)</td>
+    <td align="center" valign="center">Voronoi from poisson disc points</td>
+     <td align="center" valign="center">Voronoi from poisson disc points (bounded)</td>
   </tr>
   <tr>
     <td valign="top"><img src="resources/voronoi2.png"></td>
@@ -75,8 +75,8 @@ voronoi.getFaces().forEach(face -> {
 
  <table>
   <tr>
-    <td>Voronoi from random points</td>
-     <td>3 line sites</td>
+    <td align="center" valign="center">Voronoi from random points</td>
+     <td align="center" valign="center">3 line sites</td>
   </tr>
   <tr>
     <td valign="top"><img src="resources/voronoi3.png" width=500 ></td>
@@ -88,8 +88,8 @@ voronoi.getFaces().forEach(face -> {
 
 <table>
   <tr>
-    <td>Gosper Curve</td>
-     <td>Moore Curve</td>
+    <td align="center" valign="center">Gosper Curve</td>
+     <td align="center" valign="center">Moore Curve</td>
   </tr>
   <tr>
     <td valign="top"><img src="resources/lindenmayer.png" width=500></td>
@@ -99,8 +99,8 @@ voronoi.getFaces().forEach(face -> {
 
  <table>
   <tr>
-    <td>Labryinth</td>
-     <td>Medial Axis (green)</td>
+    <td align="center" valign="center">Labryinth</td>
+     <td align="center" valign="center">Medial Axis (green)</td>
   </tr>
   <tr>
     <td valign="top"><img src="resources/labryinth.png" width=500 ></td>
