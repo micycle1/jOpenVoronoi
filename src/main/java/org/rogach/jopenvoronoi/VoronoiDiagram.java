@@ -388,16 +388,16 @@ public class VoronoiDiagram {
 		return far_radius;
 	}
 
-	public ArrayList<Face> getFaces() {
-		return g.faces;
+	public List<Face> getFaces() {
+		return new ArrayList<>(g.faces);
 	}
 
-	public ArrayList<Edge> getEdges() {
-		return g.edges;
+	public List<Edge> getEdges() {
+		return new ArrayList<>(g.edges);
 	}
 
-	public ArrayList<Vertex> getVertices() {
-		return g.vertices;
+	public List<Vertex> getVertices() {
+		return new ArrayList<>(g.vertices);
 	}
 
 	/**
