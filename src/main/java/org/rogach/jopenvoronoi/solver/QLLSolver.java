@@ -136,4 +136,4 @@ public class QLLSolver extends Solver {
 		}
 	}
 
-};
+}
