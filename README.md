@@ -20,7 +20,6 @@ This fork has the following changes:
 - Introduces cell-point methods:
   - `nearestFace()` 
   - `nearestFaces()`
-- Removes the *tests* maven sub-module and brings the main library up to the top level (so it's easily hostable as an artifact via JitPack)
 - Splits the library into appropriate sub-packages
 - Converts source comments into proper Javadoc comments (only the most important comments converted so far...)
 - Removes the constraint that point sites had to be placed within a unit-circle centered on (0,0) — now points can have any coordinate! (this could have side-effects...)
@@ -79,8 +78,8 @@ voronoi.getFaces().forEach(face -> {
      <td align="center" valign="center">3 line sites</td>
   </tr>
   <tr>
-    <td valign="top"><img src="resources/voronoi3.png" width=500 ></td>
-    <td valign="top"><img src="resources/rotating.gif" width=500></td>
+    <td valign="top" width="50%"><img src="resources/voronoi3.png"></td>
+    <td valign="top" width="50%"><img src="resources/rotating.gif"></td>
   </tr>
  </table>
 
@@ -103,8 +102,8 @@ voronoi.getFaces().forEach(face -> {
      <td align="center" valign="center">Medial Axis (green)</td>
   </tr>
   <tr>
-    <td valign="top"><img src="resources/labryinth.png" width=500 ></td>
-    <td valign="top"><img src="resources/medialAxis.png" width=500></td>
+    <td valign="top" width="50%"><img src="resources/labryinth.png"></td>
+    <td valign="top" width="50%"><img src="resources/medialAxis.png"></td>
   </tr>
  </table>
 
