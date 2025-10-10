@@ -1,4 +1,4 @@
-package jopenvoronoi;
+package org.rogach.jopenvoronoi;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,8 +6,6 @@ import java.util.Random;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.rogach.jopenvoronoi.HalfEdgeDiagram;
-import org.rogach.jopenvoronoi.VoronoiDiagram;
 import org.rogach.jopenvoronoi.geometry.Face;
 import org.rogach.jopenvoronoi.geometry.Point;
 import org.rogach.jopenvoronoi.vertex.Vertex;
@@ -110,8 +108,9 @@ public class SegmentsTest {
 		// iterate small sample
 		int checkedFaces = 0;
 		for (Face f : vd.getFaces()) {
-			if (checkedFaces++ > 10)
+			if (checkedFaces++ > 10) {
 				break;
+			}
 			Point pos = f.site.position();
 			Assertions.assertNotNull(pos);
 		}
@@ -121,7 +120,7 @@ public class SegmentsTest {
 	static class Segment {
 		final Point a;
 		final Point b;
-	
+
 		Segment(Point a, Point b) {
 			this.a = a;
 			this.b = b;
@@ -148,7 +147,7 @@ public class SegmentsTest {
 		Point r = sub(p2, p1);
 		Point s = sub(q2, q1);
 		Point qp = sub(q1, p1);
-	
+
 		double rxs = cross(r, s);
 		if (rxs == 0.0) { // parallel
 			if (cross(qp, r) == 0.0) {
@@ -166,8 +165,9 @@ public class SegmentsTest {
 	// test if s intersects with any of the segments in segs
 	private boolean segmentIntersects(List<Segment> segs, Segment s) {
 		for (Segment seg : segs) {
-			if (intersects(seg, s))
+			if (intersects(seg, s)) {
 				return true;
+			}
 		}
 		return false;
 	}

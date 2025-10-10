@@ -1,12 +1,10 @@
-package jopenvoronoi;
+package org.rogach.jopenvoronoi;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.rogach.jopenvoronoi.HalfEdgeDiagram;
-import org.rogach.jopenvoronoi.VoronoiDiagram;
 import org.rogach.jopenvoronoi.geometry.Point;
 import org.rogach.jopenvoronoi.vertex.Vertex;
 
