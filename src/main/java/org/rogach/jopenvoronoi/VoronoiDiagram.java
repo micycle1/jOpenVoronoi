@@ -137,17 +137,6 @@ public class VoronoiDiagram {
 	}
 
 	/**
-	 * @param x x-coordinate of the point site
-	 * @param y y-coordinate of the point site
-	 * @return handle to the inserted point site
-	 * @deprecated Use {@link #insertPointSite(double, double)}.
-	 */
-	@Deprecated
-	public Vertex insert_point_site(double x, double y) {
-		return insertPointSite(x, y);
-	}
-
-	/**
 	 * Insert a PointSite into the voronoi diagram.
 	 *
 	 * <p>
@@ -218,16 +207,6 @@ public class VoronoiDiagram {
 		assert (vd_checker.is_valid()) : " vd_checker.is_valid() ";
 
 		return new_vert;
-	}
-
-	/**
-	 * @param p point site to insert
-	 * @return handle to the inserted point site
-	 * @deprecated Use {@link #insertPointSite(Point)}.
-	 */
-	@Deprecated
-	public Vertex insert_point_site(Point p) {
-		return insertPointSite(p);
 	}
 
 	/**
@@ -405,29 +384,9 @@ public class VoronoiDiagram {
 		return true;
 	}
 
-	/**
-	 * @param start startpoint of line-segment
-	 * @param end endpoint of line-segment
-	 * @return {@code true} when the line site is inserted successfully
-	 * @deprecated Use {@link #insertLineSite(Vertex, Vertex)}.
-	 */
-	@Deprecated
-	public boolean insert_line_site(Vertex start, Vertex end) {
-		return insertLineSite(start, end);
-	}
-
 	// return the far radius
 	public double getFarRadius() {
 		return far_radius;
-	}
-
-	/**
-	 * @return the configured far radius
-	 * @deprecated Use {@link #getFarRadius()}.
-	 */
-	@Deprecated
-	public double get_far_radius() {
-		return getFarRadius();
 	}
 
 	public List<Face> getFaces() {
@@ -478,27 +437,9 @@ public class VoronoiDiagram {
 		return num_psites - 3;
 	}
 
-	/**
-	 * @return the number of inserted point sites
-	 * @deprecated Use {@link #numPointSites()}.
-	 */
-	@Deprecated
-	public int num_point_sites() {
-		return numPointSites();
-	}
-
 	// return number of line-segments sites in diagram
 	public int numLineSites() {
 		return num_lsites;
-	}
-
-	/**
-	 * @return the number of inserted line sites
-	 * @deprecated Use {@link #numLineSites()}.
-	 */
-	@Deprecated
-	public int num_line_sites() {
-		return numLineSites();
 	}
 
 	// return number of arc-sites in diagram
@@ -506,41 +447,14 @@ public class VoronoiDiagram {
 		return num_asites;
 	}
 
-	/**
-	 * @return the number of inserted arc sites
-	 * @deprecated Use {@link #numArcSites()}.
-	 */
-	@Deprecated
-	public int num_arc_sites() {
-		return numArcSites();
-	}
-
 	// return number of voronoi-vertices
 	public int numVertices() {
 		return g.vertices.size() - numPointSites();
 	}
 
-	/**
-	 * @return the number of Voronoi vertices
-	 * @deprecated Use {@link #numVertices()}.
-	 */
-	@Deprecated
-	public int num_vertices() {
-		return numVertices();
-	}
-
 	// return number of faces in graph
 	public int numFaces() {
 		return g.faces.size();
-	}
-
-	/**
-	 * @return the number of faces in the diagram
-	 * @deprecated Use {@link #numFaces()}.
-	 */
-	@Deprecated
-	public int num_faces() {
-		return numFaces();
 	}
 
 	// return number of SPLIT vertices
@@ -552,15 +466,6 @@ public class VoronoiDiagram {
 			}
 		}
 		return count;
-	}
-
-	/**
-	 * @return the number of split vertices in the diagram
-	 * @deprecated Use {@link #numSplitVertices()}.
-	 */
-	@Deprecated
-	public int num_split_vertices() {
-		return numSplitVertices();
 	}
 
 	// return reference to graph \todo not elegant. only used by vd2svg ?
@@ -576,14 +481,6 @@ public class VoronoiDiagram {
 	// turn on debug output
 	public void debugOn() {
 		debug = true;
-	}
-
-	/**
-	 * @deprecated Use {@link #debugOn()}.
-	 */
-	@Deprecated
-	public void debug_on() {
-		debugOn();
 	}
 
 	// run topology/geometry check on diagram
@@ -610,14 +507,6 @@ public class VoronoiDiagram {
 		for (Edge e : g.edges) {
 			e.valid = true;
 		}
-	}
-
-	/**
-	 * @deprecated Use {@link #filterReset()}.
-	 */
-	@Deprecated
-	public void filter_reset() {
-		filterReset();
 	}
 
 	// comparison-predicate for VertexQueue

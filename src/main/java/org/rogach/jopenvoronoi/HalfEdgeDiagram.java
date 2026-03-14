@@ -66,27 +66,9 @@ public class HalfEdgeDiagram {
 		return faces.size();
 	}
 
-	/**
-	 * @return the number of faces in the diagram
-	 * @deprecated Use {@link #numFaces()}.
-	 */
-	@Deprecated
-	public int num_faces() {
-		return numFaces();
-	}
-
 	// return number of vertices in graph
 	public int numVertices() {
 		return vertices.size();
-	}
-
-	/**
-	 * @return the number of vertices in the diagram
-	 * @deprecated Use {@link #numVertices()}.
-	 */
-	@Deprecated
-	public int num_vertices() {
-		return numVertices();
 	}
 
 	// return number of edges in graph
@@ -304,16 +286,6 @@ public class HalfEdgeDiagram {
 			current_edge = current_edge.next;
 		} while (current_edge != start_edge);
 		return out;
-	}
-
-	/**
-	 * @param f face whose boundary edges should be returned
-	 * @return the boundary edges of {@code f}
-	 * @deprecated Use {@link #faceEdges(Face)}.
-	 */
-	@Deprecated
-	public List<Edge> face_edges(Face f) {
-		return faceEdges(f);
 	}
 
 	// return the previous edge. traverses all edges in face until previous found.
