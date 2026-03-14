@@ -10,9 +10,11 @@ import org.rogach.jopenvoronoi.geometry.Point;
 import org.rogach.jopenvoronoi.site.Site;
 import org.rogach.jopenvoronoi.vertex.Solution;
 
-//\brief line-line-line Solver
-///
-//solves 3x3 system.
+/**
+ * Line-line-line solver.
+ * <p>
+ * Solves a 3x3 system.
+ */
 public class LLLSolver extends Solver {
 
 //  a1 x + b1 y + c1 + k1 t = 0

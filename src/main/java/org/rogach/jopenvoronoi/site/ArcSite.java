@@ -9,13 +9,20 @@ import org.rogach.jopenvoronoi.util.Numeric;
 //circular arc Site
 public class ArcSite extends Site {
 
-	Point _start; // < start Point of arc
-	Point _end; // < end Point of arc
-	Point _center; // < center Point of arc
-	boolean _dir; // < CW or CCW direction flag
-	double _radius;// < radius of arc
-	double _k; // < offset-direction. +1 for enlarging, -1 for shrinking circle
-	Edge e; // < edge_descriptor to ::ARCSITE pseudo-edge
+	/** start Point of arc */
+	Point _start;
+	/** end Point of arc */
+	Point _end;
+	/** center Point of arc */
+	Point _center;
+	/** CW or CCW direction flag */
+	boolean _dir;
+	/** radius of arc */
+	double _radius;
+	/** offset-direction. +1 for enlarging, -1 for shrinking circle */
+	double _k;
+	/** edge_descriptor to ::ARCSITE pseudo-edge */
+	Edge e;
 
 	// create arc-site
 	public ArcSite(Point startpt, Point endpt, Point centr, boolean dir) {

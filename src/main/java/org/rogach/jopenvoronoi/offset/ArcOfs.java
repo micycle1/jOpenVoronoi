@@ -2,17 +2,25 @@ package org.rogach.jopenvoronoi.offset;
 
 import org.rogach.jopenvoronoi.geometry.Point;
 
-//\brief offset-element of PointSite or ArcSite
+/**
+ * offset-element of PointSite or ArcSite
+ */
 public class ArcOfs extends Ofs {
-	Point _start; // < start
-	Point _end; // < end
-	Point c; // < center
-	double r; // < radius
+	/** start */
+	Point _start;
+	/** end */
+	Point _end;
+	/** center */
+	Point c;
+	/** radius */
+	double r;
 
-	// \param p1 start Point
-	// \param p2 end Point
-	// \param cen center Point
-	// \param rad radius
+	/**
+	 * @param p1 start Point
+	 * @param p2 end Point
+	 * @param cen center Point
+	 * @param rad radius
+	 */
 	public ArcOfs(Point p1, Point p2, Point cen, double rad) {
 		this._start = p1;
 		this._end = p2;

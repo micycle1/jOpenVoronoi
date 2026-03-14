@@ -16,7 +16,8 @@ import org.rogach.jopenvoronoi.util.Numeric;
  */
 public class Vertex {
 
-	public static int count = 0; // < global vertex count TODO hold this in hedigraph instead?
+	/** global vertex count TODO hold this in hedigraph instead? */
+	public static int count = 0;
 
 	// A map of this type is used by VoronoiDiagramChecker to check that all
 	// vertices
@@ -44,14 +45,22 @@ public class Vertex {
 	 * The type of the vertex. Never(?) changes
 	 */
 	public VertexType type;
-	public double max_error; // < \todo what is this? remove?
-	public boolean in_queue; // < flag for indicating wether vertex is in the vertexQueue
-	public Point position; // < the position of the vertex.
-	public double k3; // < the offset-direction {-1,+1} of this vertex to the newly inserted site.
-	public double alfa; // < diangle for a null-vertex. only for debug-drawing
-	public Face null_face; // < if this is a null-face, a handle to the null-face
-	public Face face; // < the face of this vertex, if the vertex is a point-site
-	public double r; // < clearance-disk radius, i.e. the closest Site is at this distance
+	/** TODO what is this? remove? */
+	public double max_error;
+	/** flag for indicating whether vertex is in the vertexQueue */
+	public boolean in_queue;
+	/** the position of the vertex. */
+	public Point position;
+	/** the offset-direction {-1,+1} of this vertex to the newly inserted site. */
+	public double k3;
+	/** diangle for a null-vertex. only for debug-drawing */
+	public double alfa;
+	/** if this is a null-face, a handle to the null-face */
+	public Face null_face;
+	/** the face of this vertex, if the vertex is a point-site */
+	public Face face;
+	/** clearance-disk radius, i.e. the closest Site is at this distance */
+	public double r;
 
 	public Vertex() {
 	}

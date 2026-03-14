@@ -3,12 +3,15 @@ package org.rogach.jopenvoronoi.filter;
 import org.rogach.jopenvoronoi.HalfEdgeDiagram;
 import org.rogach.jopenvoronoi.geometry.Edge;
 
-//\brief base-class for voronoi-diagram filters
-///
-//concrete sub-classes of Filter provide a predicate
-//for determining if the edge belongs to the filtered graph.
+/**
+ * Base class for Voronoi diagram filters.
+ * <p>
+ * Concrete subclasses of {@link Filter} provide a predicate for determining if
+ * an {@link Edge} belongs to the filtered graph.
+ */
 public abstract class Filter {
-	protected HalfEdgeDiagram g; // < vd-graph
+	/** vd-graph */
+	protected HalfEdgeDiagram g;
 	// set graph
 
 	public void set_graph(HalfEdgeDiagram g) {

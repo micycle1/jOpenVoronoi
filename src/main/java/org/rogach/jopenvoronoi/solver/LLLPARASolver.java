@@ -7,9 +7,11 @@ import org.rogach.jopenvoronoi.site.Site;
 import org.rogach.jopenvoronoi.util.Pair;
 import org.rogach.jopenvoronoi.vertex.Solution;
 
-//\brief line-line-line Solver (parallel line-segment case)
-///
-//solves 3x3 system.
+/**
+ * Line-line-line solver for the parallel line-segment case.
+ * <p>
+ * Solves a 3x3 system.
+ */
 public class LLLPARASolver extends Solver {
 // parallel linesegment edge case.
 //  a1 x + b1 y + c1 + k1 t = 0

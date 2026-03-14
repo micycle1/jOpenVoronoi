@@ -5,20 +5,29 @@ import org.rogach.jopenvoronoi.HalfEdgeDiagram;
 import org.rogach.jopenvoronoi.geometry.Edge;
 import org.rogach.jopenvoronoi.geometry.Point;
 
-//\brief error-functor to locate ::SPLIT vertices
-///
-//for passing to numerical boost::toms748 root-finding algorithm
+/**
+ * Error functor used to locate {@code SPLIT} vertices.
+ * <p>
+ * Used when passing this function to the numerical
+ * {@code boost::toms748} root-finding algorithm.
+ */
 public class SplitPointError implements UnivariateFunction {
 
-	private HalfEdgeDiagram g; // < reference to vd-graph
-	private Edge edge; // < the HEEdge on which we position the new SPLIT vertex
-	private Point p1; // < first point of the split-line
-	private Point p2; // < second point of the split-line
+	/** reference to vd-graph */
+	private HalfEdgeDiagram g;
+	/** the HEEdge on which we position the new SPLIT vertex */
+	private Edge edge;
+	/** first point of the split-line */
+	private Point p1;
+	/** second point of the split-line */
+	private Point p2;
 
-	// \param gi graph
-	// \param split_edge the edge on which we want to position a SPLIT vertex
-	// \param pt1 first point of split-line
-	// \param pt2 second point of split-line
+	/**
+	 * @param gi graph
+	 * @param split_edge the edge on which we want to position a SPLIT vertex
+	 * @param pt1 first point of split-line
+	 * @param pt2 second point of split-line
+	 */
 	public SplitPointError(HalfEdgeDiagram gi, Edge split_edge, Point pt1, Point pt2) {
 		this.g = gi;
 		this.edge = split_edge;
@@ -26,8 +35,11 @@ public class SplitPointError implements UnivariateFunction {
 		this.p2 = pt2;
 	}
 
-	// \return signed distance to the pt1-pt2 line from edge-point at given offset
-	// \a t
+	/**
+	 * @param t offset distance
+	 * @return signed distance from the edge point at offset {@code t} to the
+	 *         {@code pt1-pt2} line
+	 */
 	@Override
 	public double value(double t) {
 		var p = edge.point(t);

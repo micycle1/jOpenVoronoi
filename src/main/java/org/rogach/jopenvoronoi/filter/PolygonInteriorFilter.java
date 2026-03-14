@@ -4,21 +4,26 @@ import org.rogach.jopenvoronoi.geometry.Edge;
 import org.rogach.jopenvoronoi.geometry.EdgeType;
 import org.rogach.jopenvoronoi.geometry.Face;
 
-//\brief Filter for retaining voronoi-diagram inside a polygon
-///
-//this filter sets the valid-property of edges
-//all interior edges are marked valid=true
-//all exterior edges are marked valid=false
-///
-//a polygon/pocket boundary shoud be specified in CW order
-//islands within the polygon should be specified in CCW order
+/**
+ * Filter for retaining the Voronoi diagram inside a polygon.
+ * <p>
+ * This filter sets the {@code valid} property of edges. All interior edges are marked
+ * {@code valid=true}. All exterior edges are marked {@code valid=false}.
+ * <p>
+ * A polygon or pocket boundary should be specified in {@code CW} order. Islands
+ * within the polygon should be specified in {@code CCW} order.
+ */
 public class PolygonInteriorFilter extends Filter {
 
 	private boolean side;
 
-	// \brief create a polygon interior Filter with given \a side
-	// \param side set true (false) for polygons inserted in CW (CCW) order and
-	// islands inserted in CCW (CW) order.
+	/**
+	 * Creates a polygon interior filter with the given winding side.
+	 *
+	 * @param side set {@code true} ({@code false}) for polygons inserted in
+	 *             {@code CW} ({@code CCW}) order and islands inserted in
+	 *             {@code CCW} ({@code CW}) order
+	 */
 	public PolygonInteriorFilter(boolean side) {
 		this.side = side;
 	}

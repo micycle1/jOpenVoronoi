@@ -14,7 +14,8 @@ import org.rogach.jopenvoronoi.vertex.VertexStatus;
  */
 public class VoronoiDiagramChecker {
 
-	private HalfEdgeDiagram g; // < vd-graph
+	/** vd-graph */
+	private HalfEdgeDiagram g;
 
 	public VoronoiDiagramChecker(HalfEdgeDiagram gi) {
 		this.g = gi;

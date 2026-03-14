@@ -28,13 +28,18 @@ public class Edge {
 	public Face face;
 	public Face null_face;
 	public boolean has_null_face;
-	public double k; // < offset-direction from the adjacent site, either +1 or -1
+	/** offset-direction from the adjacent site, either +1 or -1 */
+	public double k;
 	public EdgeType type;
 	public boolean valid;
-	public double[] x = new double[8]; // < 8-parameter parametrization
-	public double[] y = new double[8]; // < 8-parameter parametrization
-	public boolean sign; // < flag to choose either +/- in front of sqrt()
-	public boolean inserted_direction; // < true if ::LINESITE-edge inserted in this direction
+	/** 8-parameter parametrization */
+	public double[] x = new double[8];
+	/** 8-parameter parametrization */
+	public double[] y = new double[8];
+	/** flag to choose either +/- in front of sqrt() */
+	public boolean sign;
+	/** true if ::LINESITE-edge inserted in this direction */
+	public boolean inserted_direction;
 
 	public Edge(Vertex source, Vertex target) {
 		x[0] = 0;
@@ -87,10 +92,17 @@ public class Edge {
 		y[7] = other.y[7];
 	}
 
-	// \brief return point on edge at given offset-distance t
-	///
-	// the eight-parameter formula for a point on the edge is:
-	// x = x1 - x2 - x3*t +/- x4 * sqrt( square(x5+x6*t) - square(x7+x8*t) )
+	/**
+	 * Return the point on this edge at the given offset-distance {@code t}.
+	 * <p>
+	 * The eight-parameter formula for a point on the edge is:
+	 * <pre>{@code
+	 * x = x1 - x2 - x3*t +/- x4 * sqrt(square(x5+x6*t) - square(x7+x8*t))
+	 * }</pre>
+	 *
+	 * @param t offset distance
+	 * @return point on the edge at offset distance {@code t}
+	 */
 	public Point point(double t) {
 		var discr1 = chop(sq(x[4] + x[5] * t) - sq(x[6] + x[7] * t), 1e-14);
 		var discr2 = chop(sq(y[4] + y[5] * t) - sq(y[6] + y[7] * t), 1e-14);
@@ -406,10 +418,15 @@ public class Edge {
 		y[7] = kk;
 	}
 
-	// \return minumum t-value for this edge
-	// this function dispatches to a helper-function based on the Site:s \a s1 and
-	// \a s2
-	// used only for positioning APEX vertices?
+	/**
+	 * Returns the minimum {@code t}-value for this edge.
+	 *
+	 * @param s1 first site adjacent to this edge
+	 * @param s2 second site adjacent to this edge
+	 * @return minimum {@code t}-value for this edge. This function dispatches to a
+	 *         helper function based on the sites {@code s1} and {@code s2}. It is
+	 *         used only for positioning {@code APEX} vertices.
+	 */
 	public double minimum_t(Site s1, Site s2) {
 		if (s1.isPoint() && s2.isPoint()) {
 			return minimum_pp_t(s1, s2);

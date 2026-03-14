@@ -10,25 +10,33 @@ import org.rogach.jopenvoronoi.geometry.Edge;
 import org.rogach.jopenvoronoi.geometry.Face;
 import org.rogach.jopenvoronoi.geometry.Point;
 
-//\brief From a voronoi-diagram, generate offsets.
-///
-//an offset is allways a closed loop.
-//the loop consists of offset-elements from each face that the loop visits.
-//each face is associated with a Site, and the offset element from
-//- a point-site is a circular arc
-//- a line-site is a line
-//- an arc is a circular arc
-///
-//This class produces offsets at the given offset-distance on the entire
-//voronoi-diagram. To produce offsets only inside or outside a given geometry,
-//use a filter first. The filter sets the valid-property of edges, so that offsets
-//are not produced on faces with one or more invalid edge.
+/**
+ * Generates offsets from a Voronoi diagram.
+ * <p>
+ * An offset is always a closed loop. The loop consists of offset elements from
+ * each face that the loop visits. Each face is associated with a {@link org.rogach.jopenvoronoi.site.Site Site}, and the
+ * offset element from:
+ * <ul>
+ * <li>a point site is a circular arc</li>
+ * <li>a line site is a line</li>
+ * <li>an arc site is a circular arc</li>
+ * </ul>
+ * This class produces offsets at the given offset distance on the entire
+ * Voronoi diagram. To produce offsets only inside or outside a given geometry,
+ * apply a {@link org.rogach.jopenvoronoi.filter.Filter filter} first. The filter
+ * sets the {@code valid} property of edges so that offsets are not produced on
+ * faces with one or more invalid edges.
+ */
 public class Offset {
-	HalfEdgeDiagram g; // < vd-graph
+	/** vd-graph */
+	HalfEdgeDiagram g;
 	Set<Face> remaining_faces = new HashSet<>();
-	List<OffsetLoop> offset_list; // < list of output offsets
+	/** list of output offsets */
+	List<OffsetLoop> offset_list;
 
-	// \param gi vd-graph
+	/**
+	 * @param g Voronoi diagram graph
+	 */
 	public Offset(HalfEdgeDiagram g) {
 		this.g = g;
 	}
@@ -93,7 +101,10 @@ public class Offset {
 		return new OffsetVertex(next_edge.point(t), o.radius(), o.center(), cw, current_face, next_edge);
 	}
 
-	// \brief figure out mode (?)
+	/**
+	 * Determine which bracketing direction applies to this edge for the current
+	 * offset distance.
+	 */
 	private boolean edge_mode(Edge e, double t) {
 		var src = e.source;
 		var trg = e.target;
@@ -114,11 +125,14 @@ public class Offset {
 		return center.is_right(start, end); // NOTE: this only works for arcs smaller than a half-circle !
 	}
 
-	// \brief starting at e, find the next edge on the face that brackets t
-	///
-	// we can be in one of two modes.
-	// if mode==false then we are looking for an edge where src_t < t < trg_t
-	// if mode==true we are looning for an edge where trg_t < t < src_t
+	/**
+	 * Starting at {@code e}, find the next edge on the face that brackets
+	 * {@code t}.
+	 * <p>
+	 * We can be in one of two modes. If {@code mode == false} then we are looking
+	 * for an edge where {@code src_t < t < trg_t}. If {@code mode == true} we are
+	 * looking for an edge where {@code trg_t < t < src_t}.
+	 */
 	private Edge find_next_offset_edge(Edge e, double t, boolean mode) {
 		var start = e;
 		var current = start;

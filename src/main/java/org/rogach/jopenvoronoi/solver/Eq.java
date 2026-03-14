@@ -60,11 +60,16 @@ package org.rogach.jopenvoronoi.solver;
  */
 public class Eq {
 
-	public boolean q; // < true for quadratic, false for linear
-	public double a; // < a parameter of line-equation
-	public double b; // < b parameter of line equation
-	public double c; // < c parameter of line equation
-	public double k; // < offset direction parameter
+	/** true for quadratic, false for linear */
+	public boolean q;
+	/** a parameter of line-equation */
+	public double a;
+	/** b parameter of line equation */
+	public double b;
+	/** c parameter of line equation */
+	public double c;
+	/** offset direction parameter */
+	public double k;
 
 	// default ctor
 	public Eq() {

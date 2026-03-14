@@ -7,17 +7,24 @@ import org.rogach.jopenvoronoi.geometry.EdgeType;
 import org.rogach.jopenvoronoi.geometry.Point;
 import org.rogach.jopenvoronoi.site.Site;
 
-//\brief error functor for edge-based desperate solver
-///
-//minimize error by searching for a point on the solution-edge
+/**
+ * Error functor for the edge-based desperate solver.
+ * <p>
+ * Minimizes error by searching for a point on the solution-edge.
+ */
 public class VertexError implements UnivariateFunction {
-	HalfEdgeDiagram g; // < vd-graph
-	Edge edge; // < existing edge on which we have positioned a new vertex
-	Site s3; // < newly inserted Site
+	/** vd-graph */
+	HalfEdgeDiagram g;
+	/** existing edge on which we have positioned a new vertex */
+	Edge edge;
+	/** newly inserted Site */
+	Site s3;
 
-	// \param gi vd-graph
-	// \param sln_edge solution edge
-	// \param si3 newly inserted Site
+	/**
+	 * @param gi vd-graph
+	 * @param sln_edge solution edge
+	 * @param si3 newly inserted Site
+	 */
 	public VertexError(HalfEdgeDiagram gi, Edge sln_edge, Site si3) {
 		this.g = gi;
 		this.edge = sln_edge;
@@ -35,7 +42,9 @@ public class VertexError implements UnivariateFunction {
 	}
 
 	// return a point on the edge at given offset-distance
-	// \param t offset-distance ( >= 0 )
+	/**
+	 * @param t offset-distance ( >= 0 )
+	 */
 	Point edge_point(double t) {
 		Point p;
 		if (edge.type == EdgeType.LINELINE) { // this is a workaround because the LINELINE edge-parameters are wrong? at
