@@ -122,8 +122,7 @@ public class PlanarGraph {
 	}
 
 	public static PlanarGraph minimizeFailure(PlanarGraph input) {
-		System.out.printf("Minimizing input with %d points and %d segments\n", input.points.size(),
-				input.segments.size());
+		System.out.printf("Minimizing input with %d points and %d segments\n", input.points.size(), input.segments.size());
 		Throwable origException = null;
 		try {
 			input.buildVoronoiDiagram();
@@ -137,8 +136,7 @@ public class PlanarGraph {
 		PlanarGraph current = input;
 		int batch = current.points.size() / 2;
 		while (true) {
-			System.out.printf("\nAt the start of the iteration: %d points and %d segments\n", current.points.size(),
-					current.segments.size());
+			System.out.printf("\nAt the start of the iteration: %d points and %d segments\n", current.points.size(), current.segments.size());
 			int c = 0;
 			for (batch = batch > 0 ? batch : 1; batch >= 1; batch /= 2) {
 				c = 0;
@@ -204,8 +202,7 @@ public class PlanarGraph {
 				break;
 			}
 		}
-		System.out.printf("\nMinimized input to %d points and %d segments\n", current.points.size(),
-				current.segments.size());
+		System.out.printf("\nMinimized input to %d points and %d segments\n", current.points.size(), current.segments.size());
 		return current;
 	}
 
@@ -215,9 +212,9 @@ public class PlanarGraph {
 			for (PlanarGraph.Segment s2 : input.segments) {
 				if (!s1.equals(s2) && // do not compare segment with itself
 				// do not count connected segments as intersecting
-						!s1.stt.equals(s2.end) && !s2.stt.equals(s1.end) && !s1.end.equals(s2.end)) {
-					if (Line2D.linesIntersect(s1.stt.getX(), s1.stt.getY(), s1.end.getX(), s1.end.getY(), s2.stt.getX(),
-							s2.stt.getY(), s2.end.getX(), s2.end.getY())) {
+						!s1.stt.equals(s2.stt) && !s1.stt.equals(s2.end) && !s2.stt.equals(s1.end) && !s1.end.equals(s2.end)) {
+					if (Line2D.linesIntersect(s1.stt.getX(), s1.stt.getY(), s1.end.getX(), s1.end.getY(), s2.stt.getX(), s2.stt.getY(), s2.end.getX(),
+							s2.end.getY())) {
 						return true;
 					}
 				}
@@ -228,8 +225,7 @@ public class PlanarGraph {
 		for (PlanarGraph.Segment s : input.segments) {
 			for (Point2D p : input.points) {
 				if (!p.equals(s.stt) && !p.equals(s.end)) {
-					if (Line2D.ptSegDist(s.stt.getX(), s.stt.getY(), s.end.getX(), s.end.getY(), p.getX(),
-							p.getY()) < 1e-10) {
+					if (Line2D.ptSegDist(s.stt.getX(), s.stt.getY(), s.end.getX(), s.end.getY(), p.getX(), p.getY()) < 1e-10) {
 						return true;
 					}
 				}

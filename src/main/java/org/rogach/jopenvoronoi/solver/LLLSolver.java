@@ -64,7 +64,7 @@ public class LLLSolver extends Solver {
 			for (i = 0; i < 3; i++) {
 				j = (i + 1) % 3;
 				var delta = Math.abs(eq.get(i).a * eq.get(j).b - eq.get(j).a * eq.get(i).b);
-				if (delta <= 1e-300) {
+				if (delta <= 1e-14) {
 					var para_solver = new LLLPARASolver();
 					List<Solution> paraSolutions = new ArrayList<>();
 					para_solver.solve(sites[i], kvals[i], sites[j], kvals[j], sites[(i + 2) % 3], kvals[(i + 2) % 3],

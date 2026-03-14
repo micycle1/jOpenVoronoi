@@ -99,6 +99,7 @@ public class RandomPolygon {
 	}
 
 	private static Point2D removeRandom(List<Point2D> pts) {
-		return pts.remove(new Random().nextInt(pts.size()));
+		int n = ThreadLocalRandom.current().nextInt(pts.size());
+		return pts.remove(n);
 	}
 }

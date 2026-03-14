@@ -270,14 +270,20 @@ public class VertexPositioner {
 	// search numerically for a desperate solution along the solution-edge
 	Solution desperate_solution(Site s3) {
 		var err_functor = new VertexError(g, edge, s3);
-		var src = edge.source;
-		var trg = edge.target;
-		var src_p = src.position;
-		var trg_p = trg.position;
 
-		var optimizer = new BrentOptimizer(1e-10, 1e-14);
-		var t_sln = optimizer.optimize(new MaxEval(1000), new UnivariateObjectiveFunction(err_functor),
-				GoalType.MINIMIZE, new SearchInterval(t_min, t_max)).getPoint();
+		double t_sln;
+		// Guard against zero-length or negative search intervals
+		if (Math.abs(t_max - t_min) < 1e-14) {
+			t_sln = t_min; // Interval is effectively zero, skip the optimizer
+		} else {
+			var optimizer = new BrentOptimizer(1e-10, 1e-14);
+			t_sln = optimizer.optimize(
+					new MaxEval(1000), 
+					new UnivariateObjectiveFunction(err_functor),
+					GoalType.MINIMIZE, 
+					new SearchInterval(t_min, t_max)
+			).getPoint();
+		}
 		var p_sln = err_functor.edge_point(t_sln); // g[edge].point(t_sln);
 		var desp_k3 = 0D;
 		if (s3.isPoint()) {

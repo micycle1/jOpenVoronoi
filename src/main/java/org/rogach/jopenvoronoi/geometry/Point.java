@@ -112,7 +112,14 @@ public class Point {
 
 	@Override
 	public boolean equals(Object other) {
-		return (this == other) || (x == ((Point) other).x && y == ((Point) other).y);
+		if (this == other) {
+			return true;
+		}
+		if (!(other instanceof Point)) {
+			return false;
+		}
+		Point p = (Point) other;
+		return Double.compare(p.x, x) == 0 && Double.compare(p.y, y) == 0;
 	}
 
 	@Override

@@ -5,6 +5,7 @@ import org.rogach.jopenvoronoi.geometry.Face;
 import org.rogach.jopenvoronoi.geometry.Point;
 import org.rogach.jopenvoronoi.offset.LineOfs;
 import org.rogach.jopenvoronoi.offset.Ofs;
+import org.rogach.jopenvoronoi.solver.Eq;
 
 /**
  * Representation of a line-segment generator (LineSite) for the Voronoi
@@ -57,7 +58,7 @@ public class LineSite extends Site {
 	 * @param s site with compatible line parameters
 	 */
 	public LineSite(Site s) {
-		this.eq = s.eqp();
+		this.eq = new Eq(s.eqp());
 		this.face = s.face;
 		this._start = s.start();
 		this._end = s.end();
