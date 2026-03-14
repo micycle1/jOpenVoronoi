@@ -11,6 +11,8 @@ import org.rogach.jopenvoronoi.filter.PolygonInteriorFilter;
 import org.rogach.jopenvoronoi.geometry.Edge;
 import org.rogach.jopenvoronoi.geometry.EdgeType;
 import org.rogach.jopenvoronoi.geometry.Point;
+import org.rogach.jopenvoronoi.offset.Offset;
+import org.rogach.jopenvoronoi.offset.OffsetLoop;
 import org.rogach.jopenvoronoi.vertex.Vertex;
 
 public class PolygonTest {
@@ -90,5 +92,30 @@ public class PolygonTest {
 				"Medial-axis edges should stay inside the polygon bounds");
 		Assertions.assertTrue(medialAxis.stream().anyMatch(edge -> edge.type == EdgeType.PARA_LINELINE),
 				"Expected the filtered result to contain the square's center branch");
+	}
+
+	@Test
+	public void inwardOffsetCanBeCollectedFromPolygonPointList() {
+		VoronoiDiagram vd = new VoronoiDiagram();
+		List<Point> polygon = List.of(new Point(-1.0, -1.0), new Point(1.0, -1.0), new Point(1.0, 1.0),
+				new Point(-1.0, 1.0));
+
+		List<Vertex> vertexHandles = new ArrayList<>();
+		for (Point point : polygon) {
+			vertexHandles.add(vd.insertPointSite(point));
+		}
+		for (int i = 0; i < vertexHandles.size(); i++) {
+			vd.insertLineSite(vertexHandles.get(i), vertexHandles.get((i + 1) % vertexHandles.size()));
+		}
+
+		vd.filter(new PolygonInteriorFilter(true));
+		List<OffsetLoop> insetLoops = new Offset(vd.getDiagram()).offset(0.2);
+
+		Assertions.assertEquals(1, insetLoops.size(), "Expected one inward offset loop for the square");
+		Assertions.assertEquals(5, insetLoops.get(0).vertices.size(),
+				"Expected the closed square inset loop to repeat its start vertex");
+		Assertions.assertTrue(insetLoops.get(0).vertices.stream()
+				.allMatch(vertex -> Math.abs(vertex.p.x) <= 0.8 && Math.abs(vertex.p.y) <= 0.8),
+				"Inward offset vertices should remain within the inset square bounds");
 	}
 }
