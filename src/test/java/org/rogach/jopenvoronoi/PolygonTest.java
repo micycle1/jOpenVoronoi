@@ -20,23 +20,23 @@ public class PolygonTest {
 
 		// keep handles returned by inserting point-sites so we can create line-sites
 		List<Vertex> vertexHandles = new ArrayList<>();
-		vertexHandles.add(vd.insert_point_site(new Point(-a, -a)));
-		vertexHandles.add(vd.insert_point_site(new Point(-a, a)));
-		vertexHandles.add(vd.insert_point_site(new Point(a, a)));
-		vertexHandles.add(vd.insert_point_site(new Point(a, -a)));
+		vertexHandles.add(vd.insertPointSite(new Point(-a, -a)));
+		vertexHandles.add(vd.insertPointSite(new Point(-a, a)));
+		vertexHandles.add(vd.insertPointSite(new Point(a, a)));
+		vertexHandles.add(vd.insertPointSite(new Point(a, -a)));
 
 		// insert line-sites connecting the points into a closed polygon
 		for (int i = 0; i < vertexHandles.size(); i++) {
 			int next = (i == vertexHandles.size() - 1) ? 0 : i + 1;
-			vd.insert_line_site(vertexHandles.get(i), vertexHandles.get(next));
+			vd.insertLineSite(vertexHandles.get(i), vertexHandles.get(next));
 		}
 
 		// basic checks
 		Assertions.assertTrue(vd.check(), "VoronoiDiagram.check() should return true");
 
 		// sanity on site counts
-		Assertions.assertEquals(4, vd.num_point_sites(), "Should have 4 point sites");
-		Assertions.assertEquals(4, vd.num_line_sites(), "Should have 4 line sites");
+		Assertions.assertEquals(4, vd.numPointSites(), "Should have 4 point sites");
+		Assertions.assertEquals(4, vd.numLineSites(), "Should have 4 line sites");
 
 		// retrieve diagram and ensure it's present
 		HalfEdgeDiagram diagram = vd.getDiagram();
@@ -47,7 +47,7 @@ public class PolygonTest {
 			Point pos = face.site.position();
 			// ensure site position is present (just a basic non-null check)
 			Assertions.assertNotNull(pos);
-			diagram.face_edges(face).forEach(edge -> {
+			diagram.faceEdges(face).forEach(edge -> {
 				Assertions.assertNotNull(edge.source);
 				Assertions.assertNotNull(edge.target);
 				// ensure source/target positions exist

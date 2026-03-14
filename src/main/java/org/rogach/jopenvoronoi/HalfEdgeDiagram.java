@@ -62,8 +62,16 @@ public class HalfEdgeDiagram {
 	}
 
 	// return number of faces in graph
-	public int num_faces() {
+	public int numFaces() {
 		return faces.size();
+	}
+
+	/**
+	 * @deprecated Use {@link #numFaces()}.
+	 */
+	@Deprecated
+	public int num_faces() {
+		return numFaces();
 	}
 
 	// return number of vertices in graph
@@ -78,7 +86,7 @@ public class HalfEdgeDiagram {
 
 	// return number of edges on Face f
 	public int num_edges(Face f) {
-		return face_edges(f).size();
+		return faceEdges(f).size();
 	}
 
 	// add an edge between vertices v1-v2
@@ -272,7 +280,7 @@ public class HalfEdgeDiagram {
 	// return edges of face f as a vector
 	// NOTE: it is faster to write a do-while loop in client code than to call this
 	// function!
-	public List<Edge> face_edges(Face f) {
+	public List<Edge> faceEdges(Face f) {
 		var start_edge = f.edge;
 		var current_edge = start_edge;
 		List<Edge> out = new ArrayList<>();
@@ -281,6 +289,14 @@ public class HalfEdgeDiagram {
 			current_edge = current_edge.next;
 		} while (current_edge != start_edge);
 		return out;
+	}
+
+	/**
+	 * @deprecated Use {@link #faceEdges(Face)}.
+	 */
+	@Deprecated
+	public List<Edge> face_edges(Face f) {
+		return faceEdges(f);
 	}
 
 	// return the previous edge. traverses all edges in face until previous found.
