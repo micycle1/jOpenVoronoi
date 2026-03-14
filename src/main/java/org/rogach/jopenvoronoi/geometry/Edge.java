@@ -56,6 +56,7 @@ public class Edge {
 
 		this.source = source;
 		this.target = target;
+		this.base = this;
 	}
 
 	public void copyFrom(Edge other) {

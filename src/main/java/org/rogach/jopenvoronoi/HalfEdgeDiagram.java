@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.rogach.jopenvoronoi.geometry.Edge;
 import org.rogach.jopenvoronoi.geometry.Face;
+import org.rogach.jopenvoronoi.geometry.Point;
 import org.rogach.jopenvoronoi.util.Pair;
 import org.rogach.jopenvoronoi.vertex.Vertex;
 
@@ -181,13 +182,11 @@ public class HalfEdgeDiagram {
 
 		var e1 = add_edge(esource, v);
 		var te2 = add_edge(v, esource);
-		e1.twin = te2;
-		te2.twin = e1;
+		twin_edges(e1, te2);
 
 		var e2 = add_edge(v, etarget);
 		var te1 = add_edge(etarget, v);
-		e2.twin = te1;
-		te1.twin = e2;
+		twin_edges(e2, te1);
 
 		// next-pointers
 		previous.next = e1;
@@ -225,8 +224,11 @@ public class HalfEdgeDiagram {
 		var e2 = add_edge(v2, v1);
 		e1.twin = e2;
 		e2.twin = e1;
-		e1.base = e1;
-		e2.base = e1;
+
+		Edge canonical = chooseCanonicalByCoords(e1, e2);
+
+		e1.base = canonical;
+		e2.base = canonical;
 		return new Pair<Edge, Edge>(e1, e2);
 	}
 
@@ -236,6 +238,32 @@ public class HalfEdgeDiagram {
 		assert (e1.source == e2.target) : "e1.source == e2.target";
 		e1.twin = e2;
 		e2.twin = e1;
+
+		Edge canonical = chooseCanonicalByCoords(e1, e2);
+		e1.base = canonical;
+		e2.base = canonical;
+	}
+
+	private Edge chooseCanonicalByCoords(Edge e1, Edge e2) {
+		// prefer half-edge with target.x > source.x
+		Point a1 = (e1.source != null) ? e1.source.position : null;
+		Point b1 = (e1.target != null) ? e1.target.position : null;
+
+		if (a1 != null && b1 != null) {
+			int cmp = Double.compare(b1.x, a1.x);
+			if (cmp > 0)
+				return e1;
+			if (cmp < 0)
+				return e2;
+			// x equal -> compare y
+			cmp = Double.compare(b1.y, a1.y);
+			if (cmp > 0)
+				return e1;
+			if (cmp < 0)
+				return e2;
+		}
+		// fallback deterministic tie-break
+		return (System.identityHashCode(e1) <= System.identityHashCode(e2)) ? e1 : e2;
 	}
 
 	// add a face, with given properties
