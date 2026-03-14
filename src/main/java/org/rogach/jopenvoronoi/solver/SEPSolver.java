@@ -46,7 +46,9 @@ import org.rogach.jopenvoronoi.vertex.Solution;
 //  FIXME: what happens if we get a divide by zero situation ??
 //
 
-//\brief ::SEPARATOR Solver
+/**
+ * ::SEPARATOR Solver
+ */
 public class SEPSolver extends Solver {
 	@Override
 	public int solve(Site s1, double k1, Site s2, double k2, Site s3, double k3, List<Solution> slns) {

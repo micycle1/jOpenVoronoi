@@ -2,12 +2,18 @@ package org.rogach.jopenvoronoi.offset;
 
 import org.rogach.jopenvoronoi.geometry.Point;
 
-//\brief offset-element of LineSite
+/**
+ * offset-element of LineSite
+ */
 public class LineOfs extends Ofs {
-	protected Point _start; // < start point
-	protected Point _end; // < end point
-	// \param p1 start point
-	// \param p2 end point
+	/** start point */
+	protected Point _start;
+	/** end point */
+	protected Point _end;
+	/**
+	 * @param p1 start point
+	 * @param p2 end point
+	 */
 
 	public LineOfs(Point p1, Point p2) {
 		this._start = p1;

@@ -4,15 +4,20 @@ import org.rogach.jopenvoronoi.geometry.Edge;
 import org.rogach.jopenvoronoi.geometry.Face;
 import org.rogach.jopenvoronoi.geometry.Point;
 
-//\brief Line- or arc-vertex of an offset curve.
-///
-//\todo this duplicates the idea of the Ofs class. Remove this or Ofs!
+/**
+ * Line- or arc-vertex of an offset curve. TODO this duplicates the idea of the Ofs class. Remove this or Ofs!
+ */
 public class OffsetVertex {
-	public Point p; // < position (start)
-	public double r; // < arc radius (line-vertex is indicated by radius of -1)
-	public Point c; // < arc center
-	public boolean cw; // < clockwise (or not)
-	public Face f; // < corresponding face in the vd-graph
+	/** position (start) */
+	public Point p;
+	/** arc radius (line-vertex is indicated by radius of -1) */
+	public double r;
+	/** arc center */
+	public Point c;
+	/** clockwise (or not) */
+	public boolean cw;
+	/** corresponding face in the vd-graph */
+	public Face f;
 	public Edge e; // corresponding edge
 
 	public OffsetVertex(Point p, double r, Point c, boolean cw, Face f, Edge e) {

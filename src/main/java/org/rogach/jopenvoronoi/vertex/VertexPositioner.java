@@ -25,20 +25,32 @@ import org.rogach.jopenvoronoi.solver.Solver;
 public class VertexPositioner {
 
 	// solvers, to which we dispatch, depending on the input sites
-	Solver ppp_solver; // < point-point-point solver
-	Solver lll_solver; // < line-line-line solver
-	Solver lll_para_solver; // < solver
-	Solver qll_solver; // < solver
-	Solver sep_solver; // < separator solver
-	Solver alt_sep_solver; // < alternative separator solver
+	/** point-point-point solver */
+	Solver ppp_solver;
+	/** line-line-line solver */
+	Solver lll_solver;
+	/** solver */
+	Solver lll_para_solver;
+	/** solver */
+	Solver qll_solver;
+	/** separator solver */
+	Solver sep_solver;
+	/** alternative separator solver */
+	Solver alt_sep_solver;
 
 // DATA
-	HalfEdgeDiagram g; // < reference to the VD graph.
-	double t_min; // < minimum offset-distance
-	double t_max; // < maximum offset-distance
-	Edge edge; // < the edge on which we position a new vertex
-	List<Double> errstat = new ArrayList<>(); // < error-statistics
-	boolean silent; // < silent mode (outputs no warnings to stdout)
+	/** reference to the VD graph. */
+	HalfEdgeDiagram g;
+	/** minimum offset-distance */
+	double t_min;
+	/** maximum offset-distance */
+	double t_max;
+	/** the edge on which we position a new vertex */
+	Edge edge;
+	/** error-statistics */
+	List<Double> errstat = new ArrayList<>();
+	/** silent mode (outputs no warnings to stdout) */
+	boolean silent;
 
 	// create positioner, set graph.
 	public VertexPositioner(HalfEdgeDiagram gi) {
@@ -53,18 +65,9 @@ public class VertexPositioner {
 		errstat.clear();
 	}
 
-	// \brief position a new vertex on given HEEdge \a e when inserting the new
-	// Site \a s3
-	///
-	// calculate the position of a new voronoi-vertex lying on the given edge.
-	// The new vertex is equidistant to the two sites that defined the edge
-	// and to the new site.
-	// the edge e holds information about which face it belongs to.
-	// each face holds information about which site created it
-	// so the three sites defining the position of the vertex are:
-	// - site to the left of HEEdge e
-	// - site to the right of HEEdge e
-	// - given new Site s
+	/**
+	 * position a new vertex on given HEEdge {@code e} when inserting the new Site {@code s3} calculate the position of a new voronoi-vertex lying on the given edge. The new vertex is equidistant to the two sites that defined the edge and to the new site. the edge e holds information about which face it belongs to. each face holds information about which site created it so the three sites defining the position of the vertex are: - site to the left of HEEdge e - site to the right of HEEdge e - given new Site s
+	 */
 	public Solution position(Edge e, Site s3) {
 		edge = e;
 		var face = e.face;

@@ -10,7 +10,9 @@ import org.rogach.jopenvoronoi.geometry.Point;
 import org.rogach.jopenvoronoi.site.Site;
 import org.rogach.jopenvoronoi.vertex.Solution;
 
-//\brief quadratic-linear-linear Solver
+/**
+ * quadratic-linear-linear Solver
+ */
 public class QLLSolver extends Solver {
 	@Override
 	public int solve(Site s1, double k1, Site s2, double k2, Site s3, double k3, List<Solution> slns) {
@@ -51,13 +53,9 @@ public class QLLSolver extends Solver {
 		return slns.size();
 	}
 
-	// \brief qll solver
-	// l0 first linear eqn
-	// l1 second linear eqn
-	// xi,yi,ti indexes to shuffle around
-	// xk, yk, kk, rk = params of one ('last') quadratic site (point or arc)
-	// solns = output solution triplets (x,y,t) or (u,v,t)
-	// returns number of solutions found
+	/**
+	 * qll solver l0 first linear eqn l1 second linear eqn xi,yi,ti indexes to shuffle around xk, yk, kk, rk = params of one ('last') quadratic site (point or arc) solns = output solution triplets (x,y,t) or (u,v,t) returns number of solutions found
+	 */
 	private int qll_solver(List<Eq> lins, int xi, int yi, int ti, Eq quad, double k3, List<Solution> solns) {
 		assert (lins.size() == 2) : " lins.size() == 2 ";
 		var ai = lins.get(0).get(xi); // first linear
@@ -109,12 +107,9 @@ public class QLLSolver extends Solver {
 	}
 
 	// Solve a system of one quadratic equation, and two linear equations.
-	///
-	// (1) a0 u^2 + b0 u + c0 v^2 + d0 v + e0 w^2 + f0 w + g0 = 0
-	// (2) u = a1 w + b1
-	// (3) v = a2 w + b2
-	// solve (1) for w (can have 0, 1, or 2 roots)
-	// then substitute into (2) and (3) to find (u, v, t)
+	/**
+	 * (1) a0 u^2 + b0 u + c0 v^2 + d0 v + e0 w^2 + f0 w + g0 = 0 (2) u = a1 w + b1 (3) v = a2 w + b2 solve (1) for w (can have 0, 1, or 2 roots) then substitute into (2) and (3) to find (u, v, t)
+	 */
 	private int qll_solve(double a0, double b0, double c0, double d0, double e0, double f0, double g0, double a1,
 			double b1, double a2, double b2, double soln[][]) {
 		// std::cout << "qll_solver()\n";

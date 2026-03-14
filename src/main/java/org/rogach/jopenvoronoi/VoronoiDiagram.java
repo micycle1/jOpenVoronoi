@@ -73,7 +73,7 @@ public class VoronoiDiagram {
 	/**
 	 * sites must fall within a circle with radius far_radius
 	 */
-	protected double far_radius; // <
+	protected double far_radius;
 	/**
 	 * number of point sites
 	 */
@@ -100,7 +100,8 @@ public class VoronoiDiagram {
 	 * IN-vertices, i.e. to-be-deleted
 	 */
 	protected List<Vertex> v0 = new ArrayList<>();
-	protected boolean debug; // < turn debug output on/off
+	/** turn debug output on/off */
+	protected boolean debug;
 
 	public VoronoiDiagram() {
 		this(5000);
@@ -583,11 +584,9 @@ public class VoronoiDiagram {
 	}
 
 	// comparison-predicate for VertexQueue
-	///
-	// in augment_vertex_set() we grow the delete-tree by processing vertices
-	// one-by-one from a priority_queue. This is the priority_queue sort predicate.
-	// We handle vertices with a large fabs( in_circle() ) first, since we
-	// believe their predicate to be more reliable.
+	/**
+	 * in augment_vertex_set() we grow the delete-tree by processing vertices one-by-one from a priority_queue. This is the priority_queue sort predicate. We handle vertices with a large fabs( in_circle() ) first, since we believe their predicate to be more reliable.
+	 */
 	class abs_comparison implements Comparator<Pair<Vertex, Double>> {
 		@Override
 		public int compare(Pair<Vertex, Double> lhs, Pair<Vertex, Double> rhs) {
@@ -596,17 +595,24 @@ public class VoronoiDiagram {
 	}
 
 	// data required for adding a new edge
-	///
-	// used in add_edge() for storing information related to
-	// the new edge.
+	/**
+	 * used in add_edge() for storing information related to the new edge.
+	 */
 	class EdgeData {
-		Edge v1_prv; // < edge prior to v1
-		Vertex v1; // < NEW edge source
-		Edge v1_nxt; // < edge following v1
-		Edge v2_prv; // < edge prior to v2
-		Vertex v2; // < NEW edge target
-		Edge v2_nxt; // < edge following v2
-		Face f; // < face of v1 and v2
+		/** edge prior to v1 */
+		Edge v1_prv;
+		/** NEW edge source */
+		Vertex v1;
+		/** edge following v1 */
+		Edge v1_nxt;
+		/** edge prior to v2 */
+		Edge v2_prv;
+		/** NEW edge target */
+		Vertex v2;
+		/** edge following v2 */
+		Edge v2_nxt;
+		/** face of v1 and v2 */
+		Face f;
 
 		@Override
 		public String toString() {
@@ -752,10 +758,9 @@ public class VoronoiDiagram {
 	}
 
 	// find and return IN - OUT edges
-	///
-	// given the set v0 of IN vertices, find and return the adjacent IN - OUT
-	// edges.
-	// Later NEW vertices are inserted into each of the found IN - OUT edges
+	/**
+	 * given the set v0 of IN vertices, find and return the adjacent IN - OUT edges. Later NEW vertices are inserted into each of the found IN - OUT edges
+	 */
 	private List<Edge> find_in_out_edges() {
 		assert (!v0.isEmpty()) : " !v0.isEmpty() ";
 		List<Edge> output = new ArrayList<>(); // new vertices generated on these edges
@@ -772,17 +777,13 @@ public class VoronoiDiagram {
 	}
 
 	// find EdgeData for a new edge
-	///
-	// on a face which has IN and OUT-vertices, find the sequence
-	// OUT-OUT-OUT-..-OUT-NEW(v1)-IN-...-IN-NEW(v2)-OUT-OUT
-	// and return v1/v2 together with their previous and next edges
-	// \param f face on which we search for vertices
-	// \param startverts contains NEW-vertices already found, which are not valid
-	// for this call to find_edge_data
-	// \param segment contains ENDPOINT vertices, when we are inserting a
-	// line-segment
-	// (these vertices are needed to ensure finding correct points around
-	// sites/null-edges)
+	/**
+	 * on a face which has IN and OUT-vertices, find the sequence OUT-OUT-OUT-..-OUT-NEW(v1)-IN-...-IN-NEW(v2)-OUT-OUT and return v1/v2 together with their previous and next edges
+	 *
+	 * @param f face on which we search for vertices
+	 * @param startverts contains NEW-vertices already found, which are not valid for this call to find_edge_data
+	 * @param segment contains ENDPOINT vertices, when we are inserting a line-segment (these vertices are needed to ensure finding correct points around sites/null-edges)
+	 */
 	private EdgeData find_edge_data(Face f, List<Vertex> startverts, Pair<Vertex, Vertex> segment) {
 		var ed = new EdgeData();
 		ed.f = f;
@@ -835,11 +836,9 @@ public class VoronoiDiagram {
 	}
 
 	// find and return edges on which we potentially need SPLIT vertices
-	///
-	// walk around the face f
-	// return edges whose endpoints are on separate sides of pt1-pt2 line
-	// \todo ?not all edges found like this *need* SPLIT vertices? (but it does not
-	// hurt to insert SPLIT-vertices in this case)
+	/**
+	 * walk around the face f return edges whose endpoints are on separate sides of pt1-pt2 line TODO ?not all edges found like this *need* SPLIT vertices? (but it does not hurt to insert SPLIT-vertices in this case)
+	 */
 	private List<Edge> find_split_edges(Face f, Point pt1, Point pt2) {
 		assert (vd_checker.face_ok(f)) : " vd_checker.face_ok(f) ";
 		List<Edge> out = new ArrayList<>();
@@ -929,10 +928,9 @@ public class VoronoiDiagram {
 	}
 
 	// adjacent in-count predicate for buildingdelete-tree
-	///
-	// number of IN vertices adjacent to given vertex v
-	// predicate C4 i.e. "adjacent in-count" from Sugihara&Iri 1992 "one million"
-	// paper
+	/**
+	 * number of IN vertices adjacent to given vertex v predicate C4 i.e. "adjacent in-count" from Sugihara&Iri 1992 "one million" paper
+	 */
 	private boolean predicate_c4(Vertex v) {
 		var in_count = 0;
 		for (Edge e : v.out_edges) {
@@ -948,10 +946,9 @@ public class VoronoiDiagram {
 	}
 
 	// connectedness-predicate for delete-tree building
-	///
-	// do any of the three faces that are adjacent to the given IN-vertex v have an
-	// IN-vertex ?
-	// predicate C5 i.e. "connectedness" from Sugihara&Iri 1992 "one million" paper
+	/**
+	 * do any of the three faces that are adjacent to the given IN-vertex v have an IN-vertex ? predicate C5 i.e. "connectedness" from Sugihara&Iri 1992 "one million" paper
+	 */
 	private boolean predicate_c5(Vertex v) {
 		if (v.type == VertexType.APEX || v.type == VertexType.SPLIT) {
 			return true;
@@ -1085,8 +1082,9 @@ public class VoronoiDiagram {
 	}
 
 	// add a new face corresponding to the new Site
-	///
-	// call add_new_edge() on all the incident_faces that should be split
+	/**
+	 * call add_new_edge() on all the incident_faces that should be split
+	 */
 	private Face add_face(Site s) {
 		var newface = g.add_face();
 		newface.site = s;
@@ -1103,12 +1101,9 @@ public class VoronoiDiagram {
 	}
 
 	// add all NEW-NEW edges
-	///
-	// by adding a NEW-NEW edge, split the face f into one part which is newface,
-	// and the other part is the old f
-	// for linesegment or arc sites we pass in both the k=+1 face newface and the
-	// k=-1 face newface2
-	// the segment endpoints are passed to find_edge_data()
+	/**
+	 * by adding a NEW-NEW edge, split the face f into one part which is newface, and the other part is the old f for linesegment or arc sites we pass in both the k=+1 face newface and the k=-1 face newface2 the segment endpoints are passed to find_edge_data()
+	 */
 	private void add_edges(Face newface, Face f, Face newface2, Pair<Vertex, Vertex> segment) {
 		var new_count = num_new_vertices(f);
 		assert (new_count > 0) : " new_count > 0 ";
@@ -1516,21 +1511,21 @@ public class VoronoiDiagram {
 	}
 
 	// either find an existing null-face, or create a new one.
-	// \param start the end of the segment for which we will find/create a
-	// null-face
-	// \param other the other end of the new segment
-	// \param left a point left of the new segment
-	// \param dir alfa-direction for positioning endpoint vertex on null-face
-	// \param new_site the new Site we are inserting
-	///
-	// \return HEVertex ENDPOINT-vertex for the new vertex
-	// \return HEFace null-face at endpoint (new or existing)
-	// \return HEVertex positive SEPARATOR edge endpoint vertex (if a positive
-	// separator should be added)
-	// \return HEVertex negative SEPARATOR edge endpoint vertex (if a negative
-	// separator should be added)
-	// \return HEFace face-to-null. if a PointSite face should disappear, we return
-	// it here.
+	/**
+	 * @param start the end of the segment for which we will find/create a null-face
+	 * @param other the other end of the new segment
+	 * @param left a point left of the new segment
+	 * @param dir alfa-direction for positioning endpoint vertex on null-face
+	 * @param new_site the new Site we are inserting
+	 * Returns:
+	 * <ul>
+	 * <li>HEVertex ENDPOINT-vertex for the new vertex</li>
+	 * <li>HEFace null-face at endpoint (new or existing)</li>
+	 * <li>HEVertex positive SEPARATOR edge endpoint vertex (if a positive separator should be added)</li>
+	 * <li>HEVertex negative SEPARATOR edge endpoint vertex (if a negative separator should be added)</li>
+	 * <li>HEFace face-to-null. if a PointSite face should disappear, we return it here.</li>
+	 * </ul>
+	 */
 	private FiveTuple1 find_null_face(Vertex start, Vertex other, Point left, Point dir, Site new_site) {
 		Vertex seg_start = null; // new end-point vertices
 		Face start_null_face = null; // either existing or new null-face at start-vertex
@@ -1661,10 +1656,9 @@ public class VoronoiDiagram {
 		// find and return the target vertex to which the new SEPARATOR edge should
 		// connect
 		// also return the adjacent next/prev edges
-		///
-		// flag==true when an OUT-NEW-IN vertex was found
-		///
-		// flag==false when an IN-NEW-OUT vertex was found
+		/**
+		 * flag==true when an OUT-NEW-IN vertex was found flag==false when an IN-NEW-OUT vertex was found
+		 */
 
 		if (endp == null) {
 			return new SeparatorTarget(null, null, null, false);
@@ -1808,10 +1802,11 @@ public class VoronoiDiagram {
 	}
 
 	// add a SEPPOINT vertex into the given null-edge
-	///
-	// \param endp the endpoint corresponding to the null-edge/null-face
-	// \param edge the null-edge into which we insert the new vertex
-	// \param sep_dir direction for setting alfa of the new vertex
+	/**
+	 * @param endp the endpoint corresponding to the null-edge/null-face
+	 * @param edge the null-edge into which we insert the new vertex
+	 * @param sep_dir direction for setting alfa of the new vertex
+	 */
 	private Vertex add_separator_vertex(Vertex endp, Edge edge, Point sep_dir) {
 		var sep = g.add_vertex(new Vertex(endp.position, VertexStatus.OUT, VertexType.SEPPOINT));
 		sep.set_alfa(sep_dir);
@@ -1923,11 +1918,9 @@ public class VoronoiDiagram {
 	}
 
 	// reset status of modified_vertices and incident_faces
-	///
-	// at the end after an incremental insertion of a new site,
-	// reset status of modified_vertices to UNDECIDED and incident_faces to
-	// NONINCIDENT,
-	// so that we are ready for the next insertion.
+	/**
+	 * at the end after an incremental insertion of a new site, reset status of modified_vertices to UNDECIDED and incident_faces to NONINCIDENT, so that we are ready for the next insertion.
+	 */
 	private void reset_status() {
 		for (Vertex v : modified_vertices) {
 			v.reset_status();

@@ -81,11 +81,9 @@ public class MedialAxisFilter extends Filter {
 		return dotprod > _dot_product_threshold;
 	}
 
-	// \brief calculate the dot-product between unit vectors aligned along edges
-	// e1->e2
-	///
-	// since e1 and e2 are both line-sites the direction is easy to find
-	// FIXME: more code needed here for tangent calculation if we have arc-sites
+	/**
+	 * calculate the dot-product between unit vectors aligned along edges e1->e2 since e1 and e2 are both line-sites the direction is easy to find FIXME: more code needed here for tangent calculation if we have arc-sites
+	 */
 	private double edge_dotprod(Edge e1, Edge e2) {
 		var src1 = e1.source;
 		var trg1 = e1.target;

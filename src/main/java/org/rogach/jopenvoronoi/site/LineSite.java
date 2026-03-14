@@ -26,8 +26,10 @@ import org.rogach.jopenvoronoi.offset.Ofs;
  */
 public class LineSite extends Site {
 
-	Point _start; // < start Point of LineSite
-	Point _end; // < end Point of LineSite
+	/** start Point of LineSite */
+	Point _start;
+	/** end Point of LineSite */
+	Point _end;
 	/**
 	 * midpoint used as the representative position
 	 */
