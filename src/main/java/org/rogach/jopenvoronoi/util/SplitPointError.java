@@ -6,7 +6,9 @@ import org.rogach.jopenvoronoi.geometry.Edge;
 import org.rogach.jopenvoronoi.geometry.Point;
 
 /**
- * error-functor to locate ::SPLIT vertices for passing to numerical boost::toms748 root-finding algorithm
+ * Error-functor to locate ::SPLIT vertices.
+ * <p>
+ * Used for passing to the numerical boost::toms748 root-finding algorithm.
  */
 public class SplitPointError implements UnivariateFunction {
 

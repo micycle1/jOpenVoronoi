@@ -29,9 +29,9 @@ public class VertexPositioner {
 	Solver ppp_solver;
 	/** line-line-line solver */
 	Solver lll_solver;
-	/** solver */
+	/** parallel line-line-line solver */
 	Solver lll_para_solver;
-	/** solver */
+	/** quadratic-linear-linear solver */
 	Solver qll_solver;
 	/** separator solver */
 	Solver sep_solver;
@@ -66,7 +66,19 @@ public class VertexPositioner {
 	}
 
 	/**
-	 * position a new vertex on given HEEdge {@code e} when inserting the new Site {@code s3} calculate the position of a new voronoi-vertex lying on the given edge. The new vertex is equidistant to the two sites that defined the edge and to the new site. the edge e holds information about which face it belongs to. each face holds information about which site created it so the three sites defining the position of the vertex are: - site to the left of HEEdge e - site to the right of HEEdge e - given new Site s
+	 * Position a new vertex on the given HEEdge {@code e} when inserting the new
+	 * Site {@code s3}.
+	 * <p>
+	 * The new vertex is equidistant to the two sites that defined the edge and to
+	 * the new site. The edge {@code e} holds information about which face it
+	 * belongs to, and each face holds information about which site created it.
+	 * <p>
+	 * The three sites defining the position of the vertex are:
+	 * <ul>
+	 * <li>the site to the left of HEEdge {@code e}</li>
+	 * <li>the site to the right of HEEdge {@code e}</li>
+	 * <li>the given new Site {@code s3}</li>
+	 * </ul>
 	 */
 	public Solution position(Edge e, Site s3) {
 		edge = e;

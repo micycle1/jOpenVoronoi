@@ -11,7 +11,9 @@ import org.rogach.jopenvoronoi.site.Site;
 import org.rogach.jopenvoronoi.vertex.Solution;
 
 /**
- * line-line-line Solver solves 3x3 system.
+ * Line-line-line solver.
+ * <p>
+ * Solves a 3x3 system.
  */
 public class LLLSolver extends Solver {
 

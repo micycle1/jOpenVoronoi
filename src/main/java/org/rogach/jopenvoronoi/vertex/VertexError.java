@@ -8,7 +8,9 @@ import org.rogach.jopenvoronoi.geometry.Point;
 import org.rogach.jopenvoronoi.site.Site;
 
 /**
- * error functor for edge-based desperate solver minimize error by searching for a point on the solution-edge
+ * Error functor for the edge-based desperate solver.
+ * <p>
+ * Minimizes error by searching for a point on the solution-edge.
  */
 public class VertexError implements UnivariateFunction {
 	/** vd-graph */

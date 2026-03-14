@@ -47,7 +47,7 @@ public class Vertex {
 	public VertexType type;
 	/** TODO what is this? remove? */
 	public double max_error;
-	/** flag for indicating wether vertex is in the vertexQueue */
+	/** flag for indicating whether vertex is in the vertexQueue */
 	public boolean in_queue;
 	/** the position of the vertex. */
 	public Point position;

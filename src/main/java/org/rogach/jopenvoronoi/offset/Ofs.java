@@ -3,7 +3,9 @@ package org.rogach.jopenvoronoi.offset;
 import org.rogach.jopenvoronoi.geometry.Point;
 
 /**
- * base-class for offset-elements preliminary offset-prerensentations. experiental...
+ * Base-class for offset-elements.
+ * <p>
+ * Preliminary offset presentations. Experimental.
  */
 public abstract class Ofs {
 	// radius, -1 if line

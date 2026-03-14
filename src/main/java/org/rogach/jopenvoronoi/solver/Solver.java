@@ -14,7 +14,8 @@ import org.rogach.jopenvoronoi.vertex.Solution;
 public abstract class Solver {
 
 	/**
-	 * solve for position of VoronoiVertex with given adjacent sites and directions
+	 * Solve for the position of a VoronoiVertex with the given adjacent sites and
+	 * directions.
 	 *
 	 * @param s1 first adjacent Site
 	 * @param k1 direction from {@code s1} to new VoronoiVertex

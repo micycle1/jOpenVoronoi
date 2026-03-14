@@ -93,7 +93,10 @@ public class Edge {
 	}
 
 	/**
-	 * return point on edge at given offset-distance t the eight-parameter formula for a point on the edge is: x = x1 - x2 - x3*t +/- x4 * sqrt( square(x5+x6*t) - square(x7+x8*t) )
+	 * Return the point on this edge at the given offset-distance {@code t}.
+	 * <p>
+	 * The eight-parameter formula for a point on the edge is:
+	 * {@code x = x1 - x2 - x3*t +/- x4 * sqrt(square(x5+x6*t) - square(x7+x8*t))}.
 	 */
 	public Point point(double t) {
 		var discr1 = chop(sq(x[4] + x[5] * t) - sq(x[6] + x[7] * t), 1e-14);
@@ -411,7 +414,11 @@ public class Edge {
 	}
 
 	/**
-	 * @return minumum t-value for this edge this function dispatches to a helper-function based on the Site:s {@code s1} and {@code s2} used only for positioning APEX vertices?
+	 * Returns the minimum {@code t}-value for this edge.
+	 *
+	 * @return minimum {@code t}-value for this edge. This function dispatches to a
+	 *         helper-function based on the Sites {@code s1} and {@code s2}. Used
+	 *         only for positioning APEX vertices.
 	 */
 	public double minimum_t(Site s1, Site s2) {
 		if (s1.isPoint() && s2.isPoint()) {

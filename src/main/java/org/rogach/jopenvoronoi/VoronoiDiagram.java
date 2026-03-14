@@ -585,7 +585,12 @@ public class VoronoiDiagram {
 
 	// comparison-predicate for VertexQueue
 	/**
-	 * in augment_vertex_set() we grow the delete-tree by processing vertices one-by-one from a priority_queue. This is the priority_queue sort predicate. We handle vertices with a large fabs( in_circle() ) first, since we believe their predicate to be more reliable.
+	 * In augment_vertex_set() we grow the delete-tree by processing vertices
+	 * one-by-one from a priority_queue.
+	 * <p>
+	 * This is the priority_queue sort predicate. We handle vertices with a large
+	 * fabs( in_circle() ) first, since we believe their predicate to be more
+	 * reliable.
 	 */
 	class abs_comparison implements Comparator<Pair<Vertex, Double>> {
 		@Override
@@ -759,7 +764,10 @@ public class VoronoiDiagram {
 
 	// find and return IN - OUT edges
 	/**
-	 * given the set v0 of IN vertices, find and return the adjacent IN - OUT edges. Later NEW vertices are inserted into each of the found IN - OUT edges
+	 * Given the set {@code v0} of IN vertices, find and return the adjacent IN-OUT
+	 * edges.
+	 * <p>
+	 * Later NEW vertices are inserted into each of the found IN-OUT edges.
 	 */
 	private List<Edge> find_in_out_edges() {
 		assert (!v0.isEmpty()) : " !v0.isEmpty() ";
@@ -778,11 +786,16 @@ public class VoronoiDiagram {
 
 	// find EdgeData for a new edge
 	/**
-	 * on a face which has IN and OUT-vertices, find the sequence OUT-OUT-OUT-..-OUT-NEW(v1)-IN-...-IN-NEW(v2)-OUT-OUT and return v1/v2 together with their previous and next edges
+	 * On a face which has IN and OUT-vertices, find the sequence
+	 * OUT-OUT-OUT-..-OUT-NEW(v1)-IN-...-IN-NEW(v2)-OUT-OUT and return
+	 * {@code v1}/{@code v2} together with their previous and next edges.
 	 *
 	 * @param f face on which we search for vertices
-	 * @param startverts contains NEW-vertices already found, which are not valid for this call to find_edge_data
-	 * @param segment contains ENDPOINT vertices, when we are inserting a line-segment (these vertices are needed to ensure finding correct points around sites/null-edges)
+	 * @param startverts contains NEW-vertices already found, which are not valid
+	 *                   for this call to find_edge_data
+	 * @param segment contains ENDPOINT vertices when we are inserting a
+	 *                line-segment; these vertices are needed to ensure finding
+	 *                correct points around sites/null-edges
 	 */
 	private EdgeData find_edge_data(Face f, List<Vertex> startverts, Pair<Vertex, Vertex> segment) {
 		var ed = new EdgeData();
@@ -837,7 +850,11 @@ public class VoronoiDiagram {
 
 	// find and return edges on which we potentially need SPLIT vertices
 	/**
-	 * walk around the face f return edges whose endpoints are on separate sides of pt1-pt2 line TODO ?not all edges found like this *need* SPLIT vertices? (but it does not hurt to insert SPLIT-vertices in this case)
+	 * Walk around the face {@code f} and return edges whose endpoints are on
+	 * separate sides of the {@code pt1-pt2} line.
+	 * <p>
+	 * TODO: not all edges found like this need SPLIT vertices, but it does not
+	 * hurt to insert SPLIT-vertices in this case.
 	 */
 	private List<Edge> find_split_edges(Face f, Point pt1, Point pt2) {
 		assert (vd_checker.face_ok(f)) : " vd_checker.face_ok(f) ";
@@ -929,7 +946,10 @@ public class VoronoiDiagram {
 
 	// adjacent in-count predicate for buildingdelete-tree
 	/**
-	 * number of IN vertices adjacent to given vertex v predicate C4 i.e. "adjacent in-count" from Sugihara&Iri 1992 "one million" paper
+	 * Number of IN vertices adjacent to the given vertex {@code v}.
+	 * <p>
+	 * Predicate C4, i.e. "adjacent in-count", from the Sugihara&amp;Iri 1992
+	 * "one million" paper.
 	 */
 	private boolean predicate_c4(Vertex v) {
 		var in_count = 0;
@@ -947,7 +967,11 @@ public class VoronoiDiagram {
 
 	// connectedness-predicate for delete-tree building
 	/**
-	 * do any of the three faces that are adjacent to the given IN-vertex v have an IN-vertex ? predicate C5 i.e. "connectedness" from Sugihara&Iri 1992 "one million" paper
+	 * Do any of the three faces that are adjacent to the given IN-vertex
+	 * {@code v} have an IN-vertex?
+	 * <p>
+	 * Predicate C5, i.e. "connectedness", from the Sugihara&amp;Iri 1992
+	 * "one million" paper.
 	 */
 	private boolean predicate_c5(Vertex v) {
 		if (v.type == VertexType.APEX || v.type == VertexType.SPLIT) {
@@ -1083,7 +1107,7 @@ public class VoronoiDiagram {
 
 	// add a new face corresponding to the new Site
 	/**
-	 * call add_new_edge() on all the incident_faces that should be split
+	 * Call add_new_edge() on all the incident_faces that should be split.
 	 */
 	private Face add_face(Site s) {
 		var newface = g.add_face();
@@ -1102,7 +1126,12 @@ public class VoronoiDiagram {
 
 	// add all NEW-NEW edges
 	/**
-	 * by adding a NEW-NEW edge, split the face f into one part which is newface, and the other part is the old f for linesegment or arc sites we pass in both the k=+1 face newface and the k=-1 face newface2 the segment endpoints are passed to find_edge_data()
+	 * By adding a NEW-NEW edge, split the face {@code f} into one part which is
+	 * {@code newface}, and the other part is the old {@code f}.
+	 * <p>
+	 * For linesegment or arc sites we pass in both the {@code k=+1} face
+	 * {@code newface} and the {@code k=-1} face {@code newface2}. The segment
+	 * endpoints are passed to find_edge_data().
 	 */
 	private void add_edges(Face newface, Face f, Face newface2, Pair<Vertex, Vertex> segment) {
 		var new_count = num_new_vertices(f);
@@ -1657,7 +1686,9 @@ public class VoronoiDiagram {
 		// connect
 		// also return the adjacent next/prev edges
 		/**
-		 * flag==true when an OUT-NEW-IN vertex was found flag==false when an IN-NEW-OUT vertex was found
+		 * {@code flag == true} when an OUT-NEW-IN vertex was found.
+		 * <p>
+		 * {@code flag == false} when an IN-NEW-OUT vertex was found.
 		 */
 
 		if (endp == null) {
@@ -1919,7 +1950,9 @@ public class VoronoiDiagram {
 
 	// reset status of modified_vertices and incident_faces
 	/**
-	 * at the end after an incremental insertion of a new site, reset status of modified_vertices to UNDECIDED and incident_faces to NONINCIDENT, so that we are ready for the next insertion.
+	 * At the end of an incremental insertion of a new site, reset the status of
+	 * modified_vertices to UNDECIDED and incident_faces to NONINCIDENT so that we
+	 * are ready for the next insertion.
 	 */
 	private void reset_status() {
 		for (Vertex v : modified_vertices) {

@@ -5,7 +5,13 @@ import org.rogach.jopenvoronoi.geometry.EdgeType;
 import org.rogach.jopenvoronoi.geometry.Face;
 
 /**
- * Filter for retaining voronoi-diagram inside a polygon this filter sets the valid-property of edges all interior edges are marked valid=true all exterior edges are marked valid=false a polygon/pocket boundary shoud be specified in CW order islands within the polygon should be specified in CCW order
+ * Filter for retaining the voronoi-diagram inside a polygon.
+ * <p>
+ * This filter sets the valid-property of edges. All interior edges are marked
+ * {@code valid=true}. All exterior edges are marked {@code valid=false}.
+ * <p>
+ * A polygon or pocket boundary should be specified in CW order. Islands within
+ * the polygon should be specified in CCW order.
  */
 public class PolygonInteriorFilter extends Filter {
 
@@ -14,7 +20,8 @@ public class PolygonInteriorFilter extends Filter {
 	/**
 	 * create a polygon interior Filter with given {@code side}
 	 *
-	 * @param side set true (false) for polygons inserted in CW (CCW) order and islands inserted in CCW (CW) order.
+	 * @param side set true (false) for polygons inserted in CW (CCW) order and
+	 *             islands inserted in CCW (CW) order.
 	 */
 	public PolygonInteriorFilter(boolean side) {
 		this.side = side;

@@ -11,7 +11,20 @@ import org.rogach.jopenvoronoi.geometry.Face;
 import org.rogach.jopenvoronoi.geometry.Point;
 
 /**
- * From a voronoi-diagram, generate offsets. an offset is allways a closed loop. the loop consists of offset-elements from each face that the loop visits. each face is associated with a Site, and the offset element from - a point-site is a circular arc - a line-site is a line - an arc is a circular arc This class produces offsets at the given offset-distance on the entire voronoi-diagram. To produce offsets only inside or outside a given geometry, use a filter first. The filter sets the valid-property of edges, so that offsets are not produced on faces with one or more invalid edge.
+ * Generate offsets from a voronoi-diagram.
+ * <p>
+ * An offset is always a closed loop. The loop consists of offset-elements from
+ * each face that the loop visits. Each face is associated with a Site, and the
+ * offset element from:
+ * <ul>
+ * <li>a point-site is a circular arc</li>
+ * <li>a line-site is a line</li>
+ * <li>an arc is a circular arc</li>
+ * </ul>
+ * This class produces offsets at the given offset-distance on the entire
+ * voronoi-diagram. To produce offsets only inside or outside a given geometry,
+ * use a filter first. The filter sets the valid-property of edges, so that
+ * offsets are not produced on faces with one or more invalid edge.
  */
 public class Offset {
 	/** vd-graph */
@@ -111,7 +124,12 @@ public class Offset {
 	}
 
 	/**
-	 * starting at e, find the next edge on the face that brackets t we can be in one of two modes. if mode==false then we are looking for an edge where src_t < t < trg_t if mode==true we are looning for an edge where trg_t < t < src_t
+	 * Starting at {@code e}, find the next edge on the face that brackets
+	 * {@code t}.
+	 * <p>
+	 * We can be in one of two modes. If {@code mode == false} then we are looking
+	 * for an edge where {@code src_t < t < trg_t}. If {@code mode == true} we are
+	 * looking for an edge where {@code trg_t < t < src_t}.
 	 */
 	private Edge find_next_offset_edge(Edge e, double t, boolean mode) {
 		var start = e;

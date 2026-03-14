@@ -54,7 +54,16 @@ public class QLLSolver extends Solver {
 	}
 
 	/**
-	 * qll solver l0 first linear eqn l1 second linear eqn xi,yi,ti indexes to shuffle around xk, yk, kk, rk = params of one ('last') quadratic site (point or arc) solns = output solution triplets (x,y,t) or (u,v,t) returns number of solutions found
+	 * Solve the QLL system for a fixed quadratic equation and two linear equations.
+	 *
+	 * @param lins two linear equations
+	 * @param xi x-index used when shuffling coordinates
+	 * @param yi y-index used when shuffling coordinates
+	 * @param ti t-index used when shuffling coordinates
+	 * @param quad parameters of the quadratic site (point or arc)
+	 * @param k3 offset direction for the quadratic site
+	 * @param solns output solution triplets {@code (x, y, t)} or {@code (u, v, t)}
+	 * @return number of solutions found
 	 */
 	private int qll_solver(List<Eq> lins, int xi, int yi, int ti, Eq quad, double k3, List<Solution> solns) {
 		assert (lins.size() == 2) : " lins.size() == 2 ";
@@ -108,7 +117,14 @@ public class QLLSolver extends Solver {
 
 	// Solve a system of one quadratic equation, and two linear equations.
 	/**
-	 * (1) a0 u^2 + b0 u + c0 v^2 + d0 v + e0 w^2 + f0 w + g0 = 0 (2) u = a1 w + b1 (3) v = a2 w + b2 solve (1) for w (can have 0, 1, or 2 roots) then substitute into (2) and (3) to find (u, v, t)
+	 * Solve a system of one quadratic equation and two linear equations:
+	 * <pre>
+	 * (1) a0 u^2 + b0 u + c0 v^2 + d0 v + e0 w^2 + f0 w + g0 = 0
+	 * (2) u = a1 w + b1
+	 * (3) v = a2 w + b2
+	 * </pre>
+	 * Solve equation (1) for {@code w} and then substitute into (2) and (3) to
+	 * find {@code (u, v, t)}.
 	 */
 	private int qll_solve(double a0, double b0, double c0, double d0, double e0, double f0, double g0, double a1,
 			double b1, double a2, double b2, double soln[][]) {

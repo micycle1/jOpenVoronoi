@@ -3,7 +3,8 @@ package org.rogach.jopenvoronoi.vertex;
 import org.rogach.jopenvoronoi.geometry.Point;
 
 /**
- * a new vertex position solution (position, offset-distance, side) includes the offset-distamce t, and the offset direction k3
+ * A new vertex position solution (position, offset-distance, side) includes the
+ * offset-distance {@code t} and the offset direction {@code k3}.
  */
 public class Solution {
 	// position
