@@ -69,7 +69,7 @@ public class VoronoiDiagramChecker {
 
 	// check that no undecided vertices remain in the face
 	public boolean noUndecidedInFace(Face f) { // is this true??
-		var face_verts = g.face_vertices(f);
+		var face_verts = g.faceVertices(f);
 		for (Vertex v : face_verts) {
 			if (v.status == VertexStatus.UNDECIDED) {
 				return false;
@@ -80,7 +80,7 @@ public class VoronoiDiagramChecker {
 
 	// check that for HEFace f the vertices TYPE are connected
 	public boolean faceVerticesConnected(Face f, VertexStatus Vtype) {
-		var face_verts = g.face_vertices(f);
+		var face_verts = g.faceVertices(f);
 		List<Vertex> type_verts = new ArrayList<>();
 		for (Vertex v : face_verts) {
 			if (v.status == Vtype) {

@@ -886,7 +886,7 @@ public class VoronoiDiagram {
 	// find a SPLIT vertex on the Face f
 	// return true, and set v, if found.
 	private Vertex find_split_vertex(Face f) {
-		for (Vertex q : g.face_vertices(f)) {
+		for (Vertex q : g.faceVertices(f)) {
 			if (q.type == VertexType.SPLIT) {
 				return q;
 			}
