@@ -1,3 +1,5 @@
+[![](https://jitpack.io/v/micycle1/jOpenVoronoi.svg)](https://jitpack.io/#micycle1/jOpenVoronoi)
+
 # JOpenVoronoi+
 
 A fork of *Rogach*'s [port](https://github.com/Rogach/jopenvoronoi) of the original C++ library [openvoronoi](https://github.com/aewallin/openvoronoi).
