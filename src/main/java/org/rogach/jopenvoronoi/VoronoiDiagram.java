@@ -101,9 +101,6 @@ public class VoronoiDiagram {
 	 * IN-vertices, i.e. to-be-deleted
 	 */
 	protected List<Vertex> v0 = new ArrayList<>();
-	/** turn debug output on/off */
-	protected boolean debug;
-
 	public VoronoiDiagram() {
 		this(5000);
 	}
@@ -124,7 +121,6 @@ public class VoronoiDiagram {
 		num_lsites = 0;
 		num_asites = 0;
 		reset_vertex_count();
-		debug = false;
 	}
 
 	/**
@@ -551,11 +547,6 @@ public class VoronoiDiagram {
 	// reset vertex index count \todo not very elegant...
 	public static void reset_vertex_count() {
 		Vertex.reset_count();
-	}
-
-	// turn on debug output
-	public void debugOn() {
-		debug = true;
 	}
 
 	// run topology/geometry check on diagram

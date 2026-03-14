@@ -35,7 +35,6 @@ public abstract class Solver {
 		type = t;
 	}
 
-	// flag for debug output
 	// separator case type.
 	// - type = 0 means l3 / p1 form a separator
 	// - type = 1 means l3 / p2 form a separator
