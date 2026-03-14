@@ -3,6 +3,8 @@ package org.rogach.jopenvoronoi.geometry;
 import static org.rogach.jopenvoronoi.util.Numeric.chop;
 import static org.rogach.jopenvoronoi.util.Numeric.sq;
 
+import java.util.Map.Entry;
+
 import org.rogach.jopenvoronoi.site.Site;
 import org.rogach.jopenvoronoi.vertex.Vertex;
 
@@ -448,6 +450,44 @@ public class Edge {
 		var p1p2 = s1.position().sub(s2.apex_point(s1.position())).norm(); // - s2->r() ;
 		assert (p1p2 >= 0) : " p1p2 >=0 ";
 		return p1p2 / 2; // this splits point-point edges at APEX
+	}
+	
+	/**
+	 * Returns the point and its exact clearance radius at parameter u [0, 1] 
+	 * along the edge.
+	 * 
+	 * @param u The parameter along the edge from 0.0 (source) to 1.0 (target)
+	 * @return A pair containing the Point on the edge and its clearance radius
+	 */
+	public Entry<Point, Double> edgePoint(double u) {
+		Point p;
+		double r;
+
+		if (type == EdgeType.LINE || type == EdgeType.LINELINE || type == EdgeType.PARA_LINELINE) {
+			// Linear interpolation of the position
+			Point src = source.position;
+			Point trg = target.position;
+			p = src.add(trg.sub(src).mult(u));
+
+			// Exact geometric radius: distance from p to the generating site
+			Site s = face.site;
+			Point pa = s.apex_point(p);
+			r = p.sub(pa).norm();
+		} else if (type == EdgeType.PARABOLA) {
+			// For parabolas, the distance (radius) is the parameter t.
+			// We interpolate the t-parameter between the source and target radii.
+			double srcT = source.dist();
+			double trgT = target.dist();
+			double uT = srcT + u * (trgT - srcT);
+			
+			// Get the position using the existing 8-parameter point(t) formula
+			p = point(uT);
+			r = uT;
+		} else {
+			throw new RuntimeException("Unsupported edge type for edgePoint: " + type);
+		}
+
+		return new java.util.AbstractMap.SimpleEntry<>(p, r);
 	}
 
 	@Override
