@@ -6,10 +6,12 @@ import org.rogach.jopenvoronoi.site.Site;
 import org.rogach.jopenvoronoi.vertex.Solution;
 
 /**
- * Abstract base-class for voronoi vertex position solvers
+ * Abstract base class for Voronoi vertex position solvers.
  * 
- * The input to the solver is three Sites (s1,s2,s3) and three offset-directions
- * (k1,k2,k3). The optput is a vector with one or more Solution.
+ * The input to the solver is three {@link Site Sites} ({@code s1}, {@code s2},
+ * {@code s3}) and three offset directions ({@code k1}, {@code k2},
+ * {@code k3}). The output is a vector with one or more {@link Solution}
+ * instances.
  */
 public abstract class Solver {
 
@@ -24,6 +26,7 @@ public abstract class Solver {
 	 * @param s3 third adjacent Site
 	 * @param k3 direction from {@code s3} to new VoronoiVertex
 	 * @param slns Solution vector, will be updated by Solver
+	 * @return number of solutions found
 	 */
 	public abstract int solve(Site s1, double k1, Site s2, double k2, Site s3, double k3, List<Solution> slns);
 

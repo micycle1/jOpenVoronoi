@@ -35,17 +35,18 @@ import ags.utils.dataStructures.trees.thirdGenKD.SquareEuclideanDistanceFunction
 /**
  * Voronoi diagram. The diagram builds incrementally as sites are added.
  * <p>
- * See http://en.wikipedia.org/wiki/Voronoi_diagram
+ * See <a href="http://en.wikipedia.org/wiki/Voronoi_diagram">Wikipedia:
+ * Voronoi diagram</a>.
  * <p>
- * The dual of a Voronoi diagram is the delaunay diagram (triangulation).
- * Voronoi-faces are dual to delaunay-vertices; Voronoi-vertices are dual to
- * delaunay-faces; Voronoi-edges are dual to delaunay-edges.
+ * The dual of a Voronoi diagram is the Delaunay diagram (triangulation).
+ * Voronoi faces are dual to Delaunay vertices; Voronoi vertices are dual to
+ * Delaunay faces; Voronoi edges are dual to Delaunay edges.
  */
 public class VoronoiDiagram {
 
 	// HELPER-CLASSES
 	/**
-	 * sanity-checks on the diagram are done by this helper class
+	 * Helper class used for sanity-checking the diagram.
 	 */
 	protected VoronoiDiagramChecker vd_checker;
 	/**
@@ -585,11 +586,11 @@ public class VoronoiDiagram {
 
 	// comparison-predicate for VertexQueue
 	/**
-	 * In augment_vertex_set() we grow the delete-tree by processing vertices
-	 * one-by-one from a priority_queue.
+	 * In {@code augment_vertex_set()} we grow the delete-tree by processing
+	 * vertices one by one from a priority queue.
 	 * <p>
-	 * This is the priority_queue sort predicate. We handle vertices with a large
-	 * fabs( in_circle() ) first, since we believe their predicate to be more
+	 * This is the priority queue sort predicate. We handle vertices with a large
+	 * {@code fabs(in_circle())} first, since we believe their predicate to be more
 	 * reliable.
 	 */
 	class abs_comparison implements Comparator<Pair<Vertex, Double>> {
@@ -601,7 +602,7 @@ public class VoronoiDiagram {
 
 	// data required for adding a new edge
 	/**
-	 * used in add_edge() for storing information related to the new edge.
+	 * Stores information related to a new edge while it is being added.
 	 */
 	class EdgeData {
 		/** edge prior to v1 */
@@ -907,18 +908,22 @@ public class VoronoiDiagram {
 	/**
 	 * Grows the delete-tree of IN vertices by "weighted breadth-first search"
 	 * <p>
-	 * we start at the seed and add vertices with detH<0 provided that: - (C4) v
-	 * should not be adjacent to two or more IN vertices (this would result in a
-	 * loop/cycle!) - (C5) for an incident face containing v: v is adjacent to an IN
-	 * vertex on this face
+	 * We start at the seed and add vertices with {@code detH < 0}, provided that:
+	 * <ul>
+	 * <li>(C4) {@code v} should not be adjacent to two or more IN vertices, since
+	 * that would result in a loop/cycle</li>
+	 * <li>(C5) for an incident face containing {@code v}, {@code v} is adjacent to
+	 * an IN vertex on this face</li>
+	 * </ul>
 	 * <p>
-	 * C4 and C5 refer to the Sugihara&Iri 1992 "one million" paper. We process
+	 * C4 and C5 refer to the Sugihara&amp;Iri 1992 "one million" paper. We process
 	 * UNDECIDED vertices adjacent to known IN-vertices in a "weighted
-	 * breadth-first-search" manner where vertices with a large fabs(detH) are
+	 * breadth-first-search" manner where vertices with a large {@code fabs(detH)}
+	 * are
 	 * processed first, since we assume the in-circle predicate to be more reliable
-	 * the larger fabs(in_circle()) is.
+	 * the larger {@code fabs(in_circle())} is.
 	 * 
-	 * @param site
+	 * @param site site currently being inserted
 	 */
 	private void augment_vertex_set(Site site) {
 		while (!vertexQueue.isEmpty()) {
@@ -1087,11 +1092,12 @@ public class VoronoiDiagram {
 	}
 
 	/**
-	 * Add NEW vertices on IN-OUT edges (generates new voronoi-vertices on all
-	 * IN-OUT edges)
+	 * Add NEW vertices on IN-OUT edges.
+	 * <p>
+	 * This generates new Voronoi vertices on all IN-OUT edges.
 	 * 
 	 * @implNote used only by {@link #insertPointSite(Point)}
-	 * @param new_site
+	 * @param new_site site currently being inserted
 	 */
 	private void add_vertices(Site new_site) {
 		assert (!v0.isEmpty()) : " !v0.isEmpty() ";

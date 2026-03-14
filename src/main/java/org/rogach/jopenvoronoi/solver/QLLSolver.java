@@ -11,7 +11,7 @@ import org.rogach.jopenvoronoi.site.Site;
 import org.rogach.jopenvoronoi.vertex.Solution;
 
 /**
- * quadratic-linear-linear Solver
+ * Quadratic-linear-linear solver.
  */
 public class QLLSolver extends Solver {
 	@Override
@@ -62,7 +62,8 @@ public class QLLSolver extends Solver {
 	 * @param ti t-index used when shuffling coordinates
 	 * @param quad parameters of the quadratic site (point or arc)
 	 * @param k3 offset direction for the quadratic site
-	 * @param solns output solution triplets {@code (x, y, t)} or {@code (u, v, t)}
+	 * @param solns output solution triplets {@code (x, y, t)} or
+	 *              {@code (u, v, t)}
 	 * @return number of solutions found
 	 */
 	private int qll_solver(List<Eq> lins, int xi, int yi, int ti, Eq quad, double k3, List<Solution> solns) {
@@ -118,11 +119,11 @@ public class QLLSolver extends Solver {
 	// Solve a system of one quadratic equation, and two linear equations.
 	/**
 	 * Solve a system of one quadratic equation and two linear equations:
-	 * <pre>
+	 * <pre>{@code
 	 * (1) a0 u^2 + b0 u + c0 v^2 + d0 v + e0 w^2 + f0 w + g0 = 0
 	 * (2) u = a1 w + b1
 	 * (3) v = a2 w + b2
-	 * </pre>
+	 * }</pre>
 	 * Solve equation (1) for {@code w} and then substitute into (2) and (3) to
 	 * find {@code (u, v, t)}.
 	 */

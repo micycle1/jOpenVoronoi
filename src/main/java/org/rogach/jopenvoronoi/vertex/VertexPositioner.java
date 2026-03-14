@@ -21,7 +21,10 @@ import org.rogach.jopenvoronoi.solver.QLLSolver;
 import org.rogach.jopenvoronoi.solver.SEPSolver;
 import org.rogach.jopenvoronoi.solver.Solver;
 
-//Calculates the (x,y) position of a VoronoiVertex in the VoronoiDiagram
+/**
+ * Calculates the {@code (x, y)} position of a Voronoi vertex in the
+ * {@link org.rogach.jopenvoronoi.VoronoiDiagram Voronoi diagram}.
+ */
 public class VertexPositioner {
 
 	// solvers, to which we dispatch, depending on the input sites
@@ -66,7 +69,7 @@ public class VertexPositioner {
 	}
 
 	/**
-	 * Position a new vertex on the given HEEdge {@code e} when inserting the new
+	 * Position a new vertex on the given half-edge {@code e} when inserting the new
 	 * Site {@code s3}.
 	 * <p>
 	 * The new vertex is equidistant to the two sites that defined the edge and to
@@ -75,8 +78,8 @@ public class VertexPositioner {
 	 * <p>
 	 * The three sites defining the position of the vertex are:
 	 * <ul>
-	 * <li>the site to the left of HEEdge {@code e}</li>
-	 * <li>the site to the right of HEEdge {@code e}</li>
+	 * <li>the site to the left of half-edge {@code e}</li>
+	 * <li>the site to the right of half-edge {@code e}</li>
 	 * <li>the given new Site {@code s3}</li>
 	 * </ul>
 	 */

@@ -11,20 +11,21 @@ import org.rogach.jopenvoronoi.geometry.Face;
 import org.rogach.jopenvoronoi.geometry.Point;
 
 /**
- * Generate offsets from a voronoi-diagram.
+ * Generates offsets from a Voronoi diagram.
  * <p>
- * An offset is always a closed loop. The loop consists of offset-elements from
- * each face that the loop visits. Each face is associated with a Site, and the
+ * An offset is always a closed loop. The loop consists of offset elements from
+ * each face that the loop visits. Each face is associated with a {@link org.rogach.jopenvoronoi.site.Site Site}, and the
  * offset element from:
  * <ul>
- * <li>a point-site is a circular arc</li>
- * <li>a line-site is a line</li>
- * <li>an arc is a circular arc</li>
+ * <li>a point site is a circular arc</li>
+ * <li>a line site is a line</li>
+ * <li>an arc site is a circular arc</li>
  * </ul>
- * This class produces offsets at the given offset-distance on the entire
- * voronoi-diagram. To produce offsets only inside or outside a given geometry,
- * use a filter first. The filter sets the valid-property of edges, so that
- * offsets are not produced on faces with one or more invalid edge.
+ * This class produces offsets at the given offset distance on the entire
+ * Voronoi diagram. To produce offsets only inside or outside a given geometry,
+ * apply a {@link org.rogach.jopenvoronoi.filter.Filter filter} first. The filter
+ * sets the {@code valid} property of edges so that offsets are not produced on
+ * faces with one or more invalid edges.
  */
 public class Offset {
 	/** vd-graph */
@@ -34,7 +35,7 @@ public class Offset {
 	List<OffsetLoop> offset_list;
 
 	/**
-	 * @param gi vd-graph
+	 * @param g Voronoi diagram graph
 	 */
 	public Offset(HalfEdgeDiagram g) {
 		this.g = g;
@@ -101,7 +102,8 @@ public class Offset {
 	}
 
 	/**
-	 * figure out mode (?)
+	 * Determine which bracketing direction applies to this edge for the current
+	 * offset distance.
 	 */
 	private boolean edge_mode(Edge e, double t) {
 		var src = e.source;

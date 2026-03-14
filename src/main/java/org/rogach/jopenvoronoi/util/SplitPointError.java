@@ -6,9 +6,10 @@ import org.rogach.jopenvoronoi.geometry.Edge;
 import org.rogach.jopenvoronoi.geometry.Point;
 
 /**
- * Error-functor to locate ::SPLIT vertices.
+ * Error functor used to locate {@code SPLIT} vertices.
  * <p>
- * Used for passing to the numerical boost::toms748 root-finding algorithm.
+ * Used when passing this function to the numerical
+ * {@code boost::toms748} root-finding algorithm.
  */
 public class SplitPointError implements UnivariateFunction {
 
@@ -35,7 +36,9 @@ public class SplitPointError implements UnivariateFunction {
 	}
 
 	/**
-	 * @return signed distance to the pt1-pt2 line from edge-point at given offset {@code t}
+	 * @param t offset distance
+	 * @return signed distance from the edge point at offset {@code t} to the
+	 *         {@code pt1-pt2} line
 	 */
 	@Override
 	public double value(double t) {

@@ -4,10 +4,10 @@ import org.rogach.jopenvoronoi.HalfEdgeDiagram;
 import org.rogach.jopenvoronoi.geometry.Edge;
 
 /**
- * Base-class for voronoi-diagram filters.
+ * Base class for Voronoi diagram filters.
  * <p>
- * Concrete sub-classes of Filter provide a predicate for determining if the
- * edge belongs to the filtered graph.
+ * Concrete subclasses of {@link Filter} provide a predicate for determining if
+ * an {@link Edge} belongs to the filtered graph.
  */
 public abstract class Filter {
 	/** vd-graph */
