@@ -56,6 +56,66 @@ voronoi.getFaces().forEach(face -> {
 });
 ```
 
+Get the medial axis for a polygon represented by a list of points:
+
+```java
+List<Point> polygon = List.of(
+    new Point(-1.0, -1.0),
+    new Point(1.0, -1.0),
+    new Point(1.0, 1.0),
+    new Point(-1.0, 1.0)
+);
+
+VoronoiDiagram voronoi = new VoronoiDiagram();
+List<Vertex> polygonVertices = new ArrayList<>(polygon.size());
+for (Point point : polygon) {
+    polygonVertices.add(voronoi.insertPointSite(point));
+}
+for (int i = 0; i < polygonVertices.size(); i++) {
+    voronoi.insertLineSite(polygonVertices.get(i), polygonVertices.get((i + 1) % polygonVertices.size()));
+}
+
+// The example polygon points are ordered counter-clockwise.
+voronoi.filter(new PolygonInteriorFilter(true));
+voronoi.filter(new MedialAxisFilter());
+
+List<Edge> medialAxis = voronoi.getDiagram().edges.stream()
+    .filter(edge -> edge.valid
+        && edge.type != EdgeType.LINESITE
+        && edge.type != EdgeType.NULLEDGE
+        && edge.type != EdgeType.OUTEDGE)
+    .collect(Collectors.toList());
+```
+
+`medialAxis` contains the half-edges of the polygon's medial axis. Each geometric segment appears twice in the half-edge diagram (once per direction), so pair `edge`/`edge.twin` if you only need one copy of each branch.
+
+Get an inward offset polygon from the same point-list input:
+
+```java
+List<Point> polygon = List.of(
+    new Point(-1.0, -1.0),
+    new Point(1.0, -1.0),
+    new Point(1.0, 1.0),
+    new Point(-1.0, 1.0)
+);
+
+VoronoiDiagram voronoi = new VoronoiDiagram();
+List<Vertex> polygonVertices = new ArrayList<>(polygon.size());
+for (Point point : polygon) {
+    polygonVertices.add(voronoi.insertPointSite(point));
+}
+for (int i = 0; i < polygonVertices.size(); i++) {
+    voronoi.insertLineSite(polygonVertices.get(i), polygonVertices.get((i + 1) % polygonVertices.size()));
+}
+
+// The example polygon points are ordered counter-clockwise.
+voronoi.filter(new PolygonInteriorFilter(true));
+
+List<OffsetLoop> insetLoops = new Offset(voronoi.getDiagram()).offset(0.2);
+```
+
+`insetLoops` contains closed offset loops. Omit the `PolygonInteriorFilter` step if you want both the inward and outward offsets from the full diagram.
+
 # Images
 
 ## Voronoi
