@@ -6,62 +6,82 @@ import org.rogach.jopenvoronoi.geometry.Point;
 import org.rogach.jopenvoronoi.site.Site;
 import org.rogach.jopenvoronoi.vertex.Solution;
 
-// this solver is called when we want to position a vertex on a SEPARATOR edge
-// a SEPARATOR edge exists between a LineSite and one of its PointSite end-points
-// the input sites are thus s1=LineSite and s2=PointSite  (if arcs are supported in the future then s1=ArcSite is possible)
-// s3 can be either a LineSite or a PointSite (of arcs are supported, s3=ArcSite is possible)
-//
-//  s1 (LineSite) offset eq. is     a1 x + b1 y + c1 + k1 t = 0   (1)
-//  s2 (PointSite) offset eq. is    (x-x2)^2 + (y-y2)^2 = t^2     (2)
-//
-// Two possibilities for s3:
-//   s3 (LineSite)   a3 x + b3 y + c3 + k3 t = 0
-//   s3 (PointSite)  (x-x3)^2 + (y-y3)^2 = t^2
-//
-// This configuration constrains the solution to lie on the separator edge.
-// The separator is given by
-// SEP = p2 + t* sv
-// where p2 is the location of s2, and the separator direction sv is
-// sv = (-a1,-b1)   if k1=-1
-// sv = (a1,b1)   if k1=-1
-// thus points on the separator are located at:
-//
-//  x_sep = x2 + t*sv.x
-//  y_sep = y2 + t*sv.y
-//
-//  This can be inserted into (1) or (2) above, which leads to a linear equation in t.
-//
-//  Insert into (1):
-//    a3 (x2 + t*sv.x) + b3 (y2 + t*sv.y) + c3 + k3 t = 0
-//      ==>
-//          t = -( a3*x2 + b3*y2 + c3 ) / (sv.x*a3 + sv.y*b3 + k3)
-//
-//  Insert into (2):
-//    (x2 + t*sv.x-x3)^2 + (y2 + t*sv.y-y3)^2 = t^2
-//    ==> (using dx= x2-x3 and dy = x2-x3)
-//   t^2 (sv.x^2 + sv.y^1 - 1)  + t (2*dx*sv.x + 2*dy*sv.y) + dx^2 + dy^2 = 0
-//    ==>  (since sv is a unit-vector sv.x^2 + sv.y^1 - 1 = 0)
-//         t = - (dx^2+dy^2) / (2*(dx*sv.x + dy*sv.y))
-//
-//  FIXME: what happens if we get a divide by zero situation ??
-//
-
 /**
- * ::SEPARATOR Solver
+ * Separator solver for the line/point/line case.
+ *
+ * s1 = line site
+ * s2 = endpoint point site of s1
+ * s3 = line site
  */
 public class SEPSolver extends Solver {
+
+	private static final double DEN_EPS = 1e-12;
+	private static final double RES_EPS = 1e-9;
+
 	@Override
 	public int solve(Site s1, double k1, Site s2, double k2, Site s3, double k3, List<Solution> slns) {
-		assert (s1.isLine() && s2.isPoint()) : " s1.isLine() && s2.isPoint() ";
-		assert (s3.isLine()) : "s3.isLine()";
+		if (!(s1.isLine() && s2.isPoint() && s3.isLine())) {
+			return 0;
+		}
 
-		// separator direction
-		var sv = new Point(-s1.a(), -s1.b());
-		var tsln = -(s3.a() * s2.x() + s3.b() * s2.y() + s3.c()) / (sv.x * s3.a() + sv.y * s3.b() + k3);
+		var sv = separatorDirection(s1, k1);
 
-		var psln = new Point(s2.x(), s2.y()).add(sv.mult(tsln));
-		slns.add(new Solution(psln, tsln, k3));
+		double num = -(s3.a() * s2.x() + s3.b() * s2.y() + s3.c());
+		double den = sv.x * s3.a() + sv.y * s3.b() + k3;
+
+		double denScale = Math.abs(sv.x * s3.a()) + Math.abs(sv.y * s3.b()) + Math.abs(k3) + 1.0;
+		if (!Double.isFinite(den) || Math.abs(den) <= DEN_EPS * denScale) {
+			return 0;
+		}
+
+		double t = num / den;
+		if (!Double.isFinite(t)) {
+			return 0;
+		}
+
+		double tTol = DEN_EPS * (Math.abs(t) + 1.0);
+		if (t < -tTol) {
+			return 0;
+		}
+		if (t < 0.0) {
+			t = 0.0;
+		}
+
+		var p = new Point(s2.x() + sv.x * t, s2.y() + sv.y * t);
+
+		if (!satisfiesLine(s1, k1, p, t)) {
+			return 0;
+		}
+		if (!satisfiesPoint(s2, p, t)) {
+			return 0;
+		}
+		if (!satisfiesLine(s3, k3, p, t)) {
+			return 0;
+		}
+
+		slns.add(new Solution(p, t, k3));
 		return 1;
 	}
 
-};
+	private Point separatorDirection(Site line, double k) {
+		// Matches the convention used elsewhere in this codebase:
+		// k = +1 -> (-a,-b), k = -1 -> (a,b)
+		return (k < 0.0)
+				? new Point(line.a(), line.b())
+				: new Point(-line.a(), -line.b());
+	}
+
+	private boolean satisfiesLine(Site s, double k, Point p, double t) {
+		double r = s.a() * p.x + s.b() * p.y + s.c() + k * t;
+		double scale = Math.abs(s.a() * p.x) + Math.abs(s.b() * p.y) + Math.abs(s.c()) + Math.abs(k * t) + 1.0;
+		return Double.isFinite(r) && Math.abs(r) <= RES_EPS * scale;
+	}
+
+	private boolean satisfiesPoint(Site s, Point p, double t) {
+		double dx = p.x - s.x();
+		double dy = p.y - s.y();
+		double r = dx * dx + dy * dy - t * t;
+		double scale = dx * dx + dy * dy + t * t + 1.0;
+		return Double.isFinite(r) && Math.abs(r) <= RES_EPS * scale;
+	}
+}
