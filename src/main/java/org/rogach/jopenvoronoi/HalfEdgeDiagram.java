@@ -22,9 +22,9 @@ import org.rogach.jopenvoronoi.vertex.Vertex;
  * <p>
  * HalfEdge - origin pointer to vertex (boost::source) - face to the left of
  * halfedge - twin pointer to HalfEdge (on the right of this edge) - next
- * pointer to HalfEdge this edge starts from h->twin->origin and ends at next
- * vertex in h->face traveling ccw around boundary (allows face traverse, follow
- * h->next until we arrive back at h)
+ * pointer to HalfEdge this edge starts from {@code h->twin->origin} and ends
+ * at next vertex in {@code h->face} traveling ccw around boundary (allows face
+ * traverse, follow {@code h->next} until we arrive back at h)
  * <p>
  * Face - edge pointer to HalfEdge this edge has this Face object as face
  * half-edge can be any one on the boundary of face special "infinite face",
