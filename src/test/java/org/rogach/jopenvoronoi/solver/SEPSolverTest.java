@@ -44,13 +44,13 @@ public class SEPSolverTest {
 		SEPSolver solver = new SEPSolver();
 
 		List<Solution> upward = new ArrayList<>();
-		Site upwardSite = new LineSite(new Point(0, 0), new Point(1, 0), -1);
-		assertEquals(1, solver.solve(upwardSite, upwardSite.k(), point, 1, thirdLine, thirdLine.k(), upward));
+		Site kNegativeSite = new LineSite(new Point(0, 0), new Point(1, 0), -1);
+		assertEquals(1, solver.solve(kNegativeSite, kNegativeSite.k(), point, 1, thirdLine, thirdLine.k(), upward));
 		assertEquals(1.0, upward.get(0).p.y, 1e-12);
 
 		List<Solution> downward = new ArrayList<>();
-		Site downwardSite = new LineSite(new Point(1, 0), new Point(0, 0), +1);
-		assertEquals(1, solver.solve(downwardSite, downwardSite.k(), point, 1, thirdLine, thirdLine.k(), downward));
+		Site kPositiveSite = new LineSite(new Point(1, 0), new Point(0, 0), +1);
+		assertEquals(1, solver.solve(kPositiveSite, kPositiveSite.k(), point, 1, thirdLine, thirdLine.k(), downward));
 		assertEquals(-1.0, downward.get(0).p.y, 1e-12);
 	}
 }
