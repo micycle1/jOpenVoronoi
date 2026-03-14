@@ -126,10 +126,22 @@ public class VoronoiDiagram {
 	}
 
 	/**
-	 * {@link #insert_point_site(Point)}
+	 * Inserts a point site into the Voronoi diagram.
+	 *
+	 * @param x x-coordinate of the point site
+	 * @param y y-coordinate of the point site
+	 * @return handle to the inserted point site
 	 */
+	public Vertex insertPointSite(double x, double y) {
+		return insertPointSite(new Point(x, y));
+	}
+
+	/**
+	 * @deprecated Use {@link #insertPointSite(double, double)}.
+	 */
+	@Deprecated
 	public Vertex insert_point_site(double x, double y) {
-		return insert_point_site(new Point(x, y));
+		return insertPointSite(x, y);
 	}
 
 	/**
@@ -157,27 +169,28 @@ public class VoronoiDiagram {
 	 *
 	 * @param p position of site
 	 * @return integer handle to the inserted point. use this integer when inserting
-	 *         lines/arcs with insert_line_site
+	 *         lines/arcs with {@link #insertLineSite(Vertex, Vertex)}
 	 */
-	public Vertex insert_point_site(Point p) {
+	public Vertex insertPointSite(Point p) {
+		if (p == null) {
+			throw new IllegalArgumentException("Point site cannot be null.");
+		}
 
 		if (p.norm() >= far_radius) {
-			System.out.printf("openvoronoi error. All points must lie within unit-circle. You are trying to add p= %s with p.norm()= %f\n", p, p.norm());
-			return null;
+			throw new IllegalArgumentException(
+					String.format("Point site %s lies outside the configured far radius %.3f.", p, far_radius));
 		}
 		assert (p.norm() < far_radius) : " p.norm() < far_radius ";
 
 		var nearest = kd_tree.findNearestNeighbors(new double[] { p.x, p.y }, 1, new SquareEuclideanDistanceFunction()).getMax();
 
 		if (nearest.p.equals(p)) {
-			System.err.println("Cannot insert point site " + p.toString() + ". A point with the same coordinates already exists.");
-			return null;
+			throw new IllegalArgumentException("Cannot insert duplicate point site at " + p + ".");
 		}
 
 		if (num_lsites > 0) {
-			System.err.println("Skipping inserting " + p.toString()
-					+ " because a line site has already been inserted. Insert all point sites first before inserting any line sites.");
-			return null;
+			throw new IllegalStateException(
+					"Cannot insert point sites after line sites. Insert all point sites before inserting any line sites.");
 		}
 
 		num_psites++;
@@ -205,6 +218,14 @@ public class VoronoiDiagram {
 	}
 
 	/**
+	 * @deprecated Use {@link #insertPointSite(Point)}.
+	 */
+	@Deprecated
+	public Vertex insert_point_site(Point p) {
+		return insertPointSite(p);
+	}
+
+	/**
 	 * Inserts a LineSite into the diagram
 	 * <p>
 	 * All PointSites must be inserted before any LineSites are inserted. All
@@ -213,7 +234,7 @@ public class VoronoiDiagram {
 	 * diagram!
 	 * <p>
 	 * The basic idea of the incremental diagram update is similar to that in
-	 * insert_point_site(). The major differences are: - the handling of null-faces
+	 * insertPointSite(). The major differences are: - the handling of null-faces
 	 * at the endpoints of the LineSite. - addition of SEPARATOR edges - addition of
 	 * SPLIT vertices during augment_vertex_set() - removal of SPLIT vertices at the
 	 * end
@@ -234,7 +255,7 @@ public class VoronoiDiagram {
 	 * @param end   endpoint of line-segment
 	 * @return
 	 */
-	public boolean insert_line_site(Vertex start, Vertex end) {
+	public boolean insertLineSite(Vertex start, Vertex end) {
 
 		num_lsites++;
 
@@ -379,9 +400,25 @@ public class VoronoiDiagram {
 		return true;
 	}
 
+	/**
+	 * @deprecated Use {@link #insertLineSite(Vertex, Vertex)}.
+	 */
+	@Deprecated
+	public boolean insert_line_site(Vertex start, Vertex end) {
+		return insertLineSite(start, end);
+	}
+
 	// return the far radius
-	public double get_far_radius() {
+	public double getFarRadius() {
 		return far_radius;
+	}
+
+	/**
+	 * @deprecated Use {@link #getFarRadius()}.
+	 */
+	@Deprecated
+	public double get_far_radius() {
+		return getFarRadius();
 	}
 
 	public List<Face> getFaces() {
@@ -418,33 +455,73 @@ public class VoronoiDiagram {
 	}
 
 	// return number of point sites in diagram
-	public int num_point_sites() {
+	public int numPointSites() {
 		// the three initial vertices don't count
 		return num_psites - 3;
 	}
 
+	/**
+	 * @deprecated Use {@link #numPointSites()}.
+	 */
+	@Deprecated
+	public int num_point_sites() {
+		return numPointSites();
+	}
+
 	// return number of line-segments sites in diagram
-	public int num_line_sites() {
+	public int numLineSites() {
 		return num_lsites;
 	}
 
+	/**
+	 * @deprecated Use {@link #numLineSites()}.
+	 */
+	@Deprecated
+	public int num_line_sites() {
+		return numLineSites();
+	}
+
 	// return number of arc-sites in diagram
-	public int num_arc_sites() {
+	public int numArcSites() {
 		return num_asites;
 	}
 
+	/**
+	 * @deprecated Use {@link #numArcSites()}.
+	 */
+	@Deprecated
+	public int num_arc_sites() {
+		return numArcSites();
+	}
+
 	// return number of voronoi-vertices
+	public int numVertices() {
+		return g.num_vertices() - numPointSites();
+	}
+
+	/**
+	 * @deprecated Use {@link #numVertices()}.
+	 */
+	@Deprecated
 	public int num_vertices() {
-		return g.num_vertices() - num_point_sites();
+		return numVertices();
 	}
 
 	// return number of faces in graph
+	public int numFaces() {
+		return g.numFaces();
+	}
+
+	/**
+	 * @deprecated Use {@link #numFaces()}.
+	 */
+	@Deprecated
 	public int num_faces() {
-		return g.num_faces();
+		return numFaces();
 	}
 
 	// return number of SPLIT vertices
-	public int num_split_vertices() {
+	public int numSplitVertices() {
 		var count = 0;
 		for (Vertex v : g.vertices) {
 			if (v.type == VertexType.SPLIT) {
@@ -452,6 +529,14 @@ public class VoronoiDiagram {
 			}
 		}
 		return count;
+	}
+
+	/**
+	 * @deprecated Use {@link #numSplitVertices()}.
+	 */
+	@Deprecated
+	public int num_split_vertices() {
+		return numSplitVertices();
 	}
 
 	// return reference to graph \todo not elegant. only used by vd2svg ?
@@ -465,8 +550,16 @@ public class VoronoiDiagram {
 	}
 
 	// turn on debug output
-	public void debug_on() {
+	public void debugOn() {
 		debug = true;
+	}
+
+	/**
+	 * @deprecated Use {@link #debugOn()}.
+	 */
+	@Deprecated
+	public void debug_on() {
+		debugOn();
 	}
 
 	// run topology/geometry check on diagram
@@ -489,10 +582,18 @@ public class VoronoiDiagram {
 	}
 
 	// reset filtering by setting all edges valid
-	public void filter_reset() {
+	public void filterReset() {
 		for (Edge e : g.edges) {
 			e.valid = true;
 		}
+	}
+
+	/**
+	 * @deprecated Use {@link #filterReset()}.
+	 */
+	@Deprecated
+	public void filter_reset() {
+		filterReset();
 	}
 
 	// comparison-predicate for VertexQueue
@@ -982,7 +1083,7 @@ public class VoronoiDiagram {
 	 * Add NEW vertices on IN-OUT edges (generates new voronoi-vertices on all
 	 * IN-OUT edges)
 	 * 
-	 * @implNote used only by {@link #insert_point_site(Point)}
+	 * @implNote used only by {@link #insertPointSite(Point)}
 	 * @param new_site
 	 */
 	private void add_vertices(Site new_site) {
@@ -1734,7 +1835,7 @@ public class VoronoiDiagram {
 	}
 
 	/**
-	 * one-argument version of repair_face() used by insert_point_site()
+	 * one-argument version of repair_face() used by insertPointSite(Point)
 	 * 
 	 * @see #repair_face(Face, Pair, Pair, Pair)
 	 * @param f

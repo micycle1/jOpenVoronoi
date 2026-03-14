@@ -53,14 +53,14 @@ import org.rogach.jopenvoronoi.*;
 
 VoronoiDiagram voronoi = new VoronoiDiagram();
 for (int i = 0; i < 100; i++) {
-  voronoi.insert_point_site(Math.random(), Math.random());
+  voronoi.insertPointSite(Math.random(), Math.random());
 }
 
 HalfEdgeDiagram diagram = voronoi.getDiagram();
 
 voronoi.getFaces().forEach(face -> {
     Point pos = face.site.position();
-    diagram.face_edges(face).forEach(edge -> {
+    diagram.faceEdges(face).forEach(edge -> {
         vertex(edge.source.position.x, edge.source.position.y);
         vertex(edge.target.position.x, edge.target.position.y);
     });

@@ -28,20 +28,20 @@ public class SegmentsTest {
 		// insert point sites and collect handles
 		List<Vertex> vertexHandles = new ArrayList<>();
 		for (Point p : pts) {
-			Vertex vh = vd.insert_point_site(p);
+			Vertex vh = vd.insertPointSite(p);
 			vertexHandles.add(vh);
 		}
 
 		// now insert line segments connecting them into a closed polygon
 		for (int n = 0; n < vertexHandles.size(); n++) {
 			int next = (n == vertexHandles.size() - 1) ? 0 : n + 1;
-			vd.insert_line_site(vertexHandles.get(n), vertexHandles.get(next));
+			vd.insertLineSite(vertexHandles.get(n), vertexHandles.get(next));
 		}
 
 		// checks
 		Assertions.assertTrue(vd.check(), "VoronoiDiagram.check() should return true");
-		Assertions.assertEquals(6, vd.num_point_sites(), "Should have 6 point sites");
-		Assertions.assertEquals(6, vd.num_line_sites(), "Should have 6 line sites");
+		Assertions.assertEquals(6, vd.numPointSites(), "Should have 6 point sites");
+		Assertions.assertEquals(6, vd.numLineSites(), "Should have 6 line sites");
 
 		// get diagram and iterate faces/edges to exercise API
 		HalfEdgeDiagram diagram = vd.getDiagram();
@@ -49,7 +49,7 @@ public class SegmentsTest {
 		vd.getFaces().forEach(face -> {
 			Point pos = face.site.position();
 			Assertions.assertNotNull(pos, "face.site.position() should not be null");
-			diagram.face_edges(face).forEach(edge -> {
+			diagram.faceEdges(face).forEach(edge -> {
 				Assertions.assertNotNull(edge.source);
 				Assertions.assertNotNull(edge.target);
 				Assertions.assertNotNull(edge.source.position);
@@ -78,8 +78,8 @@ public class SegmentsTest {
 
 		long t0 = System.nanoTime();
 		for (Segment s : segs) {
-			Vertex a = vd.insert_point_site(s.a);
-			Vertex b = vd.insert_point_site(s.b);
+			Vertex a = vd.insertPointSite(s.a);
+			Vertex b = vd.insertPointSite(s.b);
 			segmentHandles.add(new Vertex[] { a, b });
 		}
 		long tPointsNanos = System.nanoTime() - t0;
@@ -87,15 +87,15 @@ public class SegmentsTest {
 		// insert line sites
 		long t1 = System.nanoTime();
 		for (Vertex[] ids : segmentHandles) {
-			vd.insert_line_site(ids[0], ids[1]);
+			vd.insertLineSite(ids[0], ids[1]);
 		}
 		long tLinesNanos = System.nanoTime() - t1;
 
 		// basic checks
 		Assertions.assertTrue(vd.check(), "VoronoiDiagram.check() should return true");
 		Assertions.assertEquals(nmax, segmentHandles.size(), "Should have created nmax segments");
-		Assertions.assertEquals(2 * nmax, vd.num_point_sites(), "Expect 2*nmax point sites (each segment had two endpoints)");
-		Assertions.assertEquals(nmax, vd.num_line_sites(), "Should have nmax line sites");
+		Assertions.assertEquals(2 * nmax, vd.numPointSites(), "Expect 2*nmax point sites (each segment had two endpoints)");
+		Assertions.assertEquals(nmax, vd.numLineSites(), "Should have nmax line sites");
 
 		// print timings (informational)
 		double tPointsSec = tPointsNanos / 1e9;
