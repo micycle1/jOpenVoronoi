@@ -9,6 +9,16 @@ A fork of *Rogach*'s [port](https://github.com/Rogach/jopenvoronoi) of the origi
 - Diagram Medial Axis
 - Nearest N cells to point
 
+# Build
+
+This library is built with Maven on Java 11+:
+
+```bash
+mvn verify
+```
+
+The build produces the main library jar together with source and Javadoc jars under `target/`.
+
 # Fork Changes
 
 This fork has the following changes:

@@ -9,7 +9,7 @@ import org.rogach.jopenvoronoi.site.Site;
 import org.rogach.jopenvoronoi.vertex.Solution;
 
 /**
- * point-point-point Solver (based on Sugihara & Iri paper)
+ * point-point-point Solver (based on Sugihara &amp; Iri paper)
  */
 public class PPPSolver extends Solver {
 

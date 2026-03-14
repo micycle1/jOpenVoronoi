@@ -6,14 +6,43 @@
 	<artifactId>jopenvoronoi</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
-	<name>jopenvoronoi</name>
+	<name>jOpenVoronoi</name>
+	<description>Incremental Voronoi point and line site diagrams for Java 11.</description>
+	<url>https://github.com/micycle1/jOpenVoronoi</url>
 
 	<properties>
 		<sonar.projectKey>micycle1_jOpenVoronoi</sonar.projectKey>
 		<sonar.organization>micycle</sonar.organization>
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 		<maven.compiler.release>11</maven.compiler.release>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
+
+	<licenses>
+		<license>
+			<name>GNU General Public License v3.0</name>
+			<url>https://www.gnu.org/licenses/gpl-3.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>Rogach</id>
+			<name>Rogach</name>
+		</developer>
+		<developer>
+			<id>micycle1</id>
+			<name>micycle1</name>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>scm:git:https://github.com/micycle1/jOpenVoronoi.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/micycle1/jOpenVoronoi.git</developerConnection>
+		<url>https://github.com/micycle1/jOpenVoronoi</url>
+	</scm>
 
 	<dependencies>
 		<dependency>
@@ -41,7 +70,21 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.1</version>
 				<configuration>
-					<encoding>UTF-8</encoding>
+					<encoding>${project.build.sourceEncoding}</encoding>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.4.2</version>
+				<configuration>
+					<archive>
+						<manifest>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+						</manifest>
+						<manifestEntries>
+							<Automatic-Module-Name>org.rogach.jopenvoronoi</Automatic-Module-Name>
+						</manifestEntries>
+					</archive>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -51,7 +94,7 @@
 				<executions>
 					<execution>
 						<id>attach-sources</id>
-						<phase>deploy</phase>
+						<phase>package</phase>
 						<goals>
 							<goal>jar-no-fork</goal>
 						</goals>
@@ -63,7 +106,10 @@
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>3.12.0</version>
 				<configuration>
-					<failOnError>false</failOnError>
+					<encoding>${project.build.sourceEncoding}</encoding>
+					<docencoding>${project.reporting.outputEncoding}</docencoding>
+					<charset>${project.reporting.outputEncoding}</charset>
+					<failOnError>true</failOnError>
 				</configuration>
 				<executions>
 					<execution>
