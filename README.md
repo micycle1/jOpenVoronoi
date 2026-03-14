@@ -92,10 +92,10 @@ voronoi.filter(new PolygonInteriorFilter(true));
 voronoi.filter(new MedialAxisFilter());
 
 List<Edge> medialAxis = voronoi.getDiagram().edges.stream()
-    .filter(edge -> edge.valid)
-    .filter(edge -> edge.type != EdgeType.LINESITE)
-    .filter(edge -> edge.type != EdgeType.NULLEDGE)
-    .filter(edge -> edge.type != EdgeType.OUTEDGE)
+    .filter(edge -> edge.valid
+        && edge.type != EdgeType.LINESITE
+        && edge.type != EdgeType.NULLEDGE
+        && edge.type != EdgeType.OUTEDGE)
     .collect(Collectors.toList());
 ```
 

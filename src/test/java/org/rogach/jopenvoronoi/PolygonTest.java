@@ -79,9 +79,9 @@ public class PolygonTest {
 		vd.filter(new PolygonInteriorFilter(true));
 		vd.filter(new MedialAxisFilter());
 
-		List<Edge> medialAxis = vd.getDiagram().edges.stream().filter(edge -> edge.valid)
-				.filter(edge -> edge.type != EdgeType.LINESITE).filter(edge -> edge.type != EdgeType.NULLEDGE)
-				.filter(edge -> edge.type != EdgeType.OUTEDGE).collect(Collectors.toList());
+		List<Edge> medialAxis = vd.getDiagram().edges.stream().filter(edge -> edge.valid
+				&& edge.type != EdgeType.LINESITE && edge.type != EdgeType.NULLEDGE && edge.type != EdgeType.OUTEDGE)
+				.collect(Collectors.toList());
 
 		Assertions.assertEquals(10, medialAxis.size(), "Expected the square to yield 10 medial-axis half-edges");
 		Assertions.assertTrue(medialAxis.stream().allMatch(edge -> Math.abs(edge.source.position.x) <= 1.0
