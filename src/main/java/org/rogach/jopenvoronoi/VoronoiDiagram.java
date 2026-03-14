@@ -167,7 +167,7 @@ public class VoronoiDiagram {
 	 * IN-NEW edges, see remove_vertex_set() -# reset vertex/face status to be ready
 	 * for next incremental operation, see reset_status()
 	 *
-	 * @param p position of site
+	 * @param p position of site; must not be {@code null}
 	 * @return integer handle to the inserted point. use this integer when inserting
 	 *         lines/arcs with {@link #insertLineSite(Vertex, Vertex)}
 	 */
@@ -496,7 +496,7 @@ public class VoronoiDiagram {
 
 	// return number of voronoi-vertices
 	public int numVertices() {
-		return g.num_vertices() - numPointSites();
+		return g.vertices.size() - numPointSites();
 	}
 
 	/**
@@ -509,7 +509,7 @@ public class VoronoiDiagram {
 
 	// return number of faces in graph
 	public int numFaces() {
-		return g.numFaces();
+		return g.faces.size();
 	}
 
 	/**
@@ -1835,7 +1835,7 @@ public class VoronoiDiagram {
 	}
 
 	/**
-	 * one-argument version of repair_face() used by insertPointSite(Point)
+	 * one-argument version of repair_face() used by {@link #insertPointSite(Point)}
 	 * 
 	 * @see #repair_face(Face, Pair, Pair, Pair)
 	 * @param f
