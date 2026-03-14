@@ -35,18 +35,6 @@ public abstract class Solver {
 		type = t;
 	}
 
-	// set the debug mode to \a b
-	public void set_debug(boolean b) {
-		debug = b;
-	}
-
-	// no warnings/messages to stdout will be written, if silent is set true.
-	public void set_silent(boolean b) {
-		silent = b;
-	}
-
-	// flag for debug output
-	boolean debug;
 	// separator case type.
 	// - type = 0 means l3 / p1 form a separator
 	// - type = 1 means l3 / p2 form a separator

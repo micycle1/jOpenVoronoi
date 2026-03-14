@@ -53,7 +53,7 @@ public class Vertex {
 	public Point position;
 	/** the offset-direction {-1,+1} of this vertex to the newly inserted site. */
 	public double k3;
-	/** diangle for a null-vertex. only for debug-drawing */
+	/** diangle for a null-vertex and separator handling. */
 	public double alfa;
 	/** if this is a null-face, a handle to the null-face */
 	public Face null_face;
