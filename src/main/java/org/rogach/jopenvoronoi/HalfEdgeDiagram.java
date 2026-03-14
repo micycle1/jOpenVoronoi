@@ -239,6 +239,7 @@ public class HalfEdgeDiagram {
 	// add a face, with given properties
 	public Face add_face() {
 		var f = new Face();
+		f.attachDiagram(this);
 		faces.add(f);
 		return f;
 	}
@@ -272,6 +273,10 @@ public class HalfEdgeDiagram {
 			count++;
 		} while (current != startedge);
 		return verts;
+	}
+
+	public List<Vertex> faceVertices(Face face) {
+		return face_vertices(face);
 	}
 
 	// return edges of face f as a vector

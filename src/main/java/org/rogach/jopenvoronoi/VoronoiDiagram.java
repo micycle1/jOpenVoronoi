@@ -389,8 +389,70 @@ public class VoronoiDiagram {
 		return far_radius;
 	}
 
+	/**
+	 * Returns the user-visible Voronoi faces.
+	 * <p>
+	 * Internal null faces used as implementation scaffolding for line-site
+	 * insertion are hidden from this view.
+	 *
+	 * @return all non-null faces in the diagram
+	 */
 	public List<Face> getFaces() {
+		List<Face> faces = new ArrayList<>();
+		for (Face face : g.faces) {
+			if (!face.isNullFace()) {
+				faces.add(face);
+			}
+		}
+		return faces;
+	}
+
+	/**
+	 * Returns every face in the underlying half-edge graph, including internal null
+	 * faces used during line-site insertion.
+	 *
+	 * @return all faces in the underlying graph
+	 */
+	public List<Face> getAllFaces() {
 		return new ArrayList<>(g.faces);
+	}
+
+	public List<Face> getNonNullFaces() {
+		return getFaces();
+	}
+
+	public Face getFace(Vertex vertex) {
+		if (vertex == null) {
+			throw new IllegalArgumentException("vertex cannot be null");
+		}
+		if (vertex.face != null) {
+			return vertex.face;
+		}
+		if (vertex.null_face != null) {
+			return vertex.null_face;
+		}
+		throw new IllegalArgumentException("vertex is not directly associated with a face");
+	}
+
+	public List<Edge> getFaceEdges(Face face) {
+		if (face == null) {
+			throw new IllegalArgumentException("face cannot be null");
+		}
+		return face.getEdges();
+	}
+
+	public List<Vertex> getFaceVertices(Face face) {
+		if (face == null) {
+			throw new IllegalArgumentException("face cannot be null");
+		}
+		return face.getVertices();
+	}
+
+	public List<Face> getAdjacentFaces(Face face) {
+		if (face == null) {
+			throw new IllegalArgumentException("face cannot be null");
+		}
+		return face.getAdjacentFaces();
 	}
 
 	public List<Edge> getEdges() {
@@ -452,8 +514,19 @@ public class VoronoiDiagram {
 		return g.vertices.size() - numPointSites();
 	}
 
-	// return number of faces in graph
+	// return number of user-visible faces in graph
 	public int numFaces() {
+		var count = 0;
+		for (Face face : g.faces) {
+			if (!face.isNullFace()) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	// return total number of faces in graph, including internal null-faces
+	public int numAllFaces() {
 		return g.faces.size();
 	}
 

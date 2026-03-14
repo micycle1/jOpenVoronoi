@@ -2,6 +2,7 @@ package org.rogach.jopenvoronoi;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.rogach.jopenvoronoi.geometry.Face;
 import org.rogach.jopenvoronoi.geometry.Point;
 import org.rogach.jopenvoronoi.vertex.Vertex;
 
@@ -56,7 +57,19 @@ public class VoronoiDiagramApiTest {
 
 		Assertions.assertEquals(4, diagram.numPointSites());
 		Assertions.assertEquals(4, diagram.numLineSites());
-		Assertions.assertEquals(diagram.numFaces(), diagram.getDiagram().numFaces());
-		Assertions.assertFalse(diagram.getDiagram().faceEdges(diagram.getFaces().get(0)).isEmpty());
+		Assertions.assertEquals(diagram.getFaces().size(), diagram.numFaces());
+		Assertions.assertTrue(diagram.numAllFaces() >= diagram.numFaces());
+		Assertions.assertTrue(diagram.getAllFaces().size() >= diagram.getFaces().size());
+		Assertions.assertSame(diagram.getFace(first), first.face);
+
+		Face face = diagram.getFaces().stream().filter(Face::isPointSiteFace).findFirst().orElseThrow();
+		Assertions.assertFalse(face.getEdges().isEmpty());
+		Assertions.assertFalse(face.getVertices().isEmpty());
+		Assertions.assertEquals(face.getEdges(), diagram.getFaceEdges(face));
+		Assertions.assertEquals(face.getVertices(), diagram.getFaceVertices(face));
+		Assertions.assertFalse(diagram.getAdjacentFaces(face).isEmpty());
+		Assertions.assertTrue(diagram.getFaces().stream().noneMatch(Face::isNullFace));
+		Assertions.assertEquals(diagram.getNonNullFaces().size(), diagram.getFaces().size());
+		Assertions.assertTrue(diagram.getAllFaces().stream().anyMatch(Face::isNullFace));
 	}
 }
