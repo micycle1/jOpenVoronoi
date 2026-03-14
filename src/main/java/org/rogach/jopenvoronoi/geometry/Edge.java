@@ -21,6 +21,7 @@ public class Edge {
 	public Vertex source;
 	public Vertex target;
 	public Edge twin;
+	public Edge base;
 	public Edge next;
 	public Face face;
 	public Face null_face;

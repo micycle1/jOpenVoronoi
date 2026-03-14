@@ -225,6 +225,8 @@ public class HalfEdgeDiagram {
 		var e2 = add_edge(v2, v1);
 		e1.twin = e2;
 		e2.twin = e1;
+		e1.base = e1;
+		e2.base = e1;
 		return new Pair<Edge, Edge>(e1, e2);
 	}
 
