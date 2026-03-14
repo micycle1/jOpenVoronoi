@@ -1,5 +1,7 @@
 package org.rogach.jopenvoronoi.solver;
 
+import static org.rogach.jopenvoronoi.util.Numeric.sq;
+
 import java.util.List;
 
 import org.rogach.jopenvoronoi.geometry.Point;
@@ -7,85 +9,51 @@ import org.rogach.jopenvoronoi.site.Site;
 import org.rogach.jopenvoronoi.vertex.Solution;
 
 /**
- * Point-point-point solver.
- *
- * <p>Computes the circumcenter of the three point sites. The implementation
- * uses a translated 2x2 formulation (relative to the third point) for improved
- * numerical stability. If the points are collinear or nearly collinear, no
- * Voronoi vertex is produced and the solver returns {@code 0}.
+ * point-point-point Solver (based on Sugihara &amp; Iri paper)
  */
 public class PPPSolver extends Solver {
 
-	private static final double COLLINEAR_EPS = 1e-12;
-	private static final double RES_EPS = 1e-9; // residual tolerance
-
 	@Override
 	public int solve(Site s1, double k1, Site s2, double k2, Site s3, double k3, List<Solution> slns) {
-		if (!(s1.isPoint() && s2.isPoint() && s3.isPoint())) {
-			throw new AssertionError("s1.isPoint() && s2.isPoint() && s3.isPoint()");
+		assert (s1.isPoint() && s2.isPoint() && s3.isPoint()) : "s1.isPoint() && s2.isPoint() && s3.isPoint()";
+		var pi = s1.position();
+		var pj = s2.position();
+		var pk = s3.position();
+
+		if (pi.is_right(pj, pk)) {
+			var tmp = pi;
+			pi = pj;
+			pj = tmp;
 		}
-
-		double x1 = s1.x(), y1 = s1.y();
-		double x2 = s2.x(), y2 = s2.y();
-		double x3 = s3.x(), y3 = s3.y();
-
-		// Translate to p3 to reduce cancellation.
-		double ax = x1 - x3;
-		double ay = y1 - y3;
-		double bx = x2 - x3;
-		double by = y2 - y3;
-
-		double a2 = ax * ax + ay * ay;
-		double b2 = bx * bx + by * by;
-
-		double det = 2.0 * (ax * by - ay * bx);
-		double detScale = 2.0 * (Math.abs(ax * by) + Math.abs(ay * bx)) + 1.0;
-		if (!Double.isFinite(det) || Math.abs(det) <= COLLINEAR_EPS * detScale) {
-			return 0;
+		assert (!pi.is_right(pj, pk)) : " !pi.is_right(pj,pk) ";
+		// 2) point pk should have the largest angle. largest angle is opposite longest
+		// side.
+		var longest_side = pi.sub(pj).norm();
+		while ((pj.sub(pk).norm() > longest_side) || ((pi.sub(pk).norm() > longest_side))) {
+			// cyclic rotation of points until pk is opposite the longest side pi-pj
+			var tmp = pk;
+			pk = pj;
+			pj = pi;
+			pi = tmp;
+			longest_side = pi.sub(pj).norm();
 		}
+		assert (!pi.is_right(pj, pk)) : " !pi.is_right(pj,pk) ";
+		assert (pi.sub(pj).norm() >= pj.sub(pk).norm()) : " pi.sub(pj).norm() >=  pj.sub(pk).norm() ";
+		assert (pi.sub(pj).norm() >= pk.sub(pi).norm()) : " pi.sub(pj).norm() >=  pk.sub(pi).norm() ";
 
-		double uxRel = (by * a2 - ay * b2) / det;
-		double uyRel = (ax * b2 - bx * a2) / det;
-
-		double ux = uxRel + x3;
-		double uy = uyRel + y3;
-		if (!Double.isFinite(ux) || !Double.isFinite(uy)) {
-			return 0;
+		var J2 = (pi.y - pk.y) * (sq(pj.x - pk.x) + sq(pj.y - pk.y)) / 2.0
+				- (pj.y - pk.y) * (sq(pi.x - pk.x) + sq(pi.y - pk.y)) / 2.0;
+		var J3 = (pi.x - pk.x) * (sq(pj.x - pk.x) + sq(pj.y - pk.y)) / 2.0
+				- (pj.x - pk.x) * (sq(pi.x - pk.x) + sq(pi.y - pk.y)) / 2.0;
+		var J4 = (pi.x - pk.x) * (pj.y - pk.y) - (pj.x - pk.x) * (pi.y - pk.y);
+		assert (J4 != 0.0) : " J4 != 0.0 ";
+		if (J4 == 0.0) {
+			throw new RuntimeException(" PPPSolver: Warning divide-by-zero!!");
 		}
-
-		double dx = ux - x1;
-		double dy = uy - y1;
-		double t2 = dx * dx + dy * dy;
-		if (!(t2 >= 0.0) || !Double.isFinite(t2)) {
-			return 0;
-		}
-
-		double t = Math.sqrt(t2);
-		if (!Double.isFinite(t)) {
-			return 0;
-		}
-
-		var p = new Point(ux, uy);
-
-		if (!satisfiesPoint(s1, p, t)) {
-			return 0;
-		}
-		if (!satisfiesPoint(s2, p, t)) {
-			return 0;
-		}
-		if (!satisfiesPoint(s3, p, t)) {
-			return 0;
-		}
-
-		slns.add(new Solution(p, t, +1));
+		var sln_pt = new Point(-J2 / J4 + pk.x, J3 / J4 + pk.y);
+		var dist = sln_pt.sub(pi).norm();
+		slns.add(new Solution(sln_pt, dist, +1));
 		return 1;
 	}
 
-	private boolean satisfiesPoint(Site s, Point p, double t) {
-		double dx = p.x - s.x();
-		double dy = p.y - s.y();
-		double r = dx * dx + dy * dy - t * t;
-		double scale = dx * dx + dy * dy + t * t + 1.0;
-		return Double.isFinite(r) && Math.abs(r) <= RES_EPS * scale;
-	}
 }

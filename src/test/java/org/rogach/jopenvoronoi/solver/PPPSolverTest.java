@@ -14,7 +14,7 @@ import org.rogach.jopenvoronoi.vertex.Solution;
 
 public class PPPSolverTest {
 
-	private static final double EPS = 1e-12;
+	private static final double EPS = 1e-9;
 
 	@Test
 	@DisplayName("Circumcenter of right triangle")

@@ -9,101 +9,83 @@ import org.rogach.jopenvoronoi.vertex.Solution;
 
 /**
  * Line-line-line solver for the parallel line-segment case.
- *
  * <p>
- * Used when two of the three line sites are parallel. The solution is obtained
- * by intersecting:
- * <ul>
- * <li>the line-line bisector of the parallel pair, and</li>
- * <li>the offset line of the third site at distance {@code t_b}.</li>
- * </ul>
- *
- * <p>
- * The 2x2 system is solved with a scaled determinant test for improved
- * robustness.
+ * Solves a 3x3 system.
  */
 public class LLLPARASolver extends Solver {
-
-	private static final double PARALLEL_EPS = 1e-12;
-	private static final double DET_EPS = 1e-12;
-	private static final double RES_EPS = 1e-9;
+// parallel linesegment edge case.
+//  a1 x + b1 y + c1 + k1 t = 0
+//  a2 x + b2 y + c2 + k2 t = 0
+//  a3 x + b3 y + c3 + k3 t = 0
+//
+// s1 and s2 are parallel, so they have a PARA_LINELINE edge between them
+//
+// this constrains the solution to lie on a line parallel to s1/s2
+// passing through a point equidistant from s1/s2
+//
+// equation of bisector is:
+// ab x + bb y + cb = 0
+// ab = a1
+// bb = b1
+// cb = (c1+c2)2
+// all points on the bisector have a t value
+// tb = fabs(c1-c2)/2
+//
+// find intersection of bisector and offset of third site
+//  ab x + bb y + cb = 0
+//  a3 x + b3 y + c3 + k3 tb = 0
+//  or
+//  ( ab  bb ) ( x ) = ( -cb )
+//  ( a3  b3 ) ( y ) = ( -c3-k3*tb )
+//
 
 	@Override
 	public int solve(Site s1, double k1, Site s2, double k2, Site s3, double k3, List<Solution> slns) {
+		assert (s1.isLine() && s2.isLine() && s3.isLine()) : " s1.isLine() && s2.isLine() && s3.isLine() ";
 
-		if (!isNearlyParallel(s1, s2)) {
-			return 0;
-		}
+		var bisector = new Eq();
+		bisector.a = s1.a();
+		bisector.b = s1.b();
+		var s2c = s2.c();
 
-		double ba = s1.a();
-		double bb = s1.b();
-		double s2c = s2.c();
-
-		// If normals point in opposite directions, align the second equation first.
-		double dot = s1.a() * s2.a() + s1.b() * s2.b();
-		if (dot < 0.0) {
+		// if s1 and s2 have opposite (a,b) normals, flip the sign of s2c
+		var n0 = new Point(s1.a(), s1.b());
+		var n1 = new Point(s2.a(), s2.b());
+		if (n0.dot(n1) < 0) {
 			s2c = -s2c;
 		}
 
-		double bc = 0.5 * (s1.c() + s2c);
-		double tb = 0.5 * Math.abs(s1.c() - s2c);
+		bisector.c = (s1.c() + s2c) * 0.5;
+		var tb = 0.5 * Math.abs(s1.c() - s2c); // bisector offset distance
 
-		var xy = twoByTwoSolve(ba, bb, s3.a(), s3.b(), -bc, -s3.c() - k3 * tb);
-
-		if (xy == null) {
+		var xy = two_by_two_solver(bisector.a, bisector.b, s3.a(), s3.b(), -bisector.c, -s3.c() - k3 * tb);
+		if (xy != null) {
+			slns.add(new Solution(new Point(xy.getFirst(), xy.getSecond()), tb, k3));
+			return 1;
+		} else {
 			return 0;
 		}
-
-		double x = xy.getFirst();
-		double y = xy.getSecond();
-		if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(tb)) {
-			return 0;
-		}
-
-		var p = new Point(x, y);
-
-		// Validate against the original three offset equations.
-		if (!satisfiesLine(s1, k1, p, tb)) {
-			return 0;
-		}
-		if (!satisfiesLine(s2, k2, p, tb)) {
-			return 0;
-		}
-		if (!satisfiesLine(s3, k3, p, tb)) {
-			return 0;
-		}
-
-		slns.add(new Solution(p, tb, k3));
-		return 1;
 	}
 
-	private boolean isNearlyParallel(Site s1, Site s2) {
-		double cross = Math.abs(s1.a() * s2.b() - s2.a() * s1.b());
-		double scale = Math.abs(s1.a() * s2.b()) + Math.abs(s2.a() * s1.b()) + 1.0;
-		return cross <= PARALLEL_EPS * scale;
-	}
-
-	private Pair<Double, Double> twoByTwoSolve(double a, double b, double c, double d, double e, double f) {
+	// solve 2z2 system Ax = y by inverting A
+	// x = Ainv * y
+	// returns false if det(A)==0, i.e. no solution found
+	Pair<Double, Double> two_by_two_solver(double a, double b, double c, double d, double e, double f) {
 		// [ a b ] [u] = [ e ]
 		// [ c d ] [v] = [ f ]
-		double det = a * d - c * b;
-		double scale = Math.abs(a * d) + Math.abs(c * b) + 1.0;
-		if (!Double.isFinite(det) || Math.abs(det) <= DET_EPS * scale) {
+		// matrix inverse is
+		// [ d -b ]
+		// 1/det * [ -c a ]
+		// so
+		// [u] [ d -b ] [ e ]
+		// [v] = 1/det * [ -c a ] [ f ]
+		var det = a * d - c * b;
+		if (Math.abs(det) < 1e-15) {
 			return null;
 		}
-
-		double u = (d * e - b * f) / det;
-		double v = (-c * e + a * f) / det;
-		if (!Double.isFinite(u) || !Double.isFinite(v)) {
-			return null;
-		}
-
-		return new Pair<>(u, v);
+		var u = (1.0 / det) * (d * e - b * f);
+		var v = (1.0 / det) * (-c * e + a * f);
+		return new Pair<Double, Double>(u, v);
 	}
 
-	private boolean satisfiesLine(Site s, double k, Point p, double t) {
-		double r = s.a() * p.x + s.b() * p.y + s.c() + k * t;
-		double scale = Math.abs(s.a() * p.x) + Math.abs(s.b() * p.y) + Math.abs(s.c()) + Math.abs(k * t) + 1.0;
-		return Double.isFinite(r) && Math.abs(r) <= RES_EPS * scale;
-	}
-}
+};

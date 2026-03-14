@@ -136,6 +136,21 @@ public class LLLPARASolverTest {
 		}
 	}
 
+	@Test
+	@DisplayName("Test assertion for non-line sites")
+	void testNonLineSiteAssertion() {
+		// Assuming we have PointSite or other non-line sites
+		Site point1 = new PointSite(new Point(0, 0));
+		Site line1 = new LineSite(new Point(0, 0), new Point(1, 1));
+		Site line2 = new LineSite(new Point(0, 2), new Point(2, 0));
+
+		List<Solution> solutions = new ArrayList<>();
+
+		assertThrows(AssertionError.class, () -> {
+			solver.solve(point1, 1.0, line1, 1.0, line2, 1.0, solutions);
+		});
+	}
+
 	@ParameterizedTest
 	@MethodSource("provideEdgeCases")
 	@DisplayName("Test edge cases with various line configurations")
