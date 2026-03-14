@@ -41,7 +41,7 @@ public class VertexPositioner {
 	/** alternative separator solver */
 	Solver alt_sep_solver;
 
-	// DATA
+// DATA
 	/** reference to the VD graph. */
 	HalfEdgeDiagram g;
 	/** minimum offset-distance */
@@ -52,6 +52,8 @@ public class VertexPositioner {
 	Edge edge;
 	/** error-statistics */
 	List<Double> errstat = new ArrayList<>();
+	/** silent mode (outputs no warnings to stdout) */
+	boolean silent;
 
 	// create positioner, set graph.
 	public VertexPositioner(HalfEdgeDiagram gi) {
@@ -62,6 +64,7 @@ public class VertexPositioner {
 		sep_solver = new SEPSolver();
 		alt_sep_solver = new ALTSEPSolver();
 		lll_para_solver = new LLLPARASolver();
+		silent = false;
 		errstat.clear();
 	}
 
@@ -350,13 +353,13 @@ public class VertexPositioner {
 			// s2/s3
 			if (s3.isLine() && s1.isPoint()) {
 				if (detect_sep_case(s3, s1)) {
-					alt_sep_solver.setType(0);
+					alt_sep_solver.set_type(0);
 					return alt_sep_solver.solve(s1, k1, s2, k2, s3, k3, solns);
 				}
 			}
 			if (s3.isLine() && s2.isPoint()) {
 				if (detect_sep_case(s3, s2)) {
-					alt_sep_solver.setType(1);
+					alt_sep_solver.set_type(1);
 					return alt_sep_solver.solve(s1, k1, s2, k2, s3, k3, solns);
 				}
 			}

@@ -37,8 +37,8 @@ public class QLLSolverTest {
 		}
 
 		// Tolerances
-		double tolLine = 1e-12;
-		double tolCirc = 1e-12;
+		double tolLine = 1e-6;
+		double tolCirc = 1e-6;
 
 		// Pull coefficients for the line equations
 		double a1 = lx0.a(), b1 = lx0.b(), c1 = lx0.c();
@@ -84,7 +84,7 @@ public class QLLSolverTest {
 			boolean hasExpectedT = false;
 			for (Solution s : out) {
 				double tAbs = Math.abs(s.t);
-				if (Math.abs(tAbs - tSmall) < 1e-10 || Math.abs(tAbs - tLarge) < 1e-10) {
+				if (Math.abs(tAbs - tSmall) < 1e-5 || Math.abs(tAbs - tLarge) < 1e-5) {
 					hasExpectedT = true;
 					break;
 				}

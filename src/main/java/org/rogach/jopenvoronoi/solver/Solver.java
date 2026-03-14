@@ -31,7 +31,7 @@ public abstract class Solver {
 	public abstract int solve(Site s1, double k1, Site s2, double k2, Site s3, double k3, List<Solution> slns);
 
 	// used by alt_sep_solver
-	public void setType(int t) {
+	public void set_type(int t) {
 		type = t;
 	}
 
@@ -39,4 +39,6 @@ public abstract class Solver {
 	// - type = 0 means l3 / p1 form a separator
 	// - type = 1 means l3 / p2 form a separator
 	int type;
+	/** suppress all warnings or other stdout output */
+	boolean silent;
 }

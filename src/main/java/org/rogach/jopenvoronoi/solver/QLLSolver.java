@@ -1,5 +1,8 @@
 package org.rogach.jopenvoronoi.solver;
 
+import static org.rogach.jopenvoronoi.util.Numeric.chop;
+import static org.rogach.jopenvoronoi.util.Numeric.quadratic_roots;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,261 +12,140 @@ import org.rogach.jopenvoronoi.vertex.Solution;
 
 /**
  * Quadratic-linear-linear solver.
- * <p>
- * Handles one quadratic equation and two linear equations. If there are
- * multiple quadratic sites, we subtract one quadratic equation from the others
- * to obtain the needed linear equations.
  */
 public class QLLSolver extends Solver {
-
-	private static final int[][] PERMUTATIONS = { { 0, 1, 2 }, // solve x,y in terms of t
-			{ 2, 0, 1 }, // solve t,x in terms of y
-			{ 1, 2, 0 } // solve y,t in terms of x
-	};
-
-	private static final double DET_EPS = 1e-12;
-	private static final double ROOT_EPS = 1e-12;
-	private static final double RES_EPS = 1e-9;
-	private static final double DUP_EPS = 1e-9;
-
 	@Override
 	public int solve(Site s1, double k1, Site s2, double k2, Site s3, double k3, List<Solution> slns) {
+		// equation-parameters, in quad-precision
+		List<Eq> quads = new ArrayList<>();
+		List<Eq> lins = new ArrayList<>();
 		var sites = new Site[] { s1, s2, s3 };
 		var kvals = new double[] { k1, k2, k3 };
-
-		List<Eq> original = new ArrayList<>(3);
-		List<Eq> quads = new ArrayList<>(3);
-		List<Eq> lins = new ArrayList<>(2);
-
-		for (int i = 0; i < 3; i++) {
-			var eq = sites[i].eqp(kvals[i]);
-			original.add(new Eq(eq));
+		for (var i = 0; i < 3; i++) {
+			var eqn = sites[i].eqp(kvals[i]);
 			if (sites[i].is_linear()) {
-				lins.add(new Eq(eq));
+				lins.add(eqn);
 			} else {
-				quads.add(new Eq(eq));
+				quads.add(eqn);
 			}
 		}
+		assert (!quads.isEmpty()) : " !quads.isEmpty() ";
 
-		if (quads.isEmpty()) {
+		if (lins.size() == 1 || lins.size() == 0) {
+			assert (quads.size() == 3 || quads.size() == 2) : " quads.size() == 3 || quads.size() == 2 ";
+			for (var i = 1; i < quads.size(); i++) {
+				quads.get(i).subEq(quads.get(0));
+				lins.add(quads.get(i));
+			}
+		}
+		assert (lins.size() == 2) : " lins.size() == 2";
+
+		// TODO: pick the solution appraoch with the best numerical stability.
+		// call all three permutations
+		// index shuffling determines if we solve:
+		// x and y in terms of t
+		// y and t in terms of x
+		// t and x in terms of y
+		qll_solver(lins, 0, 1, 2, quads.get(0), k3, slns);
+		qll_solver(lins, 2, 0, 1, quads.get(0), k3, slns);
+		qll_solver(lins, 1, 2, 0, quads.get(0), k3, slns);
+
+		return slns.size();
+	}
+
+	/**
+	 * Solve the QLL system for a fixed quadratic equation and two linear equations.
+	 *
+	 * @param lins two linear equations
+	 * @param xi x-index used when shuffling coordinates
+	 * @param yi y-index used when shuffling coordinates
+	 * @param ti t-index used when shuffling coordinates
+	 * @param quad parameters of the quadratic site (point or arc)
+	 * @param k3 offset direction for the quadratic site
+	 * @param solns output solution triplets {@code (x, y, t)} or
+	 *              {@code (u, v, t)}
+	 * @return number of solutions found
+	 */
+	private int qll_solver(List<Eq> lins, int xi, int yi, int ti, Eq quad, double k3, List<Solution> solns) {
+		assert (lins.size() == 2) : " lins.size() == 2 ";
+		var ai = lins.get(0).get(xi); // first linear
+		var bi = lins.get(0).get(yi);
+		var ki = lins.get(0).get(ti);
+		var ci = lins.get(0).c;
+
+		var aj = lins.get(1).get(xi); // second linear
+		var bj = lins.get(1).get(yi);
+		var kj = lins.get(1).get(ti);
+		var cj = lins.get(1).c;
+
+		var d = chop(ai * bj - aj * bi); // chop! (determinant for 2 linear eqns (?))
+		if (d == 0) {
+			return -1;
+		}
+		// these are the w-equations for qll_solve()
+		// (2) u = a1 w + b1
+		// (3) v = a2 w + b2
+		var a0 = (bi * kj - bj * ki) / d;
+		var a1 = -(ai * kj - aj * ki) / d;
+		var b0 = (bi * cj - bj * ci) / d;
+		var b1 = -(ai * cj - aj * ci) / d;
+		// based on the 'last' quadratic of (s1,s2,s3)
+		var aargs = new double[3][2];
+		aargs[0][0] = 1.0;
+		aargs[0][1] = quad.a;
+		aargs[1][0] = 1.0;
+		aargs[1][1] = quad.b;
+		aargs[2][0] = -1.0;
+		aargs[2][1] = quad.k;
+
+		var isolns = new double[2][3];
+		// this solves for w, and returns either 0, 1, or 2 triplets of (u,v,t) in
+		// isolns
+		// NOTE: indexes of aargs shuffled depending on (xi,yi,ti) !
+		var scount = qll_solve(aargs[xi][0], aargs[xi][1], aargs[yi][0], aargs[yi][1], aargs[ti][0], aargs[ti][1],
+				quad.c, // xk*xk + yk*yk - rk*rk,
+				a0, b0, a1, b1, isolns);
+		var tsolns = new double[2][3];
+		for (var i = 0; i < scount; i++) {
+			tsolns[i][xi] = isolns[i][0]; // u x
+			tsolns[i][yi] = isolns[i][1]; // v y
+			tsolns[i][ti] = isolns[i][2]; // t t chop!
+			solns.add(new Solution(new Point(tsolns[i][0], tsolns[i][1]), tsolns[i][2], k3));
+		}
+		// std::cout << " k3="<<kk3<<" qqq_solve found " << scount << " roots\n";
+		return scount;
+	}
+
+	// Solve a system of one quadratic equation, and two linear equations.
+	/**
+	 * Solve a system of one quadratic equation and two linear equations:
+	 * <pre>{@code
+	 * (1) a0 u^2 + b0 u + c0 v^2 + d0 v + e0 w^2 + f0 w + g0 = 0
+	 * (2) u = a1 w + b1
+	 * (3) v = a2 w + b2
+	 * }</pre>
+	 * Solve equation (1) for {@code w} and then substitute into (2) and (3) to
+	 * find {@code (u, v, t)}.
+	 */
+	private int qll_solve(double a0, double b0, double c0, double d0, double e0, double f0, double g0, double a1,
+			double b1, double a2, double b2, double soln[][]) {
+		// std::cout << "qll_solver()\n";
+		// TODO: optimize using abs(a0) == abs(c0) == abs(d0) == 1
+		var a = chop((a0 * (a1 * a1) + c0 * (a2 * a2) + e0));
+		var b = chop((2 * a0 * a1 * b1 + 2 * a2 * b2 * c0 + a1 * b0 + a2 * d0 + f0));
+		var c = a0 * (b1 * b1) + c0 * (b2 * b2) + b0 * b1 + b2 * d0 + g0;
+		var roots = quadratic_roots(a, b, c); // solves a*w^2 + b*w + c = 0
+		if (roots.isEmpty()) { // No roots, no solutions
 			return 0;
-		}
-
-		// Convert extra quadratic equations into linear equations by subtraction.
-		if (lins.size() <= 1) {
-			if (quads.size() < 2) {
-				return 0;
+		} else {
+			for (var i = 0; i < roots.size(); i++) {
+				double w = roots.get(i);
+				soln[i][0] = a1 * w + b1; // u
+				soln[i][1] = a2 * w + b2; // v
+				soln[i][2] = w; // t
 			}
-			var base = quads.get(0);
-			for (int i = 1; i < quads.size(); i++) {
-				var lin = new Eq(quads.get(i));
-				lin.subEq(base);
-				lins.add(lin);
-			}
+			return roots.size();
 		}
-
-		if (lins.size() != 2) {
-			return 0;
-		}
-
-		var quad = quads.get(0);
-
-		// Try best-conditioned permutation first, then the others if needed.
-		var order = permutationOrder(lins);
-		for (int idx : order) {
-			var p = PERMUTATIONS[idx];
-			int added = solvePermutation(lins, p[0], p[1], p[2], quad, original, k3, slns);
-			if (added > 0) {
-				return added;
-			}
-		}
-
-		return 0;
 	}
 
-	private int solvePermutation(List<Eq> lins, int xi, int yi, int ti, Eq quad, List<Eq> original, double k3, List<Solution> solns) {
-
-		var li = lins.get(0);
-		var lj = lins.get(1);
-
-		double ai = li.get(xi);
-		double bi = li.get(yi);
-		double ki = li.get(ti);
-		double ci = li.c;
-
-		double aj = lj.get(xi);
-		double bj = lj.get(yi);
-		double kj = lj.get(ti);
-		double cj = lj.c;
-
-		double d = ai * bj - aj * bi;
-		double dScale = Math.abs(ai * bj) + Math.abs(aj * bi) + 1.0;
-		if (Math.abs(d) <= DET_EPS * dScale) {
-			return 0;
-		}
-
-		// u = uSlope*w + uIntercept
-		// v = vSlope*w + vIntercept
-		double uSlope = (bi * kj - bj * ki) / d;
-		double vSlope = -(ai * kj - aj * ki) / d;
-		double uIntercept = (bi * cj - bj * ci) / d;
-		double vIntercept = -(ai * cj - aj * ci) / d;
-
-		double[] squareCoeff = { 1.0, 1.0, -1.0 };
-		double[] linearCoeff = { quad.a, quad.b, quad.k };
-
-		double[] roots = new double[2];
-		int rootCount = solveReducedQuadratic(squareCoeff[xi], linearCoeff[xi], squareCoeff[yi], linearCoeff[yi], squareCoeff[ti], linearCoeff[ti], quad.c,
-				uSlope, uIntercept, vSlope, vIntercept, roots);
-
-		int added = 0;
-		for (int i = 0; i < rootCount; i++) {
-			double w = roots[i];
-			double u = uSlope * w + uIntercept;
-			double v = vSlope * w + vIntercept;
-
-			double[] xyz = new double[3];
-			xyz[xi] = u;
-			xyz[yi] = v;
-			xyz[ti] = w;
-
-			double x = xyz[0];
-			double y = xyz[1];
-			double t = xyz[2];
-
-			if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(t)) {
-				continue;
-			}
-
-			double tTol = ROOT_EPS * (Math.abs(t) + 1.0);
-			if (t < -tTol) {
-				continue;
-			}
-			if (t < 0.0) {
-				t = 0.0;
-			}
-
-			if (!satisfiesAll(original, x, y, t)) {
-				continue;
-			}
-
-			if (isDuplicate(solns, x, y)) {
-				continue;
-			}
-
-			solns.add(new Solution(new Point(x, y), t, k3));
-			added++;
-		}
-
-		return added;
-	}
-
-	private int solveReducedQuadratic(double u2, double u1, double v2, double v1, double w2, double w1, double g0, double uSlope, double uIntercept,
-			double vSlope, double vIntercept, double[] roots) {
-
-		double A = u2 * uSlope * uSlope + v2 * vSlope * vSlope + w2;
-		double B = 2.0 * u2 * uSlope * uIntercept + 2.0 * v2 * vSlope * vIntercept + u1 * uSlope + v1 * vSlope + w1;
-		double C = u2 * uIntercept * uIntercept + v2 * vIntercept * vIntercept + u1 * uIntercept + v1 * vIntercept + g0;
-
-		return solveQuadratic(A, B, C, roots);
-	}
-
-	private int solveQuadratic(double a, double b, double c, double[] roots) {
-		double scale = Math.abs(a) + Math.abs(b) + Math.abs(c) + 1.0;
-
-		if (Math.abs(a) <= ROOT_EPS * scale) {
-			if (Math.abs(b) <= ROOT_EPS * scale) {
-				return 0;
-			}
-			roots[0] = -c / b;
-			return 1;
-		}
-
-		double disc = b * b - 4.0 * a * c;
-		double discScale = Math.abs(b * b) + Math.abs(4.0 * a * c) + 1.0;
-
-		if (disc < -ROOT_EPS * discScale) {
-			return 0;
-		}
-		if (Math.abs(disc) <= ROOT_EPS * discScale) {
-			roots[0] = -b / (2.0 * a);
-			return 1;
-		}
-
-		double sqrtDisc = Math.sqrt(Math.max(0.0, disc));
-		double q = -0.5 * (b + Math.copySign(sqrtDisc, b));
-
-		double r1 = q / a;
-		double r2 = (Math.abs(q) <= ROOT_EPS * scale) ? (-b / (2.0 * a)) : (c / q);
-
-		roots[0] = r1;
-		if (nearlyEqual(r1, r2, DUP_EPS)) {
-			return 1;
-		}
-		roots[1] = r2;
-		return 2;
-	}
-
-	private boolean satisfiesAll(List<Eq> eqs, double x, double y, double t) {
-		for (var eq : eqs) {
-			double residual;
-			double scale;
-
-			if (eq.q) {
-				residual = x * x + eq.a * x + y * y + eq.b * y - t * t + eq.k * t + eq.c;
-				scale = x * x + Math.abs(eq.a * x) + y * y + Math.abs(eq.b * y) + t * t + Math.abs(eq.k * t) + Math.abs(eq.c) + 1.0;
-			} else {
-				residual = eq.a * x + eq.b * y + eq.k * t + eq.c;
-				scale = Math.abs(eq.a * x) + Math.abs(eq.b * y) + Math.abs(eq.k * t) + Math.abs(eq.c) + 1.0;
-			}
-
-			if (Math.abs(residual) > RES_EPS * scale) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private boolean isDuplicate(List<Solution> solns, double x, double y) {
-		for (var s : solns) {
-			if (nearlyEqual(s.p.x, x, DUP_EPS) && nearlyEqual(s.p.y, y, DUP_EPS)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private int[] permutationOrder(List<Eq> lins) {
-		double[] score = new double[PERMUTATIONS.length];
-		for (int i = 0; i < PERMUTATIONS.length; i++) {
-			int xi = PERMUTATIONS[i][0];
-			int yi = PERMUTATIONS[i][1];
-			score[i] = permutationScore(lins, xi, yi);
-		}
-
-		int[] order = { 0, 1, 2 };
-		for (int i = 0; i < order.length; i++) {
-			for (int j = i + 1; j < order.length; j++) {
-				if (score[order[j]] > score[order[i]]) {
-					int tmp = order[i];
-					order[i] = order[j];
-					order[j] = tmp;
-				}
-			}
-		}
-		return order;
-	}
-
-	private double permutationScore(List<Eq> lins, int xi, int yi) {
-		double ai = lins.get(0).get(xi);
-		double bi = lins.get(0).get(yi);
-		double aj = lins.get(1).get(xi);
-		double bj = lins.get(1).get(yi);
-		return Math.abs(ai * bj - aj * bi);
-	}
-
-	private boolean nearlyEqual(double a, double b, double eps) {
-		double scale = Math.max(1.0, Math.max(Math.abs(a), Math.abs(b)));
-		return Math.abs(a - b) <= eps * scale;
-	}
 }
