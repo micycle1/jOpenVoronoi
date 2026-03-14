@@ -46,7 +46,7 @@ for (int i = 0; i < 100; i++) {
   voronoi.insertPointSite(Math.random(), Math.random());
 }
 
-voronoi.getNonNullFaces().forEach(face -> {
+voronoi.getFaces().forEach(face -> {
     face.getEdges().forEach(edge -> {
         vertex(edge.source.position.x, edge.source.position.y);
         vertex(edge.target.position.x, edge.target.position.y);

@@ -46,6 +46,13 @@ public class Face {
 		return status;
 	}
 
+	/**
+	 * Returns whether this face is an internal helper face rather than a
+	 * user-visible Voronoi cell.
+	 * <p>
+	 * Null faces are introduced by the line-site insertion algorithm to model
+	 * endpoint/null-edge structure in the half-edge graph.
+	 */
 	public boolean isNullFace() {
 		return is_null_face;
 	}

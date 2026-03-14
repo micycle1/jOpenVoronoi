@@ -57,15 +57,19 @@ public class VoronoiDiagramApiTest {
 
 		Assertions.assertEquals(4, diagram.numPointSites());
 		Assertions.assertEquals(4, diagram.numLineSites());
-		Assertions.assertEquals(diagram.numFaces(), diagram.getDiagram().numFaces());
+		Assertions.assertEquals(diagram.getFaces().size(), diagram.numFaces());
+		Assertions.assertTrue(diagram.numAllFaces() >= diagram.numFaces());
+		Assertions.assertTrue(diagram.getAllFaces().size() >= diagram.getFaces().size());
 		Assertions.assertSame(diagram.getFace(first), first.face);
 
-		Face face = diagram.getNonNullFaces().stream().filter(Face::isPointSiteFace).findFirst().orElseThrow();
+		Face face = diagram.getFaces().stream().filter(Face::isPointSiteFace).findFirst().orElseThrow();
 		Assertions.assertFalse(face.getEdges().isEmpty());
 		Assertions.assertFalse(face.getVertices().isEmpty());
 		Assertions.assertEquals(face.getEdges(), diagram.getFaceEdges(face));
 		Assertions.assertEquals(face.getVertices(), diagram.getFaceVertices(face));
 		Assertions.assertFalse(diagram.getAdjacentFaces(face).isEmpty());
-		Assertions.assertTrue(diagram.getNonNullFaces().stream().noneMatch(Face::isNullFace));
+		Assertions.assertTrue(diagram.getFaces().stream().noneMatch(Face::isNullFace));
+		Assertions.assertEquals(diagram.getFaces(), diagram.getNonNullFaces());
+		Assertions.assertTrue(diagram.getAllFaces().stream().anyMatch(Face::isNullFace));
 	}
 }
