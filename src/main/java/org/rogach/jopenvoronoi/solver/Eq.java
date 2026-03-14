@@ -118,13 +118,6 @@ public class Eq {
 		k -= other.k;
 	}
 
-	// subtraction
-	public Eq sub(Eq other) {
-		var res = new Eq();
-		res.subEq(other);
-		return res;
-	}
-
 	// access parameters through operator[]
 	public double get(int idx) {
 		switch (idx) {

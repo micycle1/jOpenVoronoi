@@ -74,6 +74,7 @@ public class Edge {
 		this.has_null_face = other.has_null_face;
 		this.type = other.type;
 		this.valid = other.valid;
+		this.inserted_direction = other.inserted_direction;
 		x[0] = other.x[0];
 		x[1] = other.x[1];
 		x[2] = other.x[2];

@@ -39,8 +39,9 @@ public class Point {
 	}
 
 	public void normalize() {
-		if (this.norm() != 0.0) {
-			this.multEq(1 / this.norm());
+		var n = this.norm();
+		if (n != 0.0) {
+			this.multEq(1 / n);
 		}
 	}
 

@@ -72,6 +72,9 @@ public class Offset {
 	private void offset_loop_walk(Face start, double t) {
 		var out_in_mode = false;
 		var start_edge = find_next_offset_edge(start.edge, t, out_in_mode); // the first edge on the start-face
+		if (start_edge == null) {
+			throw new IllegalStateException("No bracketing edge found on start face for t=" + t);
+		}
 		var current_edge = start_edge;
 		var loop = new OffsetLoop(); // store the output in this loop
 		loop.offset_distance = t;
@@ -80,6 +83,9 @@ public class Offset {
 			out_in_mode = edge_mode(current_edge, t);
 			// find the next edge
 			var next_edge = find_next_offset_edge(current_edge.next, t, out_in_mode);
+			if (next_edge == null) {
+				throw new IllegalStateException("Broken offset walk: no next bracketing edge for t=" + t);
+			}
 			var current_face = current_edge.face;
 			loop.add(offset_element_from_face(current_face, current_edge, next_edge, t));
 			remaining_faces.remove(current_face); // although we may revisit current_face (if it is non-convex), it
@@ -136,22 +142,19 @@ public class Offset {
 	private Edge find_next_offset_edge(Edge e, double t, boolean mode) {
 		var start = e;
 		var current = start;
-		var ofs_edge = e;
 		do {
 			var src = current.source;
 			var trg = current.target;
 			var src_r = src.dist();
 			var trg_r = trg.dist();
 			if (!mode && (src_r < t) && (t < trg_r)) {
-				ofs_edge = current;
-				break;
+				return current;
 			} else if (mode && (trg_r < t) && (t < src_r)) {
-				ofs_edge = current;
-				break;
+				return current;
 			}
 			current = current.next;
 		} while (current != start);
-		return ofs_edge;
+		return null;
 	}
 
 	// go through all faces and set flag=0 if the face requires an offset.
