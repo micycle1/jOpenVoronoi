@@ -23,11 +23,12 @@ public class RandomPolygon {
 	}
 
 	/**
-	 * 
-	 * @param nPoints
+	 * Generates a random polygon.
+	 *
+	 * @param nPoints number of polygon vertices to generate
 	 * @param min     minimum bound of x and y coordinates
 	 * @param max     maximum bound of x and y coordinates
-	 * @return
+	 * @return the generated polygon vertices
 	 */
 	public static List<Point2D> generate_polygon(int nPoints, int min, int max) {
 		var points = generate_points(nPoints, min, max);

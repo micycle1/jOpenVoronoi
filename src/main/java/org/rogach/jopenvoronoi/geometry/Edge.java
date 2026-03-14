@@ -107,7 +107,7 @@ public class Edge {
 	/**
 	 * Returns the midpoint of the edge source and target positions
 	 * 
-	 * @return
+	 * @return the midpoint between the source and target vertices
 	 */
 	public Point position() {
 		return (source.position.add(target.position)).mult(0.5); // TODO pre-calculate?

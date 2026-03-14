@@ -9,11 +9,12 @@ import java.util.Set;
 public class RandomLabyrinth {
 
 	/**
-	 * 
-	 * @param size
+	 * Generates a labyrinth as a planar graph.
+	 *
+	 * @param size grid size of the labyrinth
 	 * @param loadFactor [0...1] at 0 and 1 labyrinth is regular; at 0.5, the most
 	 *                   cells are merged
-	 * @return
+	 * @return the generated labyrinth graph
 	 */
 	public static PlanarGraph generateLabyrinth(int size, double loadFactor) {
 		// stores bitwise fields to indicate connections between cells
