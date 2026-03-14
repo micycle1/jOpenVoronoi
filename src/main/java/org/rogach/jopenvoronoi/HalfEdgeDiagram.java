@@ -75,8 +75,16 @@ public class HalfEdgeDiagram {
 	}
 
 	// return number of vertices in graph
-	public int num_vertices() {
+	public int numVertices() {
 		return vertices.size();
+	}
+
+	/**
+	 * @deprecated Use {@link #numVertices()}.
+	 */
+	@Deprecated
+	public int num_vertices() {
+		return numVertices();
 	}
 
 	// return number of edges in graph
