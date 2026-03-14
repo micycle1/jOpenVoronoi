@@ -102,6 +102,8 @@ public abstract class KdTree<T> {
 
 	/**
 	 * Get the number of points in the tree
+	 *
+	 * @return the number of stored points
 	 */
 	public int size() {
 		return locationCount;
@@ -109,6 +111,9 @@ public abstract class KdTree<T> {
 
 	/**
 	 * Add a point and associated value to the tree
+	 *
+	 * @param location coordinates of the point to insert
+	 * @param value value associated with the inserted point
 	 */
 	public void addPoint(double[] location, T value) {
 		var cursor = this;
@@ -304,6 +309,11 @@ public abstract class KdTree<T> {
 
 	/**
 	 * Calculates the nearest 'count' points to 'location'
+	 *
+	 * @param location query point coordinates
+	 * @param count maximum number of neighbors to return
+	 * @param sequentialSorting whether to sort the results sequentially
+	 * @return the nearest neighbors together with their distances
 	 */
 	@SuppressWarnings("unchecked")
 	public List<Entry<T>> nearestNeighbor(double[] location, int count, boolean sequentialSorting) {

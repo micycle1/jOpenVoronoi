@@ -67,6 +67,7 @@ public class HalfEdgeDiagram {
 	}
 
 	/**
+	 * @return the number of faces in the diagram
 	 * @deprecated Use {@link #numFaces()}.
 	 */
 	@Deprecated
@@ -80,6 +81,7 @@ public class HalfEdgeDiagram {
 	}
 
 	/**
+	 * @return the number of vertices in the diagram
 	 * @deprecated Use {@link #numVertices()}.
 	 */
 	@Deprecated
@@ -160,6 +162,9 @@ public class HalfEdgeDiagram {
 
 	/**
 	 * Insert vertex v into the middle of Edge e
+	 *
+	 * @param v vertex to insert
+	 * @param e edge to split
 	 */
 	public void add_vertex_in_edge(Vertex v, Edge e) {
 		// the vertex v is inserted into the middle of edge e
@@ -229,7 +234,9 @@ public class HalfEdgeDiagram {
 	/**
 	 * Adds two edges: one from v1 to v2, and one from v2 to v1
 	 *
-	 * @return
+	 * @param v1 source vertex of the first edge
+	 * @param v2 source vertex of the twin edge
+	 * @return the two created twin edges
 	 */
 	public Pair<Edge, Edge> add_twin_edges(Vertex v1, Vertex v2) {
 		var e1 = add_edge(v1, v2);
@@ -300,6 +307,8 @@ public class HalfEdgeDiagram {
 	}
 
 	/**
+	 * @param f face whose boundary edges should be returned
+	 * @return the boundary edges of {@code f}
 	 * @deprecated Use {@link #faceEdges(Face)}.
 	 */
 	@Deprecated

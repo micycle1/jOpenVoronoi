@@ -15,9 +15,10 @@ public class LindenmayerCurve {
 	// TODO other L-Systems
 
 	/**
-	 * 
+	 * Generates a Moore curve of the requested iteration depth.
+	 *
 	 * @param k fractal depth
-	 * @return
+	 * @return the generated planar graph for the curve
 	 */
 	public static PlanarGraph generateMooreCurve(int k) {
 		var axiom = "LFL+F+LFL";

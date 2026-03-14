@@ -137,6 +137,9 @@ public class VoronoiDiagram {
 	}
 
 	/**
+	 * @param x x-coordinate of the point site
+	 * @param y y-coordinate of the point site
+	 * @return handle to the inserted point site
 	 * @deprecated Use {@link #insertPointSite(double, double)}.
 	 */
 	@Deprecated
@@ -218,6 +221,8 @@ public class VoronoiDiagram {
 	}
 
 	/**
+	 * @param p point site to insert
+	 * @return handle to the inserted point site
 	 * @deprecated Use {@link #insertPointSite(Point)}.
 	 */
 	@Deprecated
@@ -253,7 +258,7 @@ public class VoronoiDiagram {
 	 * 
 	 * @param start startpoint of line-segment
 	 * @param end   endpoint of line-segment
-	 * @return
+	 * @return {@code true} when the line site is inserted successfully
 	 */
 	public boolean insertLineSite(Vertex start, Vertex end) {
 
@@ -401,6 +406,9 @@ public class VoronoiDiagram {
 	}
 
 	/**
+	 * @param start startpoint of line-segment
+	 * @param end endpoint of line-segment
+	 * @return {@code true} when the line site is inserted successfully
 	 * @deprecated Use {@link #insertLineSite(Vertex, Vertex)}.
 	 */
 	@Deprecated
@@ -414,6 +422,7 @@ public class VoronoiDiagram {
 	}
 
 	/**
+	 * @return the configured far radius
 	 * @deprecated Use {@link #getFarRadius()}.
 	 */
 	@Deprecated
@@ -435,6 +444,10 @@ public class VoronoiDiagram {
 
 	/**
 	 * Returns the face nearest to the given point.
+	 *
+	 * @param x x-coordinate of the query point
+	 * @param y y-coordinate of the query point
+	 * @return the nearest face
 	 */
 	public Face nearestFace(double x, double y) {
 		return nearestFaces(x, y, 1).get(0);
@@ -442,6 +455,11 @@ public class VoronoiDiagram {
 
 	/**
 	 * Returns the N nearest faces to the given point.
+	 *
+	 * @param x x-coordinate of the query point
+	 * @param y y-coordinate of the query point
+	 * @param n maximum number of nearest faces to return
+	 * @return the nearest faces in ascending distance order
 	 */
 	public List<Face> nearestFaces(double x, double y, int n) {
 		var heap = kd_tree.findNearestNeighbors(new double[] { x, y }, n, new SquareEuclideanDistanceFunction());
@@ -461,6 +479,7 @@ public class VoronoiDiagram {
 	}
 
 	/**
+	 * @return the number of inserted point sites
 	 * @deprecated Use {@link #numPointSites()}.
 	 */
 	@Deprecated
@@ -474,6 +493,7 @@ public class VoronoiDiagram {
 	}
 
 	/**
+	 * @return the number of inserted line sites
 	 * @deprecated Use {@link #numLineSites()}.
 	 */
 	@Deprecated
@@ -487,6 +507,7 @@ public class VoronoiDiagram {
 	}
 
 	/**
+	 * @return the number of inserted arc sites
 	 * @deprecated Use {@link #numArcSites()}.
 	 */
 	@Deprecated
@@ -500,6 +521,7 @@ public class VoronoiDiagram {
 	}
 
 	/**
+	 * @return the number of Voronoi vertices
 	 * @deprecated Use {@link #numVertices()}.
 	 */
 	@Deprecated
@@ -513,6 +535,7 @@ public class VoronoiDiagram {
 	}
 
 	/**
+	 * @return the number of faces in the diagram
 	 * @deprecated Use {@link #numFaces()}.
 	 */
 	@Deprecated
@@ -532,6 +555,7 @@ public class VoronoiDiagram {
 	}
 
 	/**
+	 * @return the number of split vertices in the diagram
 	 * @deprecated Use {@link #numSplitVertices()}.
 	 */
 	@Deprecated
