@@ -516,7 +516,13 @@ public class VoronoiDiagram {
 
 	// return number of user-visible faces in graph
 	public int numFaces() {
-		return getFaces().size();
+		var count = 0;
+		for (Face face : g.faces) {
+			if (!face.isNullFace()) {
+				count++;
+			}
+		}
+		return count;
 	}
 
 	// return total number of faces in graph, including internal null-faces
