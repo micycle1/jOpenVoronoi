@@ -56,6 +56,51 @@ voronoi.getFaces().forEach(face -> {
 });
 ```
 
+Get the medial axis for a polygon represented by a list of points:
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.rogach.jopenvoronoi.VoronoiDiagram;
+import org.rogach.jopenvoronoi.filter.MedialAxisFilter;
+import org.rogach.jopenvoronoi.filter.PolygonInteriorFilter;
+import org.rogach.jopenvoronoi.geometry.Edge;
+import org.rogach.jopenvoronoi.geometry.EdgeType;
+import org.rogach.jopenvoronoi.geometry.Point;
+import org.rogach.jopenvoronoi.vertex.Vertex;
+
+List<Point> polygon = List.of(
+    new Point(-1.0, -1.0),
+    new Point(1.0, -1.0),
+    new Point(1.0, 1.0),
+    new Point(-1.0, 1.0)
+);
+
+VoronoiDiagram voronoi = new VoronoiDiagram();
+List<Vertex> polygonVertices = new ArrayList<>(polygon.size());
+for (Point point : polygon) {
+    polygonVertices.add(voronoi.insertPointSite(point));
+}
+for (int i = 0; i < polygonVertices.size(); i++) {
+    voronoi.insertLineSite(polygonVertices.get(i), polygonVertices.get((i + 1) % polygonVertices.size()));
+}
+
+// The example polygon points are ordered counter-clockwise.
+voronoi.filter(new PolygonInteriorFilter(true));
+voronoi.filter(new MedialAxisFilter());
+
+List<Edge> medialAxis = voronoi.getDiagram().edges.stream()
+    .filter(edge -> edge.valid)
+    .filter(edge -> edge.type != EdgeType.LINESITE)
+    .filter(edge -> edge.type != EdgeType.NULLEDGE)
+    .filter(edge -> edge.type != EdgeType.OUTEDGE)
+    .collect(Collectors.toList());
+```
+
+`medialAxis` contains the half-edges of the polygon's medial axis. Each geometric segment appears twice in the half-edge diagram (once per direction), so pair `edge`/`edge.twin` if you only need one copy of each branch.
+
 # Images
 
 ## Voronoi
