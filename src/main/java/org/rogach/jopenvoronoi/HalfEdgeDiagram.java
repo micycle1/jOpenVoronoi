@@ -275,6 +275,10 @@ public class HalfEdgeDiagram {
 		return verts;
 	}
 
+	public List<Vertex> faceVertices(Face face) {
+		return face_vertices(face);
+	}
+
 	// return edges of face f as a vector
 	// NOTE: it is faster to write a do-while loop in client code than to call this
 	// function!

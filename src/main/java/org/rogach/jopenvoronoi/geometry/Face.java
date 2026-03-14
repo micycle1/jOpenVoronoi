@@ -25,7 +25,7 @@ public class Face {
 	}
 
 	public List<Vertex> getVertices() {
-		return requireDiagram().face_vertices(this);
+		return requireDiagram().faceVertices(this);
 	}
 
 	public List<Face> getAdjacentFaces() {

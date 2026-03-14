@@ -48,8 +48,8 @@ for (int i = 0; i < 100; i++) {
 
 voronoi.getNonNullFaces().forEach(face -> {
     face.getEdges().forEach(edge -> {
-         vertex(edge.source.position.x, edge.source.position.y);
-         vertex(edge.target.position.x, edge.target.position.y);
+        vertex(edge.source.position.x, edge.source.position.y);
+        vertex(edge.target.position.x, edge.target.position.y);
     });
 });
 ```
