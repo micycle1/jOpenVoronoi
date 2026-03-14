@@ -46,13 +46,10 @@ for (int i = 0; i < 100; i++) {
   voronoi.insertPointSite(Math.random(), Math.random());
 }
 
-HalfEdgeDiagram diagram = voronoi.getDiagram();
-
-voronoi.getFaces().forEach(face -> {
-    Point pos = face.site.position();
-    diagram.faceEdges(face).forEach(edge -> {
-        vertex(edge.source.position.x, edge.source.position.y);
-        vertex(edge.target.position.x, edge.target.position.y);
+voronoi.getNonNullFaces().forEach(face -> {
+    face.getEdges().forEach(edge -> {
+         vertex(edge.source.position.x, edge.source.position.y);
+         vertex(edge.target.position.x, edge.target.position.y);
     });
 });
 ```

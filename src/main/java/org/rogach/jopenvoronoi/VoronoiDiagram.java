@@ -393,6 +393,50 @@ public class VoronoiDiagram {
 		return new ArrayList<>(g.faces);
 	}
 
+	public List<Face> getNonNullFaces() {
+		List<Face> faces = new ArrayList<>();
+		for (Face face : g.faces) {
+			if (!face.isNullFace()) {
+				faces.add(face);
+			}
+		}
+		return faces;
+	}
+
+	public Face getFace(Vertex vertex) {
+		if (vertex == null) {
+			throw new IllegalArgumentException("vertex cannot be null");
+		}
+		if (vertex.face != null) {
+			return vertex.face;
+		}
+		if (vertex.null_face != null) {
+			return vertex.null_face;
+		}
+		throw new IllegalArgumentException("vertex is not directly associated with a face");
+	}
+
+	public List<Edge> getFaceEdges(Face face) {
+		if (face == null) {
+			throw new IllegalArgumentException("face cannot be null");
+		}
+		return face.getEdges();
+	}
+
+	public List<Vertex> getFaceVertices(Face face) {
+		if (face == null) {
+			throw new IllegalArgumentException("face cannot be null");
+		}
+		return face.getVertices();
+	}
+
+	public List<Face> getAdjacentFaces(Face face) {
+		if (face == null) {
+			throw new IllegalArgumentException("face cannot be null");
+		}
+		return face.getAdjacentFaces();
+	}
+
 	public List<Edge> getEdges() {
 		return new ArrayList<>(g.edges);
 	}

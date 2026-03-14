@@ -239,6 +239,7 @@ public class HalfEdgeDiagram {
 	// add a face, with given properties
 	public Face add_face() {
 		var f = new Face();
+		f.attachDiagram(this);
 		faces.add(f);
 		return f;
 	}
