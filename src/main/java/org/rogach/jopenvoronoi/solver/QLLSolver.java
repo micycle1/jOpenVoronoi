@@ -23,7 +23,7 @@ public class QLLSolver extends Solver {
 		var kvals = new double[] { k1, k2, k3 };
 		for (var i = 0; i < 3; i++) {
 			var eqn = sites[i].eqp(kvals[i]);
-			if (sites[i].is_linear()) {
+			if (sites[i].isLine()) {
 				lins.add(eqn);
 			} else {
 				quads.add(eqn);

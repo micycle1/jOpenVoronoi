@@ -49,16 +49,6 @@ public abstract class Site {
 		return eq2;
 	}
 
-	// true for LineSite
-	public boolean is_linear() {
-		return isLine();
-	}
-
-	// true for PointSite and ArcSite
-	public boolean is_quadratic() {
-		return isPoint();
-	}
-
 	// x position
 	public double x() {
 		throw new UnsupportedOperationException();
