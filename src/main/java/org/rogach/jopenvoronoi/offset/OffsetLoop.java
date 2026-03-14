@@ -7,7 +7,7 @@ import java.util.List;
 public class OffsetLoop {
 	/** list of offsetvertices in this loop */
 	public List<OffsetVertex> vertices = new ArrayList<>();
-	public double offset_distance;
+	public double offsetDistance;
 
 	public void add(OffsetVertex v) {
 		vertices.add(v);

@@ -11,7 +11,7 @@ public class Numeric {
 
 	// solve quadratic eqn: a*x*x + b*x + c = 0
 	// returns real roots (0, 1, or 2) as vector
-	public static List<Double> quadratic_roots(double a, double b, double c) {
+	public static List<Double> quadraticRoots(double a, double b, double c) {
 		List<Double> roots = new ArrayList<>();
 		if ((a == 0) && (b == 0)) {
 			return roots;
@@ -88,23 +88,23 @@ public class Numeric {
 		}
 	}
 
-	public static double diangle_x(double a) {
+	public static double diangleX(double a) {
 		return (a < 2 ? 1 - a : a - 3);
 	}
 
-	public static double diangle_y(double a) {
+	public static double diangleY(double a) {
 		return (a < 3 ? ((a > 1) ? 2 - a : a) : a - 4);
 	}
 
-	public static Pair<Double, Double> diangle_xy(double a) {
-		var x = diangle_x(a);
-		var y = diangle_y(a);
+	public static Pair<Double, Double> diangleXy(double a) {
+		var x = diangleX(a);
+		var y = diangleY(a);
 		var norm = Math.sqrt(x * x + y * y);
 		return new Pair<Double, Double>(x / norm, y / norm);
 	}
 
 	// return true if a lies in [less,more]
-	public static boolean diangle_bracket(double less, double a, double more) {
+	public static boolean diangleBracket(double less, double a, double more) {
 		if (less == more) {
 			return false;
 		} else if (less <= more) { // normal case..
@@ -119,7 +119,7 @@ public class Numeric {
 	}
 
 	// return average of input angles
-	public static double diangle_mid(double alfa1, double alfa2) {
+	public static double diangleMid(double alfa1, double alfa2) {
 		if (alfa1 <= alfa2) {
 			return (alfa1 + alfa2) / 2;
 		} else {

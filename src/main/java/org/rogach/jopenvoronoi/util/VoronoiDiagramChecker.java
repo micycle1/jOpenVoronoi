@@ -23,12 +23,12 @@ public class VoronoiDiagramChecker {
 
 	// overall sanity-check for the diagram, calls other sanity-check functions
 	public boolean is_valid() {
-		return (all_faces_ok() && vertex_degree_ok() && face_count_equals_generator_count());
+		return (allFacesOk() && vertexDegreeOk() && faceCountEqualsGeneratorCount());
 	}
 
 	// check that number of faces equals the number of generators
 	// \todo not implemented!
-	public boolean face_count_equals_generator_count() {
+	public boolean faceCountEqualsGeneratorCount() {
 		// Euler formula for planar graphs
 		// v - e + f = 2
 		// in a half-edge diagram all edges occur twice, so:
@@ -48,9 +48,9 @@ public class VoronoiDiagramChecker {
 
 	// check that the diagram is of degree three.
 	// however ::SPLIT and ::APEX vertices are of degree 2.
-	public boolean vertex_degree_ok() {
+	public boolean vertexDegreeOk() {
 		for (Vertex v : g.vertices) {
-			if (v.degree() != Vertex.expected_degree.get(v.type)) {
+			if (v.degree() != Vertex.expectedDegree.get(v.type)) {
 				return false;
 			}
 		}
@@ -119,7 +119,7 @@ public class VoronoiDiagramChecker {
 	}
 
 	// check that all faces are ok. calls face_ok()
-	public boolean all_faces_ok() {
+	public boolean allFacesOk() {
 		for (Face f : g.faces) {
 			if (!face_ok(f)) {
 				return false;

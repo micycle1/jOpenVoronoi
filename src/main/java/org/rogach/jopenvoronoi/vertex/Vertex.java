@@ -23,19 +23,19 @@ public class Vertex {
 	// vertices
 	// have the expected (correct) degree (i.e. number of edges)
 	// map for checking topology correctness
-	public static Map<VertexType, Integer> expected_degree = new HashMap<>();
+	public static Map<VertexType, Integer> expectedDegree = new HashMap<>();
 	static {
-		expected_degree.put(VertexType.OUTER, 4); // special outer vertices
-		expected_degree.put(VertexType.NORMAL, 6); // normal vertex in the graph
-		expected_degree.put(VertexType.POINTSITE, 0); // point site
-		expected_degree.put(VertexType.ENDPOINT, 6); // end-point of line or arc
-		expected_degree.put(VertexType.SEPPOINT, 6); // end-point of separator
-		expected_degree.put(VertexType.SPLIT, 4); // split point, to avoid loops in delete-tree
-		expected_degree.put(VertexType.APEX, 4); // apex point on quadratic bisector
+		expectedDegree.put(VertexType.OUTER, 4); // special outer vertices
+		expectedDegree.put(VertexType.NORMAL, 6); // normal vertex in the graph
+		expectedDegree.put(VertexType.POINTSITE, 0); // point site
+		expectedDegree.put(VertexType.ENDPOINT, 6); // end-point of line or arc
+		expectedDegree.put(VertexType.SEPPOINT, 6); // end-point of separator
+		expectedDegree.put(VertexType.SPLIT, 4); // split point, to avoid loops in delete-tree
+		expectedDegree.put(VertexType.APEX, 4); // apex point on quadratic bisector
 	}
 
-	public List<Edge> out_edges = new ArrayList<>();
-	public List<Edge> in_edges = new ArrayList<>();
+	public List<Edge> outEdges = new ArrayList<>();
+	public List<Edge> inEdges = new ArrayList<>();
 
 	/**
 	 * vertex status. updated/changed during an incremental graph update
@@ -46,9 +46,9 @@ public class Vertex {
 	 */
 	public VertexType type;
 	/** TODO what is this? remove? */
-	public double max_error;
+	public double maxError;
 	/** flag for indicating whether vertex is in the vertexQueue */
-	public boolean in_queue;
+	public boolean inQueue;
 	/** the position of the vertex. */
 	public Point position;
 	/** the offset-direction {-1,+1} of this vertex to the newly inserted site. */
@@ -56,7 +56,7 @@ public class Vertex {
 	/** diangle for a null-vertex and separator handling. */
 	public double alfa;
 	/** if this is a null-face, a handle to the null-face */
-	public Face null_face;
+	public Face nullFace;
 	/** the face of this vertex, if the vertex is a point-site */
 	public Face face;
 	/** clearance-disk radius, i.e. the closest Site is at this distance */
@@ -66,7 +66,7 @@ public class Vertex {
 	}
 
 	public int degree() {
-		return out_edges.size() + in_edges.size();
+		return outEdges.size() + inEdges.size();
 	}
 
 	// ctor with given status and type
@@ -93,12 +93,12 @@ public class Vertex {
 	// set index, increase count, initialize in_queue to false.
 	public void init() {
 		count++;
-		in_queue = false;
+		inQueue = false;
 		alfa = -1; // invalid/non-initialized alfa value
-		null_face = null;
+		nullFace = null;
 		type = VertexType.NORMAL;
 		face = null;
-		max_error = 0;
+		maxError = 0;
 	}
 
 	// set position and status
@@ -117,7 +117,7 @@ public class Vertex {
 	// set position, status, type, and clearance-disk through givem apex-point
 	public void init(Point p, VertexStatus st, VertexType t, Point initDist) {
 		init(p, st, t);
-		init_dist(initDist);
+		initDist(initDist);
 	}
 
 	// set position, status, type, clerance-disk radius, and k3-side
@@ -127,17 +127,17 @@ public class Vertex {
 	}
 
 	// set in_queue false, and status to ::UNDECIDED
-	public void reset_status() {
-		in_queue = false;
+	public void resetStatus() {
+		inQueue = false;
 		status = VertexStatus.UNDECIDED;
 	}
 
-	public void set_alfa(Point dir) {
+	public void setAlfa(Point dir) {
 		alfa = Numeric.diangle(dir.x, dir.y);
 	}
 
 	// initialize clerance-disk
-	public void init_dist(Point p) {
+	public void initDist(Point p) {
 		r = dist(p);
 	}
 
@@ -147,7 +147,7 @@ public class Vertex {
 	}
 
 	// set clearance-disk to zero
-	public void zero_dist() {
+	public void zeroDist() {
 		r = 0;
 	}
 
@@ -157,12 +157,12 @@ public class Vertex {
 	}
 
 	// in-circle predicate
-	public double in_circle(Point p) {
+	public double inCircle(Point p) {
 		return dist(p) - r;
 	}
 
 	// reset the index count
-	public static void reset_count() {
+	public static void resetCount() {
 		count = 0;
 	}
 

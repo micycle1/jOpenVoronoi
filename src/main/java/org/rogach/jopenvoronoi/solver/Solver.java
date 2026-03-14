@@ -31,7 +31,7 @@ public abstract class Solver {
 	public abstract int solve(Site s1, double k1, Site s2, double k2, Site s3, double k3, List<Solution> slns);
 
 	// used by alt_sep_solver
-	public void set_type(int t) {
+	public void setType(int t) {
 		type = t;
 	}
 

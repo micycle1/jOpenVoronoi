@@ -48,7 +48,7 @@ public class PointSite extends Site {
 	}
 
 	@Override
-	public Point apex_point(Point p) {
+	public Point apexPoint(Point p) {
 		return _p;
 	}
 
@@ -89,12 +89,12 @@ public class PointSite extends Site {
 	}
 
 	@Override
-	public boolean in_region(Point p) {
+	public boolean inRegion(Point p) {
 		return true;
 	}
 
 	@Override
-	public double in_region_t(Point p) {
+	public double inRegionT(Point p) {
 		return -1;
 	}
 

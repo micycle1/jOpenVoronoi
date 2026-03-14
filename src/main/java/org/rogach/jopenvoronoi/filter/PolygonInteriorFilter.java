@@ -42,16 +42,16 @@ public class PolygonInteriorFilter extends Filter {
 
 		var f = e.face;
 		var s = f.site;
-		if (s.isLine() && linesite_ccw(f)) {
+		if (s.isLine() && linesiteCcw(f)) {
 			return true;
 		} else if (s.isPoint()) {
 			// we need to search for an adjacent linesite.
 			// (? can we have a situation where this fails?)
-			var linetwin = find_adjacent_linesite(f);
+			var linetwin = findAdjacentLinesite(f);
 			if (linetwin != null) {
 				var twin = linetwin.twin;
 				var twin_face = twin.face;
-				if (linesite_ccw(twin_face)) {
+				if (linesiteCcw(twin_face)) {
 					return true;
 				}
 			} else {
@@ -62,7 +62,7 @@ public class PolygonInteriorFilter extends Filter {
 	}
 
 	// on the face f, find the adjacent linesite
-	private Edge find_adjacent_linesite(Face f) {
+	private Edge findAdjacentLinesite(Face f) {
 		var current = f.edge;
 		var start = current;
 
@@ -81,11 +81,11 @@ public class PolygonInteriorFilter extends Filter {
 	}
 
 	// return true if linesite was inserted in the direction indicated by _side
-	private boolean linesite_ccw(Face f) {
+	private boolean linesiteCcw(Face f) {
 		var current = f.edge;
 		var start = current;
 		do {
-			if ((current.inserted_direction ? side && current.type == EdgeType.LINESITE
+			if ((current.insertedDirection ? side && current.type == EdgeType.LINESITE
 					: !side && current.type == EdgeType.LINESITE)) {
 				return true;
 			}

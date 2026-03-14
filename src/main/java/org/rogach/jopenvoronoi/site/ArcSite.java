@@ -45,19 +45,19 @@ public class ArcSite extends Site {
 	} // FIXME: radius
 
 	@Override
-	public boolean in_region(Point p) {
+	public boolean inRegion(Point p) {
 		if (p == _center) {
 			return true;
 		}
 
-		var t = in_region_t(p);
+		var t = inRegionT(p);
 		return ((t >= 0) && (t <= 1));
 	}
 
 	// \todo fix arc-site in_region_t test!!
 	@Override
-	public double in_region_t(Point pt) {
-		var t = in_region_t_raw(pt); // (diangle_pt - diangle_min) / (diangle_max-diangle_min);
+	public double inRegionT(Point pt) {
+		var t = inRegionTRaw(pt); // (diangle_pt - diangle_min) / (diangle_max-diangle_min);
 		var eps = 1e-7;
 		if (Math.abs(t) < eps) {
 			t = 0.0;
@@ -68,7 +68,7 @@ public class ArcSite extends Site {
 	}
 
 	@Override
-	public double in_region_t_raw(Point pt) {
+	public double inRegionTRaw(Point pt) {
 		// projection onto circle
 		var cen_start = _start.sub(_center);
 		var cen_end = _end.sub(_center);
@@ -91,11 +91,11 @@ public class ArcSite extends Site {
 	}
 
 	@Override
-	public Point apex_point(Point p) {
-		if (in_region(p)) {
-			return projection_point(p);
+	public Point apexPoint(Point p) {
+		if (inRegion(p)) {
+			return projectionPoint(p);
 		} else {
-			return closer_endpoint(p);
+			return closerEndpoint(p);
 		}
 	}
 
@@ -158,7 +158,7 @@ public class ArcSite extends Site {
 	}
 
 	// projection of given Point onto the ArcSite
-	private Point projection_point(Point p) {
+	private Point projectionPoint(Point p) {
 		if (p == _center) {
 			return _start;
 		} else {
@@ -170,7 +170,7 @@ public class ArcSite extends Site {
 
 	// return the end Point (either _start or _end) that is closest to the given
 	// Point
-	private Point closer_endpoint(Point p) {
+	private Point closerEndpoint(Point p) {
 		var d_start = _start.sub(p).norm();
 		var d_end = _end.sub(p).norm();
 		if (d_start < d_end) {

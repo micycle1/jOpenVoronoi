@@ -112,7 +112,7 @@ public class LineSite extends Site {
 	 * @return closest point on the segment
 	 */
 	@Override
-	public Point apex_point(Point p) {
+	public Point apexPoint(Point p) {
 		var s_p = p.sub(_start);
 		var s_e = _end.sub(_start);
 		var t = s_p.dot(s_e) / s_e.dot(s_e);
@@ -134,8 +134,8 @@ public class LineSite extends Site {
 	 * @return {@code true} if the projection parameter t is in [0,1]
 	 */
 	@Override
-	public boolean in_region(Point p) {
-		var t = in_region_t(p);
+	public boolean inRegion(Point p) {
+		var t = inRegionT(p);
 		return ((t >= 0) && (t <= 1));
 	}
 
@@ -147,7 +147,7 @@ public class LineSite extends Site {
 	 * @return {@code t} in [0,1] (approx.)
 	 */
 	@Override
-	public double in_region_t(Point p) {
+	public double inRegionT(Point p) {
 		var s_p = p.sub(_start);
 		var s_e = _end.sub(_start);
 		var t = s_p.dot(s_e) / s_e.dot(s_e);
@@ -161,7 +161,7 @@ public class LineSite extends Site {
 	}
 
 	@Override
-	public double in_region_t_raw(Point p) {
+	public double inRegionTRaw(Point p) {
 		var s_p = p.sub(_start);
 		var s_e = _end.sub(_start);
 		var t = s_p.dot(s_e) / s_e.dot(s_e);
@@ -211,7 +211,7 @@ public class LineSite extends Site {
 	 * @param p point to set into the line equation
 	 */
 	@Override
-	public void set_c(Point p) {
+	public void setC(Point p) {
 		eq.c = -(eq.a * p.x + eq.b * p.y);
 	}
 

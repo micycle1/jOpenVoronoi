@@ -45,7 +45,7 @@ public class MedialAxisFilter extends Filter {
 			return false; // separators are allways removed
 		}
 
-		if (both_endpoints_positive(e)) {
+		if (bothEndpointsPositive(e)) {
 			return true;
 		}
 
@@ -53,7 +53,7 @@ public class MedialAxisFilter extends Filter {
 		// and the other end does not.
 		// figure out the angle between the adjacent line-segments and decide based on
 		// the angle.
-		if (segments_parallel(e)) {
+		if (segmentsParallel(e)) {
 			return false;
 		}
 
@@ -62,7 +62,7 @@ public class MedialAxisFilter extends Filter {
 
 	// return true if this is an internal edge, i.e. both endpoints have a nonzero
 	// clearance-disk radius
-	private boolean both_endpoints_positive(Edge e) {
+	private boolean bothEndpointsPositive(Edge e) {
 		var src = e.source;
 		var trg = e.target;
 		return (src.dist() > 0) && (trg.dist() > 0);
@@ -70,14 +70,14 @@ public class MedialAxisFilter extends Filter {
 
 	// return true if the segments that connect to the given Edge are nearly
 	// parallel
-	private boolean segments_parallel(Edge e) {
-		var endp1 = find_endpoint(e);
-		var endp2 = find_endpoint(e.twin);
+	private boolean segmentsParallel(Edge e) {
+		var endp1 = findEndpoint(e);
+		var endp2 = findEndpoint(e.twin);
 		// find the segments
-		var e1 = find_segment(endp1);
-		var e2 = find_segment(endp2);
+		var e1 = findSegment(endp1);
+		var e2 = findSegment(endp2);
 		e2 = e2.twin; // this makes the edges oriented in the same direction
-		var dotprod = edge_dotprod(e1, e2);
+		var dotprod = edgeDotprod(e1, e2);
 		return dotprod > _dot_product_threshold;
 	}
 
@@ -89,7 +89,7 @@ public class MedialAxisFilter extends Filter {
 	 * to find. FIXME: more code is needed here for tangent calculation if we have
 	 * arc-sites.
 	 */
-	private double edge_dotprod(Edge e1, Edge e2) {
+	private double edgeDotprod(Edge e1, Edge e2) {
 		var src1 = e1.source;
 		var trg1 = e1.target;
 		var src2 = e2.source;
@@ -107,8 +107,8 @@ public class MedialAxisFilter extends Filter {
 	}
 
 	// find the LineSite edge that connects to \a v
-	Edge find_segment(Vertex v) {
-		for (Edge e : v.out_edges) {
+	Edge findSegment(Vertex v) {
+		for (Edge e : v.outEdges) {
 			if (e.type == EdgeType.LINESITE) {
 				return e;
 			}
@@ -118,9 +118,9 @@ public class MedialAxisFilter extends Filter {
 
 	// find an ::ENDPOINT vertex that connects to Edge e through a ::NULLEDGE at
 	// either the source or target of e.
-	Vertex find_endpoint(Edge e) {
+	Vertex findEndpoint(Edge e) {
 		var next = e.next;
-		var prev = g.previous_edge(e);
+		var prev = g.previousEdge(e);
 		Vertex endp;
 		if (next.type == EdgeType.NULLEDGE) {
 			endp = next.target;

@@ -30,9 +30,9 @@ import org.rogach.jopenvoronoi.geometry.Point;
 public class Offset {
 	/** vd-graph */
 	HalfEdgeDiagram g;
-	Set<Face> remaining_faces = new HashSet<>();
+	Set<Face> remainingFaces = new HashSet<>();
 	/** list of output offsets */
-	List<OffsetLoop> offset_list;
+	List<OffsetLoop> offsetList;
 
 	/**
 	 * @param g Voronoi diagram graph
@@ -43,25 +43,25 @@ public class Offset {
 
 	// create offsets at offset distance \a t
 	public List<OffsetLoop> offset(double t) {
-		offset_list = new ArrayList<OffsetLoop>();
-		set_flags(t);
+		offsetList = new ArrayList<OffsetLoop>();
+		setFlags(t);
 		Face start;
 		var c = 0;
-		while ((start = find_start_face()) != null) { // while there are faces that still require offsets
-			offset_loop_walk(start, t); // start on the face, and do an offset loop
+		while ((start = findStartFace()) != null) { // while there are faces that still require offsets
+			offsetLoopWalk(start, t); // start on the face, and do an offset loop
 			if (c > 30000) {
 				throw new AssertionError("c > 30000, hang in offset walk");
 			}
 			c++;
 		}
 
-		return offset_list;
+		return offsetList;
 	}
 
 	// find a suitable start face
-	private Face find_start_face() {
-		if (!remaining_faces.isEmpty()) {
-			return remaining_faces.iterator().next();
+	private Face findStartFace() {
+		if (!remainingFaces.isEmpty()) {
+			return remainingFaces.iterator().next();
 		} else {
 			return null;
 		}
@@ -69,39 +69,39 @@ public class Offset {
 
 	// perform an offset walk at given distance \a t,
 	// starting at the given face
-	private void offset_loop_walk(Face start, double t) {
+	private void offsetLoopWalk(Face start, double t) {
 		var out_in_mode = false;
-		var start_edge = find_next_offset_edge(start.edge, t, out_in_mode); // the first edge on the start-face
+		var start_edge = findNextOffsetEdge(start.edge, t, out_in_mode); // the first edge on the start-face
 		if (start_edge == null) {
 			throw new IllegalStateException("No bracketing edge found on start face for t=" + t);
 		}
 		var current_edge = start_edge;
 		var loop = new OffsetLoop(); // store the output in this loop
-		loop.offset_distance = t;
+		loop.offsetDistance = t;
 		loop.add(new OffsetVertex(current_edge.point(t), current_edge));
 		do {
-			out_in_mode = edge_mode(current_edge, t);
+			out_in_mode = edgeMode(current_edge, t);
 			// find the next edge
-			var next_edge = find_next_offset_edge(current_edge.next, t, out_in_mode);
+			var next_edge = findNextOffsetEdge(current_edge.next, t, out_in_mode);
 			if (next_edge == null) {
 				throw new IllegalStateException("Broken offset walk: no next bracketing edge for t=" + t);
 			}
 			var current_face = current_edge.face;
-			loop.add(offset_element_from_face(current_face, current_edge, next_edge, t));
-			remaining_faces.remove(current_face); // although we may revisit current_face (if it is non-convex), it
+			loop.add(offsetElementFromFace(current_face, current_edge, next_edge, t));
+			remainingFaces.remove(current_face); // although we may revisit current_face (if it is non-convex), it
 													// seems safe to mark it "done" here.
 			current_edge = next_edge.twin;
 		} while (current_edge != start_edge);
-		offset_list.add(loop); // append the created loop to the output
+		offsetList.add(loop); // append the created loop to the output
 	}
 
 	// return an offset-element corresponding to the current face
-	private OffsetVertex offset_element_from_face(Face current_face, Edge current_edge, Edge next_edge, double t) {
+	private OffsetVertex offsetElementFromFace(Face current_face, Edge current_edge, Edge next_edge, double t) {
 		var s = current_face.site;
 		var o = s.offset(current_edge.point(t), next_edge.point(t)); // ask the Site for offset-geometry here.
 		var cw = true;
 		if (!s.isLine()) { // point and arc-sites produce arc-offsets, for which cw must be set.
-			cw = find_cw(o.start(), o.center(), o.end()); // figure out cw or ccw arcs?
+			cw = findCw(o.start(), o.center(), o.end()); // figure out cw or ccw arcs?
 		}
 		// add offset to output
 		return new OffsetVertex(next_edge.point(t), o.radius(), o.center(), cw, current_face, next_edge);
@@ -111,7 +111,7 @@ public class Offset {
 	 * Determine which bracketing direction applies to this edge for the current
 	 * offset distance.
 	 */
-	private boolean edge_mode(Edge e, double t) {
+	private boolean edgeMode(Edge e, double t) {
 		var src = e.source;
 		var trg = e.target;
 		var src_r = src.dist();
@@ -127,7 +127,7 @@ public class Offset {
 	}
 
 	// figure out cw or ccw for an arc
-	private boolean find_cw(Point start, Point center, Point end) {
+	private boolean findCw(Point start, Point center, Point end) {
 		return center.is_right(start, end); // NOTE: this only works for arcs smaller than a half-circle !
 	}
 
@@ -139,7 +139,7 @@ public class Offset {
 	 * for an edge where {@code src_t < t < trg_t}. If {@code mode == true} we are
 	 * looking for an edge where {@code trg_t < t < src_t}.
 	 */
-	private Edge find_next_offset_edge(Edge e, double t, boolean mode) {
+	private Edge findNextOffsetEdge(Edge e, double t, boolean mode) {
 		var start = e;
 		var current = start;
 		do {
@@ -158,7 +158,7 @@ public class Offset {
 	}
 
 	// go through all faces and set flag=0 if the face requires an offset.
-	private void set_flags(double t) {
+	private void setFlags(double t) {
 		for (Face f : g.faces) {
 			var start = f.edge;
 			var current = start;
@@ -167,8 +167,8 @@ public class Offset {
 				var trg = current.target;
 				var src_r = src.dist();
 				var trg_r = trg.dist();
-				if (t_bracket(src_r, trg_r, t)) {
-					remaining_faces.add(f);
+				if (tBracket(src_r, trg_r, t)) {
+					remainingFaces.add(f);
 				}
 				current = current.next;
 			} while (current != start);
@@ -184,7 +184,7 @@ public class Offset {
 			var current = start;
 			do {
 				if (!current.valid) {
-					remaining_faces.remove(f); // don't offset faces with invalid edges
+					remainingFaces.remove(f); // don't offset faces with invalid edges
 				}
 				current = current.next;
 			} while (current != start);
@@ -192,7 +192,7 @@ public class Offset {
 	}
 
 	// is t in (a,b) ?
-	private boolean t_bracket(double a, double b, double t) {
+	private boolean tBracket(double a, double b, double t) {
 		var min_t = Math.min(a, b);
 		var max_t = Math.max(a, b);
 		return ((min_t < t) && (t < max_t));

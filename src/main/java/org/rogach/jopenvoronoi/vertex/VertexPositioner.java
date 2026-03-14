@@ -29,25 +29,25 @@ public class VertexPositioner {
 
 	// solvers, to which we dispatch, depending on the input sites
 	/** point-point-point solver */
-	Solver ppp_solver;
+	Solver pppSolver;
 	/** line-line-line solver */
-	Solver lll_solver;
+	Solver lllSolver;
 	/** parallel line-line-line solver */
-	Solver lll_para_solver;
+	Solver lllParaSolver;
 	/** quadratic-linear-linear solver */
-	Solver qll_solver;
+	Solver qllSolver;
 	/** separator solver */
-	Solver sep_solver;
+	Solver sepSolver;
 	/** alternative separator solver */
-	Solver alt_sep_solver;
+	Solver altSepSolver;
 
 // DATA
 	/** reference to the VD graph. */
 	HalfEdgeDiagram g;
 	/** minimum offset-distance */
-	double t_min;
+	double tMin;
 	/** maximum offset-distance */
-	double t_max;
+	double tMax;
 	/** the edge on which we position a new vertex */
 	Edge edge;
 	/** error-statistics */
@@ -58,12 +58,12 @@ public class VertexPositioner {
 	// create positioner, set graph.
 	public VertexPositioner(HalfEdgeDiagram gi) {
 		this.g = gi;
-		ppp_solver = new PPPSolver();
-		lll_solver = new LLLSolver();
-		qll_solver = new QLLSolver();
-		sep_solver = new SEPSolver();
-		alt_sep_solver = new ALTSEPSolver();
-		lll_para_solver = new LLLPARASolver();
+		pppSolver = new PPPSolver();
+		lllSolver = new LLLSolver();
+		qllSolver = new QLLSolver();
+		sepSolver = new SEPSolver();
+		altSepSolver = new ALTSEPSolver();
+		lllParaSolver = new LLLPARASolver();
 		silent = false;
 		errstat.clear();
 	}
@@ -93,8 +93,8 @@ public class VertexPositioner {
 		var trg = e.target;
 		var t_src = src.dist();
 		var t_trg = trg.dist();
-		t_min = Math.min(t_src, t_trg); // the solution we seek must have t_min<t<t_max
-		t_max = Math.max(t_src, t_trg);
+		tMin = Math.min(t_src, t_trg); // the solution we seek must have t_min<t<t_max
+		tMax = Math.max(t_src, t_trg);
 
 		var s1 = face.site;
 		var s2 = twin_face.site;
@@ -179,24 +179,24 @@ public class VertexPositioner {
 			if (s3.start().equals(ptsite.position())) {
 				k = -k;
 			}
-			solver_dispatch(s1, k1, s2, k2, s3, k, solutions);
+			solverDispatch(s1, k1, s2, k2, s3, k, solutions);
 		} else {
-			solver_dispatch(s1, k1, s2, k2, s3, +1, solutions); // a single k3=+1 call for s3->isPoint()
+			solverDispatch(s1, k1, s2, k2, s3, +1, solutions); // a single k3=+1 call for s3->isPoint()
 
 			if (!s3.isPoint()) {
-				solver_dispatch(s1, k1, s2, k2, s3, -1, solutions); // for lineSite or ArcSite we try k3=-1 also
+				solverDispatch(s1, k1, s2, k2, s3, -1, solutions); // for lineSite or ArcSite we try k3=-1 also
 			}
 		}
 
-		if (solutions.size() == 1 && (t_min <= solutions.get(0).t) && (t_max >= solutions.get(0).t)
-				&& (s3.in_region(solutions.get(0).p))) {
+		if (solutions.size() == 1 && (tMin <= solutions.get(0).t) && (tMax >= solutions.get(0).t)
+				&& (s3.inRegion(solutions.get(0).p))) {
 			return solutions.get(0);
 		}
 
 		// choose only in_region() solutions
 		List<Solution> acceptable_solutions = new ArrayList<>();
 		for (Solution s : solutions) {
-			if (s3.in_region(s.p) && s.t >= t_min && s.t <= t_max) {
+			if (s3.inRegion(s.p) && s.t >= tMin && s.t <= tMax) {
 				acceptable_solutions.add(s);
 			}
 		}
@@ -209,7 +209,7 @@ public class VertexPositioner {
 			var min_error = 100D;
 			var min_solution = new Solution(new Point(0, 0), 0, 0);
 			for (Solution s : acceptable_solutions) {
-				var err = edge_error(s);
+				var err = edgeError(s);
 				if (err < min_error) {
 					min_solution = s;
 					min_error = err;
@@ -219,16 +219,16 @@ public class VertexPositioner {
 		}
 
 		if (solutions.isEmpty()) {
-			return desperate_solution(s3);
+			return desperateSolution(s3);
 		} else {
 			// choose solution that is best by dist_error
 			var leastBad = solutions.get(0);
 			var leastErr = Double.MAX_VALUE;
 			for (Solution s : solutions) {
 				// punish wrong solutions
-				var derr = dist_error(edge, s, s3);
+				var derr = distError(edge, s, s3);
 				// punish solutions outside t range
-				var terr = Math.max(0, Math.max((s.t - t_max), (t_min - s.t)));
+				var terr = Math.max(0, Math.max((s.t - tMax), (tMin - s.t)));
 				if (edge.type == EdgeType.PARA_LINELINE) {
 					var s_p = s.p.sub(edge.source.position);
 					var s_e = edge.target.position.sub(edge.source.position);
@@ -247,7 +247,7 @@ public class VertexPositioner {
 			}
 
 			// determine clamp direction
-			var t = Math.max(t_min, Math.min(t_max, leastBad.t));
+			var t = Math.max(tMin, Math.min(tMax, leastBad.t));
 			var p_sln = edge.point(t);
 
 			// find out on which side the solution lies
@@ -268,23 +268,23 @@ public class VertexPositioner {
 	}
 
 	// search numerically for a desperate solution along the solution-edge
-	Solution desperate_solution(Site s3) {
+	Solution desperateSolution(Site s3) {
 		var err_functor = new VertexError(g, edge, s3);
 
 		double t_sln;
 		// Guard against zero-length or negative search intervals
-		if (Math.abs(t_max - t_min) < 1e-14) {
-			t_sln = t_min; // Interval is effectively zero, skip the optimizer
+		if (Math.abs(tMax - tMin) < 1e-14) {
+			t_sln = tMin; // Interval is effectively zero, skip the optimizer
 		} else {
 			var optimizer = new BrentOptimizer(1e-10, 1e-14);
 			t_sln = optimizer.optimize(
 					new MaxEval(1000), 
 					new UnivariateObjectiveFunction(err_functor),
 					GoalType.MINIMIZE, 
-					new SearchInterval(t_min, t_max)
+					new SearchInterval(tMin, tMax)
 			).getPoint();
 		}
-		var p_sln = err_functor.edge_point(t_sln); // g[edge].point(t_sln);
+		var p_sln = err_functor.edgePoint(t_sln); // g[edge].point(t_sln);
 		var desp_k3 = 0D;
 		if (s3.isPoint()) {
 			desp_k3 = 1;
@@ -302,7 +302,7 @@ public class VertexPositioner {
 	}
 
 	// dispatch to the correct solver based on the sites
-	int solver_dispatch(Site s1, double k1, Site s2, double k2, Site s3, double k3, List<Solution> solns) {
+	int solverDispatch(Site s1, double k1, Site s2, double k2, Site s3, double k3, List<Solution> solns) {
 
 		if (edge.type == EdgeType.SEPARATOR) {
 			// this is a SEPARATOR edge with two LineSites adjacent.
@@ -312,12 +312,12 @@ public class VertexPositioner {
 			if (s1.isLine() && s2.isLine()) {
 				// the parallell lineseg case v0 --s1 --> pt -- s2 --> v1
 				// find t
-				if (edge.has_null_face) {
-					s2 = edge.null_face.site;
+				if (edge.hasNullFace) {
+					s2 = edge.nullFace.site;
 					assert (s2.isPoint()) : " s2.isPoint() ";
 					k2 = +1;
-				} else if (edge.twin.has_null_face) {
-					s2 = edge.twin.null_face.site;
+				} else if (edge.twin.hasNullFace) {
+					s2 = edge.twin.nullFace.site;
 					assert (s2.isPoint()) : " s2.isPoint() ";
 					k2 = +1;
 				}
@@ -334,14 +334,14 @@ public class VertexPositioner {
 				assert (s2.isPoint()) : " s2.isPoint() ";
 			}
 			assert (s1.isLine() && s2.isPoint()) : " s1.isLine() && s2.isPoint() ";
-			return sep_solver.solve(s1, k1, s2, k2, s3, k3, solns);
+			return sepSolver.solve(s1, k1, s2, k2, s3, k3, solns);
 		} else if (edge.type == EdgeType.PARA_LINELINE && s3.isLine()) { // an edge betwee parallel LineSites
 			// std::cout << " para lineline! \n";
-			return lll_para_solver.solve(s1, k1, s2, k2, s3, k3, solns);
+			return lllParaSolver.solve(s1, k1, s2, k2, s3, k3, solns);
 		} else if (s1.isLine() && s2.isLine() && s3.isLine()) {
-			return lll_solver.solve(s1, k1, s2, k2, s3, k3, solns); // all lines.
+			return lllSolver.solve(s1, k1, s2, k2, s3, k3, solns); // all lines.
 		} else if (s1.isPoint() && s2.isPoint() && s3.isPoint()) {
-			return ppp_solver.solve(s1, 1, s2, 1, s3, 1, solns); // all points, no need to specify k1,k2,k3, they are
+			return pppSolver.solve(s1, 1, s2, 1, s3, 1, solns); // all points, no need to specify k1,k2,k3, they are
 																	// all +1
 		} else if ((s3.isLine() && s1.isPoint()) || (s1.isLine() && s3.isPoint()) || (s3.isLine() && s2.isPoint())
 				|| (s2.isLine() && s3.isPoint()) // bad coverage for this line?
@@ -352,38 +352,38 @@ public class VertexPositioner {
 			// s1/s3
 			// s2/s3
 			if (s3.isLine() && s1.isPoint()) {
-				if (detect_sep_case(s3, s1)) {
-					alt_sep_solver.set_type(0);
-					return alt_sep_solver.solve(s1, k1, s2, k2, s3, k3, solns);
+				if (detectSepCase(s3, s1)) {
+					altSepSolver.setType(0);
+					return altSepSolver.solve(s1, k1, s2, k2, s3, k3, solns);
 				}
 			}
 			if (s3.isLine() && s2.isPoint()) {
-				if (detect_sep_case(s3, s2)) {
-					alt_sep_solver.set_type(1);
-					return alt_sep_solver.solve(s1, k1, s2, k2, s3, k3, solns);
+				if (detectSepCase(s3, s2)) {
+					altSepSolver.setType(1);
+					return altSepSolver.solve(s1, k1, s2, k2, s3, k3, solns);
 				}
 			}
 		}
 
 		// if we didn't dispatch to a solver above, we try the general solver
-		return qll_solver.solve(s1, k1, s2, k2, s3, k3, solns); // general case solver
+		return qllSolver.solve(s1, k1, s2, k2, s3, k3, solns); // general case solver
 
 	}
 
 	// detect separator-case, so we can dispatch to the correct Solver
-	boolean detect_sep_case(Site lsite, Site psite) {
+	boolean detectSepCase(Site lsite, Site psite) {
 		var le = lsite.edge();
 		var src = le.source;
 		var trg = le.target;
 		// now from segment end-points get the null-vertex
 		Edge src_out = null;
-		for (Edge e : src.out_edges) {
+		for (Edge e : src.outEdges) {
 			if (e.type == EdgeType.NULLEDGE) {
 				src_out = e;
 			}
 		}
 		Edge trg_out = null;
-		for (Edge e : trg.out_edges) {
+		for (Edge e : trg.outEdges) {
 			if (e.type == EdgeType.NULLEDGE) {
 				trg_out = e;
 			}
@@ -428,10 +428,10 @@ public class VertexPositioner {
 	}
 
 	// error from solution to corresponding point on the edge
-	double edge_error(Solution sl) {
+	double edgeError(Solution sl) {
 		Point p;
 		if (edge.type == EdgeType.PARA_LINELINE) {
-			p = projection_point(sl);
+			p = projectionPoint(sl);
 		} else {
 			p = edge.point(sl.t);
 		}
@@ -440,7 +440,7 @@ public class VertexPositioner {
 
 	// when the edge is not parametrized by t-value as normal edges
 	// so we need a projection of sl onto the edge instead
-	Point projection_point(Solution sl) {
+	Point projectionPoint(Solution sl) {
 		assert (edge.type == EdgeType.PARA_LINELINE) : " edge.type == EdgeType.PARA_LINELINE ";
 		// edge given by
 		// p = p0 + t * (p1-p0) with t in [0,1]
@@ -460,13 +460,13 @@ public class VertexPositioner {
 
 	// check that the new solution lies on the edge
 	boolean solution_on_edge(Solution s) {
-		var err = edge_error(s);
+		var err = edgeError(s);
 		var limit = 9E-4;
 		return (err < limit);
 	}
 
 	// new vertices should lie within the far_radius
-	boolean check_far_circle(Solution s) {
+	boolean checkFarCircle(Solution s) {
 		if (!(s.p.norm() < 18 * 1)) {
 			return false;
 		}
@@ -484,9 +484,9 @@ public class VertexPositioner {
 		var s1 = face.site;
 		var s2 = twin_face.site;
 
-		var d1 = sl.p.sub(s1.apex_point(sl.p)).norm();
-		var d2 = sl.p.sub(s2.apex_point(sl.p)).norm();
-		var d3 = sl.p.sub(s3.apex_point(sl.p)).norm();
+		var d1 = sl.p.sub(s1.apexPoint(sl.p)).norm();
+		var d2 = sl.p.sub(s2.apexPoint(sl.p)).norm();
+		var d3 = sl.p.sub(s3.apexPoint(sl.p)).norm();
 
 		var maxd = Math.max(Math.max(Math.abs(sl.t - d1), Math.abs(sl.t - d2)), Math.abs(sl.t - d3));
 		errstat.add(maxd);
@@ -507,7 +507,7 @@ public class VertexPositioner {
 	// this works as a sanity check for the solver.
 	// a high error value here is also an indication of numerical instability in the
 	// solver
-	public double dist_error(Edge e, Solution sl, Site s3) {
+	public double distError(Edge e, Solution sl, Site s3) {
 		var face = e.face;
 		var tw_edge = e.twin;
 		var twin_face = tw_edge.face;
@@ -515,9 +515,9 @@ public class VertexPositioner {
 		var s1 = face.site;
 		var s2 = twin_face.site;
 
-		var d1 = sl.p.sub(s1.apex_point(sl.p)).norm();
-		var d2 = sl.p.sub(s2.apex_point(sl.p)).norm();
-		var d3 = sl.p.sub(s3.apex_point(sl.p)).norm();
+		var d1 = sl.p.sub(s1.apexPoint(sl.p)).norm();
+		var d2 = sl.p.sub(s2.apexPoint(sl.p)).norm();
+		var d3 = sl.p.sub(s3.apexPoint(sl.p)).norm();
 
 		return Math.max(Math.max(Math.abs(sl.t - d1), Math.abs(sl.t - d2)), Math.abs(sl.t - d3));
 

@@ -50,14 +50,14 @@ public class HalfEdgeDiagram {
 	public Set<Edge> edges = new HashSet<>();
 	public Set<Face> faces = new HashSet<>();
 
-	Vertex add_vertex() {
+	Vertex addVertex() {
 		var v = new Vertex();
 		vertices.add(v);
 		return v;
 	}
 
 	// add a vertex with given properties, return vertex descriptor
-	Vertex add_vertex(Vertex v) {
+	Vertex addVertex(Vertex v) {
 		vertices.add(v);
 		return v;
 	}
@@ -78,22 +78,22 @@ public class HalfEdgeDiagram {
 	}
 
 	// return number of edges on Face f
-	int num_edges(Face f) {
+	int numEdges(Face f) {
 		return faceEdges(f).size();
 	}
 
 	// add an edge between vertices v1-v2
 	Edge add_edge(Vertex v1, Vertex v2) {
 		var e = new Edge(v1, v2);
-		v1.out_edges.add(e);
-		v2.in_edges.add(e);
+		v1.outEdges.add(e);
+		v2.inEdges.add(e);
 		edges.add(e);
 		return e;
 	}
 
 	// return true if v1-v2 edge exists
 	boolean has_edge(Vertex v1, Vertex v2) {
-		for (Edge e : v1.out_edges) {
+		for (Edge e : v1.outEdges) {
 			if (e.target == v2) {
 				return true;
 			}
@@ -103,7 +103,7 @@ public class HalfEdgeDiagram {
 
 	// return v1-v2 Edge
 	Edge edge(Vertex v1, Vertex v2) {
-		for (Edge e : v1.out_edges) {
+		for (Edge e : v1.outEdges) {
 			if (e.target == v2) {
 				return e;
 			}
@@ -112,35 +112,35 @@ public class HalfEdgeDiagram {
 	}
 
 	// clear given vertex. this removes all edges connecting to the vertex.
-	void clear_vertex(Vertex v) {
-		for (Edge e : v.out_edges) {
-			e.target.in_edges.remove(e);
+	void clearVertex(Vertex v) {
+		for (Edge e : v.outEdges) {
+			e.target.inEdges.remove(e);
 			edges.remove(e);
 		}
-		v.out_edges.clear();
-		for (Edge e : v.in_edges) {
-			e.source.out_edges.remove(e);
+		v.outEdges.clear();
+		for (Edge e : v.inEdges) {
+			e.source.outEdges.remove(e);
 			edges.remove(e);
 		}
-		v.in_edges.clear();
+		v.inEdges.clear();
 	}
 
 	// remove given vertex. call clear_vertex() before this!
-	void remove_vertex(Vertex v) {
+	void removeVertex(Vertex v) {
 		vertices.remove(v);
 	}
 
 	// remove given edge
-	void remove_edge(Edge e) {
-		e.source.out_edges.remove(e);
-		e.target.in_edges.remove(e);
+	void removeEdge(Edge e) {
+		e.source.outEdges.remove(e);
+		e.target.inEdges.remove(e);
 		edges.remove(e);
 	}
 
 	// delete a vertex. clear and remove.
-	void delete_vertex(Vertex v) {
-		clear_vertex(v);
-		remove_vertex(v);
+	void deleteVertex(Vertex v) {
+		clearVertex(v);
+		removeVertex(v);
 	}
 
 	/**
@@ -149,7 +149,7 @@ public class HalfEdgeDiagram {
 	 * @param v vertex to insert
 	 * @param e edge to split
 	 */
-	void add_vertex_in_edge(Vertex v, Edge e) {
+	void addVertexInEdge(Vertex v, Edge e) {
 		// the vertex v is inserted into the middle of edge e
 		// edge e and its twin are replaced by four new edges: e1,e2 and their twins
 		// te2,te1
@@ -174,19 +174,19 @@ public class HalfEdgeDiagram {
 		var etarget = e.target;
 		var face = e.face;
 		var twin_face = e_twin.face;
-		var previous = previous_edge(e);
-		var twin_previous = previous_edge(e_twin);
+		var previous = previousEdge(e);
+		var twin_previous = previousEdge(e_twin);
 
 		assert (previous.face == e.face) : " previous.face == e.face ";
 		assert (twin_previous.face == e_twin.face) : " twin_previous.face == e_twin.face ";
 
 		var e1 = add_edge(esource, v);
 		var te2 = add_edge(v, esource);
-		twin_edges(e1, te2);
+		twinEdges(e1, te2);
 
 		var e2 = add_edge(v, etarget);
 		var te1 = add_edge(etarget, v);
-		twin_edges(e2, te1);
+		twinEdges(e2, te1);
 
 		// next-pointers
 		previous.next = e1;
@@ -208,8 +208,8 @@ public class HalfEdgeDiagram {
 		twin_face.edge = te1;
 
 		// finally, remove the old edge
-		remove_edge(e);
-		remove_edge(e_twin);
+		removeEdge(e);
+		removeEdge(e_twin);
 	}
 
 	/**
@@ -219,7 +219,7 @@ public class HalfEdgeDiagram {
 	 * @param v2 source vertex of the twin edge
 	 * @return the two created twin edges
 	 */
-	Pair<Edge, Edge> add_twin_edges(Vertex v1, Vertex v2) {
+	Pair<Edge, Edge> addTwinEdges(Vertex v1, Vertex v2) {
 		var e1 = add_edge(v1, v2);
 		var e2 = add_edge(v2, v1);
 		e1.twin = e2;
@@ -233,7 +233,7 @@ public class HalfEdgeDiagram {
 	}
 
 	// make e1 the twin of e2 (and vice versa)
-	void twin_edges(Edge e1, Edge e2) {
+	void twinEdges(Edge e1, Edge e2) {
 		assert (e1.target == e2.source) : "e1.target == e2.source";
 		assert (e1.source == e2.target) : "e1.source == e2.target";
 		e1.twin = e2;
@@ -267,7 +267,7 @@ public class HalfEdgeDiagram {
 	}
 
 	// add a face, with given properties
-	public Face add_face() {
+	public Face addFace() {
 		var f = new Face();
 		f.attachDiagram(this);
 		faces.add(f);
@@ -275,9 +275,9 @@ public class HalfEdgeDiagram {
 	}
 
 	// return all vertices adjecent to given vertex
-	 List<Vertex> adjacent_vertices(Vertex v) {
+	 List<Vertex> adjacentVertices(Vertex v) {
 		List<Vertex> adj = new ArrayList<>();
-		for (Edge e : v.out_edges) {
+		for (Edge e : v.outEdges) {
 			adj.add(e.target);
 		}
 		return adj;
@@ -320,7 +320,7 @@ public class HalfEdgeDiagram {
 	}
 
 	// return the previous edge. traverses all edges in face until previous found.
-	 public Edge previous_edge(Edge e) {
+	 public Edge previousEdge(Edge e) {
 		var previous = e.next;
 		while (previous.next != e) {
 			previous = previous.next;
@@ -329,30 +329,30 @@ public class HalfEdgeDiagram {
 	}
 
 	// return adjacent faces to the given vertex
-	List<Face> adjacent_faces(Vertex q) {
+	List<Face> adjacentFaces(Vertex q) {
 		Set<Face> face_set = new HashSet<Face>();
-		for (Edge e : q.out_edges) {
+		for (Edge e : q.outEdges) {
 			face_set.add(e.face);
 		}
 		return new ArrayList<Face>(face_set);
 	}
 
 	// remove given v1-v2 edge
-	void remove_edge(Vertex v1, Vertex v2) {
-		remove_edge(edge(v1, v2));
+	void removeEdge(Vertex v1, Vertex v2) {
+		removeEdge(edge(v1, v2));
 	}
 
 	// remove given v1-v2 edge and its twin
-	void remove_twin_edges(Vertex v1, Vertex v2) {
+	void removeTwinEdges(Vertex v1, Vertex v2) {
 		assert (has_edge(v1, v2)) : " has_edge(v1,v2) ";
 		assert (has_edge(v2, v1)) : " has_edge(v2,v1) ";
-		remove_edge(edge(v1, v2));
-		remove_edge(edge(v2, v1));
+		removeEdge(edge(v1, v2));
+		removeEdge(edge(v2, v1));
 	}
 
 	// remove a degree-two Vertex from the middle of an Edge
 	// preserve edge-properties (next, face, k)
-	void remove_deg2_vertex(Vertex v) {
+	void removeDeg2Vertex(Vertex v) {
 		// face1 e[1]
 		// v1_prev -> v1 -> SPLIT -> v2 -> v2_next
 		// v1_next <- v1 <- SPLIT <- v2 <- v2_prev
@@ -364,37 +364,37 @@ public class HalfEdgeDiagram {
 		// v1_next <- v1 <---------- v2 <- v2_prev
 		// face2
 
-		var v_edges = v.out_edges;
+		var v_edges = v.outEdges;
 		assert (v_edges.size() == 2) : " v_edges.size() == 2";
 		assert (v_edges.get(0).source == v && v_edges.get(1).source == v) : " v_edges.get(0).source == v && v_edges.get(1).source == v ";
 
 		var v1 = v_edges.get(0).target;
 		var v2 = v_edges.get(1).target;
 		var v1_next = v_edges.get(0).next;
-		var v1_prev = previous_edge(v_edges.get(0).twin);
+		var v1_prev = previousEdge(v_edges.get(0).twin);
 		var v2_next = v_edges.get(1).next;
-		var v2_prev = previous_edge(v_edges.get(1).twin);
+		var v2_prev = previousEdge(v_edges.get(1).twin);
 		var face1 = v_edges.get(1).face;
 		var face2 = v_edges.get(0).face;
 
-		var twin_edges = add_twin_edges(v1, v2);
-		var new1 = twin_edges.getFirst();
-		var new2 = twin_edges.getSecond();
-		set_next(new1, v2_next);
-		set_next(new2, v1_next);
-		set_next(v2_prev, new2);
-		set_next(v1_prev, new1);
+		var twinEdges = addTwinEdges(v1, v2);
+		var new1 = twinEdges.getFirst();
+		var new2 = twinEdges.getSecond();
+		setNext(new1, v2_next);
+		setNext(new2, v1_next);
+		setNext(v2_prev, new2);
+		setNext(v1_prev, new1);
 		face1.edge = new1;
 		face2.edge = new2;
 		new1.copyFrom(v_edges.get(1));
 		new2.copyFrom(v_edges.get(0));
-		remove_twin_edges(v, v1);
-		remove_twin_edges(v, v2);
-		remove_vertex(v);
+		removeTwinEdges(v, v1);
+		removeTwinEdges(v, v2);
+		removeVertex(v);
 	}
 
 	// set next-pointer of e1 to e2
-	void set_next(Edge e1, Edge e2) {
+	void setNext(Edge e1, Edge e2) {
 		assert (e1.target == e2.source) : " e1.target == e2.source ";
 		e1.next = e2;
 	}
@@ -402,46 +402,46 @@ public class HalfEdgeDiagram {
 	// form a face from the edge-list:
 	// e1->e2->...->e1
 	// for all edges, set edge.face=f, and edge.k=k
-	void set_next_cycle(List<Edge> list, Face f, double k) {
+	void setNextCycle(List<Edge> list, Face f, double k) {
 		f.edge = list.get(0);
 		for (var q = 0; q < list.size(); q++) {
 			var e = list.get(q);
 			e.face = f;
 			e.k = k;
 			if (q == list.size() - 1) {
-				set_next(e, list.get(0));
+				setNext(e, list.get(0));
 			} else {
-				set_next(e, list.get(q + 1));
+				setNext(e, list.get(q + 1));
 			}
 		}
 	}
 
 	// set next-pointers for the given list (but don't close to form a cycle)
 	// also set face and k properties for edge
-	void set_next_chain(List<Edge> list, Face f, double k) {
+	void setNextChain(List<Edge> list, Face f, double k) {
 		f.edge = list.get(0);
 		for (var q = 0; q < list.size(); q++) {
 			var e = list.get(q);
 			e.face = f;
 			e.k = k;
 			if (q != list.size() - 1) {
-				set_next(e, list.get(q + 1));
+				setNext(e, list.get(q + 1));
 			}
 		}
 	}
 
 	// set next-pointers for the list
-	void set_next_chain(List<Edge> list) {
+	void setNextChain(List<Edge> list) {
 		for (var q = 0; q < list.size(); q++) {
 			var e = list.get(q);
 			if (q != list.size() - 1) {
-				set_next(e, list.get(q + 1));
+				setNext(e, list.get(q + 1));
 			}
 		}
 	}
 
 	// on a face, search and return the left/right edge from endp
-	Pair<Edge, Edge> find_next_prev(Face f, Vertex endp) {
+	Pair<Edge, Edge> findNextPrev(Face f, Vertex endp) {
 		var current = f.edge;
 		var start_edge = current;
 		Edge next_edge = null;

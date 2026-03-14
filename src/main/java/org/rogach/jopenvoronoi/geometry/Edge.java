@@ -26,8 +26,8 @@ public class Edge {
 	public Edge base;
 	public Edge next;
 	public Face face;
-	public Face null_face;
-	public boolean has_null_face;
+	public Face nullFace;
+	public boolean hasNullFace;
 	/** offset-direction from the adjacent site, either +1 or -1 */
 	public double k;
 	public EdgeType type;
@@ -39,7 +39,7 @@ public class Edge {
 	/** flag to choose either +/- in front of sqrt() */
 	public boolean sign;
 	/** true if ::LINESITE-edge inserted in this direction */
-	public boolean inserted_direction;
+	public boolean insertedDirection;
 
 	public Edge(Vertex source, Vertex target) {
 		x[0] = 0;
@@ -58,7 +58,7 @@ public class Edge {
 		y[5] = 0;
 		y[6] = 0;
 		y[7] = 0;
-		has_null_face = false;
+		hasNullFace = false;
 		valid = true;
 
 		this.source = source;
@@ -70,11 +70,11 @@ public class Edge {
 		this.sign = other.sign;
 		this.face = other.face;
 		this.k = other.k;
-		this.null_face = other.null_face;
-		this.has_null_face = other.has_null_face;
+		this.nullFace = other.nullFace;
+		this.hasNullFace = other.hasNullFace;
 		this.type = other.type;
 		this.valid = other.valid;
-		this.inserted_direction = other.inserted_direction;
+		this.insertedDirection = other.insertedDirection;
 		x[0] = other.x[0];
 		x[1] = other.x[1];
 		x[2] = other.x[2];
@@ -131,27 +131,27 @@ public class Edge {
 	}
 
 	// dispatch to setter functions based on type of \a s1 and \a s2
-	public void set_parameters(Site s1, Site s2, boolean sig) {
+	public void setParameters(Site s1, Site s2, boolean sig) {
 		sign = sig; // sqrt() sign for edge-parametrization
 		if (s1.isPoint() && s2.isPoint()) {
-			set_pp_parameters(s1, s2);
+			setPpParameters(s1, s2);
 		} else if (s1.isPoint() && s2.isLine()) {
-			set_pl_parameters(s1, s2);
+			setPlParameters(s1, s2);
 		} else if (s2.isPoint() && s1.isLine()) { // LP
-			set_pl_parameters(s2, s1);
+			setPlParameters(s2, s1);
 			sign = !sign;
 		} else if (s1.isLine() && s2.isLine()) {
-			set_ll_parameters(s2, s1);
+			setLlParameters(s2, s1);
 		} else if (s1.isPoint() && s2.isArc()) {
-			set_pa_parameters(s1, s2);
+			setPaParameters(s1, s2);
 		} else if (s2.isPoint() && s1.isArc()) { // AP
 			sign = !sign;
-			set_pa_parameters(s2, s1);
+			setPaParameters(s2, s1);
 
 		} else if (s1.isLine() && s2.isArc()) {
-			set_la_parameters(s1, s2);
+			setLaParameters(s1, s2);
 		} else if (s2.isLine() && s1.isArc()) {
-			set_la_parameters(s2, s1);
+			setLaParameters(s2, s1);
 		} else {
 			throw new RuntimeException("Unexpected combination of sites");
 			// AA
@@ -159,7 +159,7 @@ public class Edge {
 	}
 
 	// set edge parameters for PointSite-PointSite edge
-	public void set_pp_parameters(Site s1, Site s2) {
+	public void setPpParameters(Site s1, Site s2) {
 		assert (s1.isPoint() && s2.isPoint()) : " s1.isPoint() && s2.isPoint() ";
 		var d = (s1.position().sub(s2.position())).norm();
 		var alfa1 = (s2.x() - s1.x()) / d;
@@ -186,7 +186,7 @@ public class Edge {
 	}
 
 	// set ::PARABOLA edge parameters (between PointSite and LineSite).
-	public void set_pl_parameters(Site s1, Site s2) {
+	public void setPlParameters(Site s1, Site s2) {
 		assert (s1.isPoint() && s2.isLine()) : " s1.isPoint() && s2.isLine() ";
 
 		type = EdgeType.PARABOLA;
@@ -213,7 +213,7 @@ public class Edge {
 	}
 
 	// set ::SEPARATOR edge parameters
-	public void set_sep_parameters(Point endp, Point p) {
+	public void setSepParameters(Point endp, Point p) {
 		type = EdgeType.SEPARATOR;
 		var dx = p.x - endp.x;
 		var dy = p.y - endp.y;
@@ -238,7 +238,7 @@ public class Edge {
 	}
 
 	// set edge parametrization for LineSite-LineSite edge (parallel case)
-	public void set_ll_para_parameters(Site s1, Site s2) {
+	public void setLlParaParameters(Site s1, Site s2) {
 		assert (s1.isLine() && s2.isLine()) : " s1.isLine() && s2.isLine() ";
 		type = EdgeType.PARA_LINELINE;
 
@@ -305,7 +305,7 @@ public class Edge {
 	}
 
 	// set edge parametrization for LineSite-LineSite edge
-	public void set_ll_parameters(Site s1, Site s2) { // Held thesis p96
+	public void setLlParameters(Site s1, Site s2) { // Held thesis p96
 		assert (s1.isLine() && s2.isLine()) : " s1.isLine() && s2.isLine() ";
 		type = EdgeType.LINELINE;
 		var delta = s1.a() * s2.b() - s1.b() * s2.a();
@@ -313,7 +313,7 @@ public class Edge {
 		// (numerically) parallel line segments - the generic LLL solver
 		// is numerically unstable for parallel cases
 		if (Math.abs(delta) <= 1e-14) {
-			set_ll_para_parameters(s1, s2);
+			setLlParaParameters(s1, s2);
 			return;
 		}
 
@@ -345,7 +345,7 @@ public class Edge {
 	}
 
 	// set edge parameters when s1 is PointSite and s2 is ArcSite
-	public void set_pa_parameters(Site s1, Site s2) {
+	public void setPaParameters(Site s1, Site s2) {
 		assert (s1.isPoint() && s2.isArc()) : " s1.isPoint() && s2.isArc() ";
 		// std::cout << "set_pa_parameters()\n";
 
@@ -384,7 +384,7 @@ public class Edge {
 	}
 
 	// set edge parameters when s1 is ArcSite and s2 is LineSite
-	public void set_la_parameters(Site s1, Site s2) {
+	public void setLaParameters(Site s1, Site s2) {
 		assert (s1.isLine() && s2.isArc()) : " s1.isLine() && s2.isArc() ";
 		type = EdgeType.PARABOLA;
 		double lamb2;
@@ -428,19 +428,19 @@ public class Edge {
 	 *         helper function based on the sites {@code s1} and {@code s2}. It is
 	 *         used only for positioning {@code APEX} vertices.
 	 */
-	public double minimum_t(Site s1, Site s2) {
+	public double minimumT(Site s1, Site s2) {
 		if (s1.isPoint() && s2.isPoint()) {
-			return minimum_pp_t(s1, s2);
+			return minimumPpT(s1, s2);
 		} else if (s1.isPoint() && s2.isLine()) {
-			return minimum_pl_t(s1, s2);
+			return minimumPlT(s1, s2);
 		} else if (s2.isPoint() && s1.isLine()) {
-			return minimum_pl_t(s2, s1);
+			return minimumPlT(s2, s1);
 		} else if (s1.isLine() && s2.isLine()) {
 			return 0;
 		} else if (s1.isPoint() && s2.isArc()) {
-			return minimum_pa_t(s1, s2);
+			return minimumPaT(s1, s2);
 		} else if (s2.isPoint() && s1.isArc()) {
-			return minimum_pa_t(s2, s1);
+			return minimumPaT(s2, s1);
 		} else {
 			throw new RuntimeException("Unexpected site types");
 			// todo: AP, AL, AA
@@ -448,7 +448,7 @@ public class Edge {
 	}
 
 	// minimum t-value for LINE edge between PointSite and PointSite
-	public double minimum_pp_t(Site s1, Site s2) {
+	public double minimumPpT(Site s1, Site s2) {
 		assert (s1.isPoint() && s2.isPoint()) : " s1.isPoint() && s2.isPoint() ";
 		var p1p2 = s1.position().sub(s2.position()).norm();
 		assert (p1p2 >= 0) : " p1p2 >=0 ";
@@ -456,16 +456,16 @@ public class Edge {
 	}
 
 	// minimum t-value for ::PARABOLA edge
-	public double minimum_pl_t(Site s1, Site s2) {
+	public double minimumPlT(Site s1, Site s2) {
 		var mint = -x[6] / (2.0 * x[7]);
 		assert (mint >= 0) : " mint >=0 ";
 		return mint;
 	}
 
 	// minimum t-value for edge between PointSite and ArcSite
-	public double minimum_pa_t(Site s1, Site s2) {
+	public double minimumPaT(Site s1, Site s2) {
 		assert (s1.isPoint() && s2.isArc()) : " s1.isPoint() && s2.isArc() ";
-		var p1p2 = s1.position().sub(s2.apex_point(s1.position())).norm(); // - s2->r() ;
+		var p1p2 = s1.position().sub(s2.apexPoint(s1.position())).norm(); // - s2->r() ;
 		assert (p1p2 >= 0) : " p1p2 >=0 ";
 		return p1p2 / 2; // this splits point-point edges at APEX
 	}
@@ -489,7 +489,7 @@ public class Edge {
 
 			// Exact geometric radius: distance from p to the generating site
 			Site s = face.site;
-			Point pa = s.apex_point(p);
+			Point pa = s.apexPoint(p);
 			r = p.sub(pa).norm();
 		} else if (type == EdgeType.PARABOLA) {
 			// For parabolas, the distance (radius) is the parameter t.

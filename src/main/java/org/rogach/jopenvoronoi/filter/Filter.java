@@ -14,7 +14,7 @@ public abstract class Filter {
 	protected HalfEdgeDiagram g;
 	// set graph
 
-	public void set_graph(HalfEdgeDiagram g) {
+	public void setGraph(HalfEdgeDiagram g) {
 		this.g = g;
 	}
 

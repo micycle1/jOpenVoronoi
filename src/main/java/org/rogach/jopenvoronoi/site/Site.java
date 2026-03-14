@@ -19,7 +19,7 @@ public abstract class Site {
 	Eq eq = new Eq();
 
 	// return closest point on site to given point p
-	public abstract Point apex_point(Point p);
+	public abstract Point apexPoint(Point p);
 
 	// return offset of site
 	public abstract Ofs offset(Point p1, Point p2);
@@ -84,7 +84,7 @@ public abstract class Site {
 		throw new UnsupportedOperationException();
 	}
 
-	public void set_c(Point p) {
+	public void setC(Point p) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -109,15 +109,15 @@ public abstract class Site {
 	}
 
 	// is given Point in_region ?
-	public abstract boolean in_region(Point p);
+	public abstract boolean inRegion(Point p);
 
 	// is given Point in region?
-	public double in_region_t(Point p) {
+	public double inRegionT(Point p) {
 		throw new UnsupportedOperationException();
 	}
 
 	// in-region t-valye
-	public double in_region_t_raw(Point p) {
+	public double inRegionTRaw(Point p) {
 		throw new UnsupportedOperationException();
 	}
 

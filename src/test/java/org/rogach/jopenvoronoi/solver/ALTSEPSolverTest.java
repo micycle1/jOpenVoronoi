@@ -26,7 +26,7 @@ public class ALTSEPSolverTest {
 		Site lineY0 = new LineSite(new Point(0, 0), new Point(1, 0), -1); // s3 (separator line): y=0, k=-1
 
 		ALTSEPSolver solver = new ALTSEPSolver();
-		solver.set_type(0);
+		solver.setType(0);
 
 		List<Solution> out = new ArrayList<>();
 		int n = solver.solve(p, 1, lineX1, lineX1.k(), lineY0, lineY0.k(), out);
@@ -54,7 +54,7 @@ public class ALTSEPSolverTest {
 		Site lineY0 = new LineSite(new Point(0, 0), new Point(1, 0), -1); // s3 (separator line): y=0, k=-1
 
 		ALTSEPSolver solver = new ALTSEPSolver();
-		solver.set_type(0);
+		solver.setType(0);
 
 		List<Solution> out = new ArrayList<>();
 		int n = solver.solve(p, 1, thirdPoint, 1, lineY0, lineY0.k(), out);
@@ -78,7 +78,7 @@ public class ALTSEPSolverTest {
 		Site lineY0 = new LineSite(new Point(0, 0), new Point(1, 0), -1); // s3 (separator line): y=0, k=-1
 
 		ALTSEPSolver solver = new ALTSEPSolver();
-		solver.set_type(1);
+		solver.setType(1);
 
 		List<Solution> out = new ArrayList<>();
 		int n = solver.solve(lineX1, lineX1.k(), p, 1, lineY0, lineY0.k(), out);
@@ -103,7 +103,7 @@ public class ALTSEPSolverTest {
 		Site lineY0 = new LineSite(new Point(0, 0), new Point(1, 0), -1); // s3: y=0, k=-1 -> sv=(0,1)
 
 		ALTSEPSolver solver = new ALTSEPSolver();
-		solver.set_type(0);
+		solver.setType(0);
 
 		List<Solution> out = new ArrayList<>();
 		int n = solver.solve(p, 1, thirdPoint, 1, lineY0, lineY0.k(), out);
@@ -120,7 +120,7 @@ public class ALTSEPSolverTest {
 		Site thirdLine = new LineSite(new Point(1, 2), new Point(0, 2), +1);
 
 		ALTSEPSolver solver = new ALTSEPSolver();
-		solver.set_type(0);
+		solver.setType(0);
 
 		List<Solution> out = new ArrayList<>();
 		int n = solver.solve(p, 1, thirdLine, thirdLine.k(), lineY0, lineY0.k(), out);

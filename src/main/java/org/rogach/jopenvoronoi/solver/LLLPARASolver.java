@@ -58,7 +58,7 @@ public class LLLPARASolver extends Solver {
 		bisector.c = (s1.c() + s2c) * 0.5;
 		var tb = 0.5 * Math.abs(s1.c() - s2c); // bisector offset distance
 
-		var xy = two_by_two_solver(bisector.a, bisector.b, s3.a(), s3.b(), -bisector.c, -s3.c() - k3 * tb);
+		var xy = twoByTwoSolver(bisector.a, bisector.b, s3.a(), s3.b(), -bisector.c, -s3.c() - k3 * tb);
 		if (xy != null) {
 			slns.add(new Solution(new Point(xy.getFirst(), xy.getSecond()), tb, k3));
 			return 1;
@@ -70,7 +70,7 @@ public class LLLPARASolver extends Solver {
 	// solve 2z2 system Ax = y by inverting A
 	// x = Ainv * y
 	// returns false if det(A)==0, i.e. no solution found
-	Pair<Double, Double> two_by_two_solver(double a, double b, double c, double d, double e, double f) {
+	Pair<Double, Double> twoByTwoSolver(double a, double b, double c, double d, double e, double f) {
 		// [ a b ] [u] = [ e ]
 		// [ c d ] [v] = [ f ]
 		// matrix inverse is

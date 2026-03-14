@@ -34,7 +34,7 @@ public class Point {
 		return Math.sqrt(x * x + y * y);
 	}
 
-	public double norm_sq() {
+	public double normSq() {
 		return x * x + y * y;
 	}
 
@@ -46,7 +46,7 @@ public class Point {
 	}
 
 	// return perpendicular in the xy plane, rotated 90 degree to the left
-	public Point xy_perp() {
+	public Point xyPerp() {
 		return new Point(-y, x);
 		// 2D rotation matrix:
 		// cos -sin

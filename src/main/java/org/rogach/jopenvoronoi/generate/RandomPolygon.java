@@ -12,7 +12,7 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class RandomPolygon {
 
-	public static List<Point2D> generate_points(int nPoints, int min, int max) {
+	public static List<Point2D> generatePoints(int nPoints, int min, int max) {
 
 		List<Point2D> points = new ArrayList<>();
 		for (var i = 0; i < nPoints; i++) {
@@ -30,8 +30,8 @@ public class RandomPolygon {
 	 * @param max     maximum bound of x and y coordinates
 	 * @return the generated polygon vertices
 	 */
-	public static List<Point2D> generate_polygon(int nPoints, int min, int max) {
-		var points = generate_points(nPoints, min, max);
+	public static List<Point2D> generatePolygon(int nPoints, int min, int max) {
+		var points = generatePoints(nPoints, min, max);
 		var p1 = removeRandom(points);
 		var p2 = removeRandom(points);
 

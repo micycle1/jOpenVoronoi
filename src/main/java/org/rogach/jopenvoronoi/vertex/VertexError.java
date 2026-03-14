@@ -36,8 +36,8 @@ public class VertexError implements UnivariateFunction {
 	// t is the offset-distance of the solution
 	@Override
 	public double value(double t) {
-		var p = edge_point(t);
-		var s3_dist = p.sub(s3.apex_point(p)).norm();
+		var p = edgePoint(t);
+		var s3_dist = p.sub(s3.apexPoint(p)).norm();
 		return Math.abs(t - s3_dist);
 	}
 
@@ -45,7 +45,7 @@ public class VertexError implements UnivariateFunction {
 	/**
 	 * @param t offset-distance ( >= 0 )
 	 */
-	Point edge_point(double t) {
+	Point edgePoint(double t) {
 		Point p;
 		if (edge.type == EdgeType.LINELINE) { // this is a workaround because the LINELINE edge-parameters are wrong? at
 												// least in some cases?
