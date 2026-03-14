@@ -189,13 +189,13 @@ public class HalfEdgeDiagram {
 		twin_edges(e2, te1);
 
 		// next-pointers
-		previous.next = e1;
-		e1.next = e2;
-		e2.next = e.next;
+		set_next(previous, e1);
+		set_next(e1, e2);
+		set_next(e2, e.next);
 
-		twin_previous.next = te1;
-		te1.next = te2;
-		te2.next = e_twin.next;
+		set_next(twin_previous, te1);
+		set_next(te1, te2);
+		set_next(te2, e_twin.next);
 
 		// this copies params, face, k, type
 		e1.copyFrom(e);
@@ -325,11 +325,13 @@ public class HalfEdgeDiagram {
 
 	// return the previous edge. traverses all edges in face until previous found.
 	public Edge previous_edge(Edge e) {
-		var previous = e.next;
-		while (previous.next != e) {
-			previous = previous.next;
+		if (e.prev == null) {
+			throw new IllegalStateException("Edge prev not set");
 		}
-		return previous;
+		if (e.prev.next != e) {
+			throw new IllegalStateException("Edge prev/next links are inconsistent");
+		}
+		return e.prev;
 	}
 
 	// return adjacent faces to the given vertex
@@ -401,7 +403,12 @@ public class HalfEdgeDiagram {
 	// set next-pointer of e1 to e2
 	public void set_next(Edge e1, Edge e2) {
 		assert (e1.target == e2.source) : " e1.target == e2.source ";
+		var oldNext = e1.next;
 		e1.next = e2;
+		e2.prev = e1;
+		if (oldNext != null && oldNext != e2 && oldNext.prev == e1) {
+			oldNext.prev = null;
+		}
 	}
 
 	// form a face from the edge-list:

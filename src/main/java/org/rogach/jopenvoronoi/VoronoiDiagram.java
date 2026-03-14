@@ -1251,16 +1251,16 @@ public class VoronoiDiagram {
 			var twin_edges = g.add_twin_edges(new_source, new_target);
 			var e_new = twin_edges.getFirst();
 			var e_twin = twin_edges.getSecond();
-			e_new.next = new_next;
+			g.set_next(e_new, new_next);
 			assert (new_next.k == new_previous.k) : " new_next.k == new_previous.k ";
 			e_new.k = new_next.k; // the next edge is on the same face, so has the correct k-value
 			e_new.face = f; // src-trg edge has f on its left
-			new_previous.next = e_new;
+			g.set_next(new_previous, e_new);
 			f.edge = e_new;
 			e_new.set_parameters(f_site, new_site, !src_sign);
 
-			twin_previous.next = e_twin;
-			e_twin.next = twin_next;
+			g.set_next(twin_previous, e_twin);
+			g.set_next(e_twin, twin_next);
 			e_twin.k = new_source.k3;
 			e_twin.set_parameters(f_site, new_site, !src_sign); // new_site, f_site, src_sign
 			e_twin.face = new_face;
@@ -1289,9 +1289,9 @@ public class VoronoiDiagram {
 			assert (new_next.k == new_previous.k) : " new_next.k == new_previous.k ";
 
 			// new_previous -> e1 -> e2 -> new_next
-			new_previous.next = e1;
-			e1.next = e2;
-			e2.next = new_next;
+			g.set_next(new_previous, e1);
+			g.set_next(e1, e2);
+			g.set_next(e2, new_next);
 			e1.face = f;
 			e2.face = f;
 			e1.k = new_next.k;
@@ -1305,9 +1305,9 @@ public class VoronoiDiagram {
 			assert (twin_previous.face == twin_next.face) : " twin_previous.face == twin_next.face ";
 			// twin_prev -> e2_tw -> e1_tw -> twin_next on new_face
 
-			twin_previous.next = e2_tw;
-			e2_tw.next = e1_tw;
-			e1_tw.next = twin_next;
+			g.set_next(twin_previous, e2_tw);
+			g.set_next(e2_tw, e1_tw);
+			g.set_next(e1_tw, twin_next);
 
 			e1_tw.k = new_source.k3;
 			e2_tw.k = new_source.k3;
@@ -1910,7 +1910,7 @@ public class VoronoiDiagram {
 					// the next vertex should not where we came from
 					// and it should be on the same face.
 					if (e.face == f) {
-						current_edge.next = e; // this is the edge we want to take
+						g.set_next(current_edge, e); // this is the edge we want to take
 						assert (current_edge.k == e.k) : " current_edge.k == e.k ";
 						assert (vd_checker.current_face_equals_next_face(current_edge)) : " vd_checker.current_face_equals_next_face( current_edge ) ";
 					}
