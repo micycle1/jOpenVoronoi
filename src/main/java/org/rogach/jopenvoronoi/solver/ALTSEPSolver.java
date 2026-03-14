@@ -22,8 +22,8 @@ import org.rogach.jopenvoronoi.vertex.Solution;
 // The separator is given by
 // SEP = p2 + t* sv
 // where p2 is the location of s2, and the separator direction sv is
-// sv = (-a1,-b1)   if k1=-1
-// sv = (a1,b1)   if k1=+1
+// sv = (-a1,-b1)   if k1=+1
+// sv = (a1,b1)     if k1=-1
 // thus points on the separator are located at:
 //
 //  x_sep = x2 + t*sv.x
@@ -73,7 +73,7 @@ public class ALTSEPSolver extends Solver {
 			throw new RuntimeException("ALTSEPSolver FATAL ERROR! type not known.");
 		}
 		// separator direction
-		var sv = (k3 == -1) ? new Point(lsite.a(), lsite.b()) : new Point(-lsite.a(), -lsite.b());
+		var sv = (lsite_k == -1) ? new Point(lsite.a(), lsite.b()) : new Point(-lsite.a(), -lsite.b());
 
 		// now we should have this:
 		assert (lsite.isLine() && psite.isPoint()) : " lsite.isLine() && psite.isPoint() ";

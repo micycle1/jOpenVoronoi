@@ -21,10 +21,15 @@ import org.rogach.jopenvoronoi.vertex.Solution;
 // This configuration constrains the solution to lie on the separator edge.
 // The separator is given by
 // SEP = p2 + t* sv
-// where p2 is the location of s2, and the separator direction sv is
-// sv = (-a1,-b1)   if k1=-1
-// sv = (a1,b1)   if k1=-1
-// thus points on the separator are located at:
+// where p2 is the location of s2.
+//
+// In this implementation the positive/negative segment sides are represented by
+// two differently oriented LineSite instances (see VoronoiDiagram.insertLineSite()).
+// Because that orientation is already encoded in (a1,b1), the separator
+// direction on a SEPARATOR edge is always the negative normal of s1:
+// sv = (-a1,-b1)
+//
+// Thus points on the separator are located at:
 //
 //  x_sep = x2 + t*sv.x
 //  y_sep = y2 + t*sv.y
@@ -55,7 +60,7 @@ public class SEPSolver extends Solver {
 		assert (s1.isLine() && s2.isPoint()) : " s1.isLine() && s2.isPoint() ";
 		assert (s3.isLine()) : "s3.isLine()";
 
-		// separator direction
+		// The separator side is already encoded in the selected LineSite orientation.
 		var sv = new Point(-s1.a(), -s1.b());
 		var tsln = -(s3.a() * s2.x() + s3.b() * s2.y() + s3.c()) / (sv.x * s3.a() + sv.y * s3.b() + k3);
 
