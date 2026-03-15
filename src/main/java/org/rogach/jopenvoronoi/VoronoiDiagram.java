@@ -1,5 +1,9 @@
 package org.rogach.jopenvoronoi;
 
+import static org.rogach.jopenvoronoi.util.VoronoiDiagramChecker.checkEdge;
+import static org.rogach.jopenvoronoi.util.VoronoiDiagramChecker.checkFace;
+import static org.rogach.jopenvoronoi.util.VoronoiDiagramChecker.verticesAllIN;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -201,8 +205,8 @@ public class VoronoiDiagram {
 		removeVertexSet(); // remove all IN vertices and adjacent edges
 		resetStatus(); // reset all vertices to UNDECIDED
 
-		assert (vd_checker.face_ok(newface)) : " vd_checker.face_ok( newface ) ";
-		assert (vd_checker.is_valid()) : " vd_checker.is_valid() ";
+		assert (checkFace(newface)) : " vd_checker.face_ok( newface ) ";
+		assert (vd_checker.isValid()) : " vd_checker.is_valid() ";
 
 		return new_vert;
 	}
@@ -334,7 +338,7 @@ public class VoronoiDiagram {
 		// add negative separator edge at start
 		addSeparator(start.face, start_null_face, neg_start_target, neg_sep_start, pos_face.site, neg_face.site);
 		start.face.status = FaceStatus.NONINCIDENT; // face is now done.
-		assert (vd_checker.face_ok(start.face)) : " vd_checker.face_ok( start.face ) ";
+		assert (checkFace(start.face)) : " vd_checker.face_ok( start.face ) ";
 
 		var pos_end_target = findSeparatorTarget(end.face, pos_sep_end);
 		var neg_end_target = findSeparatorTarget(end.face, neg_sep_end);
@@ -344,7 +348,7 @@ public class VoronoiDiagram {
 		// add negative separator edge at end
 		addSeparator(end.face, end_null_face, neg_end_target, neg_sep_end, pos_face.site, neg_face.site);
 		end.face.status = FaceStatus.NONINCIDENT;
-		assert (vd_checker.face_ok(end.face)) : " vd_checker.face_ok( end.face ) ";
+		assert (checkFace(end.face)) : " vd_checker.face_ok( end.face ) ";
 
 		// add non-separator edges by calling add_edges on all INCIDENT faces
 		for (Face f : incidentFaces) {
@@ -361,11 +365,11 @@ public class VoronoiDiagram {
 
 		repairFace(pos_face, new Pair<Vertex, Vertex>(seg_start, seg_end), new Pair<Face, Face>(start_to_null, end_to_null),
 				new Pair<Face, Face>(start_null_face, end_null_face));
-		assert (vd_checker.face_ok(pos_face)) : " vd_checker.face_ok( pos_face ) ";
+		assert (checkFace(pos_face)) : " vd_checker.face_ok( pos_face ) ";
 
 		repairFace(neg_face, new Pair<Vertex, Vertex>(seg_start, seg_end), new Pair<Face, Face>(start_to_null, end_to_null),
 				new Pair<Face, Face>(start_null_face, end_null_face));
-		assert (vd_checker.face_ok(neg_face)) : " vd_checker.face_ok( neg_face ) ";
+		assert (checkFace(neg_face)) : " vd_checker.face_ok( neg_face ) ";
 
 		// we are done and can remove split-vertices
 		for (Face f : incidentFaces) {
@@ -373,11 +377,11 @@ public class VoronoiDiagram {
 		}
 		resetStatus();
 
-		assert (vd_checker.face_ok(start_null_face)) : " vd_checker.face_ok( start_null_face ) ";
-		assert (vd_checker.face_ok(end_null_face)) : " vd_checker.face_ok( end_null_face ) ";
-		assert (vd_checker.face_ok(pos_face)) : " vd_checker.face_ok( pos_face ) ";
-		assert (vd_checker.face_ok(neg_face)) : " vd_checker.face_ok( neg_face ) ";
-		assert (vd_checker.is_valid()) : " vd_checker.is_valid() ";
+		assert (checkFace(start_null_face)) : " vd_checker.face_ok( start_null_face ) ";
+		assert (checkFace(end_null_face)) : " vd_checker.face_ok( end_null_face ) ";
+		assert (checkFace(pos_face)) : " vd_checker.face_ok( pos_face ) ";
+		assert (checkFace(neg_face)) : " vd_checker.face_ok( neg_face ) ";
+		assert (vd_checker.isValid()) : " vd_checker.is_valid() ";
 
 		return true;
 	}
@@ -551,7 +555,7 @@ public class VoronoiDiagram {
 
 	// run topology/geometry check on diagram
 	public boolean check() {
-		if (vd_checker.is_valid()) {
+		if (vd_checker.isValid()) {
 			return true;
 		} else {
 			return false;
@@ -723,7 +727,7 @@ public class VoronoiDiagram {
 		g.twinEdges(e6_1, e7_2);
 		g.twinEdges(e6_2, e7_1);
 
-		assert (vd_checker.is_valid()) : " vd_checker.is_valid() ";
+		assert (vd_checker.isValid()) : " vd_checker.is_valid() ";
 
 	}
 
@@ -849,7 +853,7 @@ public class VoronoiDiagram {
 	 * hurt to insert SPLIT-vertices in this case.
 	 */
 	private List<Edge> findSplitEdges(Face f, Point pt1, Point pt2) {
-		assert (vd_checker.face_ok(f)) : " vd_checker.face_ok(f) ";
+		assert (checkFace(f)) : " vd_checker.face_ok(f) ";
 		List<Edge> out = new ArrayList<>();
 		var current_edge = f.edge;
 		var start_edge = current_edge;
@@ -865,7 +869,7 @@ public class VoronoiDiagram {
 																												// instead?
 				if (src_is_right != trg_is_right) {
 					out.add(current_edge);
-					assert (vd_checker.check_edge(current_edge)) : "vd_checker.check_edge(current_edge)";
+					assert (checkEdge(current_edge)) : "vd_checker.check_edge(current_edge)";
 				}
 			}
 			current_edge = current_edge.next;
@@ -936,7 +940,7 @@ public class VoronoiDiagram {
 		}
 
 		assert (vertexQueue.isEmpty()) : " vertexQueue.isEmpty() ";
-		assert (vd_checker.all_in(v0)) : " vd_checker.all_in(v0) ";
+		assert (verticesAllIN(v0)) : " vd_checker.all_in(v0) ";
 		// sanity-check?: for all incident faces the IN/OUT-vertices should be connected
 	}
 
@@ -1304,7 +1308,7 @@ public class VoronoiDiagram {
 			e_twin.face = new_face;
 			new_face.edge = e_twin;
 
-			assert (vd_checker.check_edge(e_new) && vd_checker.check_edge(e_twin)) : " vd_checker.check_edge(e_new) && vd_checker.check_edge(e_twin) ";
+			assert (checkEdge(e_new) && checkEdge(e_twin)) : " vd_checker.check_edge(e_new) && vd_checker.check_edge(e_twin) ";
 		} else {
 			// need to do apex-split, and add two new edges
 			// f f
@@ -1353,8 +1357,8 @@ public class VoronoiDiagram {
 			e1_tw.face = new_face;
 			e2_tw.face = new_face;
 
-			assert (vd_checker.check_edge(e1) && vd_checker.check_edge(e1_tw)) : " vd_checker.check_edge(e1) && vd_checker.check_edge(e1_tw) ";
-			assert (vd_checker.check_edge(e2) && vd_checker.check_edge(e2_tw)) : " vd_checker.check_edge(e2) && vd_checker.check_edge(e2_tw) ";
+			assert (checkEdge(e1) && checkEdge(e1_tw)) : " vd_checker.check_edge(e1) && vd_checker.check_edge(e1_tw) ";
+			assert (checkEdge(e2) && checkEdge(e2_tw)) : " vd_checker.check_edge(e2) && vd_checker.check_edge(e2_tw) ";
 
 			// position the apex
 			var min_t = e1.minimumT(f_site, new_site);
@@ -1491,8 +1495,8 @@ public class VoronoiDiagram {
 		e2.setSepParameters(sep_endp.position, v_target.position);
 		e2_tw.setSepParameters(sep_endp.position, v_target.position);
 
-		assert (vd_checker.check_edge(e2)) : " vd_checker.check_edge(e2) ";
-		assert (vd_checker.check_edge(e2_tw)) : " vd_checker.check_edge(e2_tw) ";
+		assert (checkEdge(e2)) : " vd_checker.check_edge(e2) ";
+		assert (checkEdge(e2_tw)) : " vd_checker.check_edge(e2_tw) ";
 
 	}
 
@@ -1556,7 +1560,7 @@ public class VoronoiDiagram {
 
 				var v = g.addVertex(new Vertex(split_pt_pos, VertexStatus.UNDECIDED, VertexType.SPLIT, fs.position()));
 
-				assert (vd_checker.check_edge(split_edge)) : " vd_checker.check_edge(split_edge) ";
+				assert (checkEdge(split_edge)) : " vd_checker.check_edge(split_edge) ";
 				// 3) insert new SPLIT vertex into the edge
 				g.addVertexInEdge(v, split_edge);
 			}
@@ -1950,7 +1954,7 @@ public class VoronoiDiagram {
 		var start_edge = current_edge;
 		var c = 0;
 		do {
-			assert (vd_checker.check_edge(current_edge)) : " vd_checker.check_edge(current_edge) ";
+			assert (checkEdge(current_edge)) : " vd_checker.check_edge(current_edge) ";
 			var current_target = current_edge.target; // an edge on the new face
 			var current_source = current_edge.source;
 			for (Edge e : current_target.outEdges) {
@@ -1984,7 +1988,8 @@ public class VoronoiDiagram {
 					if (e.face == f) {
 						g.setNext(current_edge, e); // this is the edge we want to take
 						assert (current_edge.k == e.k) : " current_edge.k == e.k ";
-						assert (vd_checker.current_face_equals_next_face(current_edge)) : " vd_checker.current_face_equals_next_face( current_edge ) ";
+						
+						assert (current_edge.face == current_edge.next.face) : "current face == next face";
 					}
 				}
 			}
@@ -2011,7 +2016,7 @@ public class VoronoiDiagram {
 
 	// remove all SPLIT type vertices on the HEFace \a f
 	private void removeSplitVertex(Face f) {
-		assert (vd_checker.face_ok(f)) : " vd_checker.face_ok( f ) ";
+		assert (checkFace(f)) : " vd_checker.face_ok( f ) ";
 
 		Vertex v;
 		while ((v = findSplitVertex(f)) != null) {
@@ -2020,10 +2025,10 @@ public class VoronoiDiagram {
 			g.removeDeg2Vertex(v);
 			modifiedVertices.remove(v);
 
-			assert (vd_checker.face_ok(f)) : " vd_checker.face_ok( f ) ";
+			assert (checkFace(f)) : " vd_checker.face_ok( f ) ";
 		}
 
-		assert (vd_checker.face_ok(f)) : " vd_checker.face_ok( f ) ";
+		assert (checkFace(f)) : " vd_checker.face_ok( f ) ";
 	}
 
 	// reset status of modified_vertices and incident_faces

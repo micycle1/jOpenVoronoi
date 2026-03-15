@@ -1,9 +1,9 @@
 package org.rogach.jopenvoronoi.util;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.rogach.jopenvoronoi.HalfEdgeDiagram;
+import org.rogach.jopenvoronoi.VoronoiDiagram;
 import org.rogach.jopenvoronoi.geometry.Edge;
 import org.rogach.jopenvoronoi.geometry.Face;
 import org.rogach.jopenvoronoi.vertex.Vertex;
@@ -20,15 +20,19 @@ public class VoronoiDiagramChecker {
 	public VoronoiDiagramChecker(HalfEdgeDiagram gi) {
 		this.g = gi;
 	}
+	
+	public VoronoiDiagramChecker(VoronoiDiagram vd) {
+		this.g = vd.getDiagram();
+	}
 
 	// overall sanity-check for the diagram, calls other sanity-check functions
-	public boolean is_valid() {
+	public boolean isValid() {
 		return (allFacesOk() && vertexDegreeOk() && faceCountEqualsGeneratorCount());
 	}
 
 	// check that number of faces equals the number of generators
-	// \todo not implemented!
-	public boolean faceCountEqualsGeneratorCount() {
+	// TODO not implemented!
+	private boolean faceCountEqualsGeneratorCount() {
 		// Euler formula for planar graphs
 		// v - e + f = 2
 		// in a half-edge diagram all edges occur twice, so:
@@ -48,7 +52,7 @@ public class VoronoiDiagramChecker {
 
 	// check that the diagram is of degree three.
 	// however ::SPLIT and ::APEX vertices are of degree 2.
-	public boolean vertexDegreeOk() {
+	private boolean vertexDegreeOk() {
 		for (Vertex v : g.vertices) {
 			if (v.degree() != Vertex.expectedDegree.get(v.type)) {
 				return false;
@@ -58,7 +62,7 @@ public class VoronoiDiagramChecker {
 	}
 
 	// check that all vertices in the input vector have status ::IN
-	public boolean all_in(List<Vertex> q) {
+	public static boolean verticesAllIN(List<Vertex> q) {
 		for (Vertex v : q) {
 			if (v.status != VertexStatus.IN) {
 				return false;
@@ -67,61 +71,10 @@ public class VoronoiDiagramChecker {
 		return true;
 	}
 
-	// check that no undecided vertices remain in the face
-	public boolean noUndecidedInFace(Face f) { // is this true??
-		var face_verts = g.faceVertices(f);
-		for (Vertex v : face_verts) {
-			if (v.status == VertexStatus.UNDECIDED) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	// check that for HEFace f the vertices TYPE are connected
-	public boolean faceVerticesConnected(Face f, VertexStatus Vtype) {
-		var face_verts = g.faceVertices(f);
-		List<Vertex> type_verts = new ArrayList<>();
-		for (Vertex v : face_verts) {
-			if (v.status == Vtype) {
-				type_verts.add(v); // build a vector of all Vtype vertices
-			}
-		}
-		assert (!type_verts.isEmpty()) : " !type_verts.isEmpty() ";
-		if (type_verts.size() == 1) {
-			return true;
-		}
-
-		// check that type_verts are connected
-		var currentEdge = f.edge;
-		var endVertex = currentEdge.source; // stop when target here
-		List<Edge> startEdges = new ArrayList<>();
-		var done = false;
-		while (!done) {
-			var src = currentEdge.source;
-			var trg = currentEdge.target;
-			if (src.status != Vtype) { // seach ?? - Vtype
-				if (trg.status == Vtype) { // we have found ?? - Vtype
-					startEdges.add(currentEdge);
-				}
-			}
-			currentEdge = currentEdge.next;
-			if (trg == endVertex) {
-				done = true;
-			}
-		}
-		assert (!startEdges.isEmpty()) : " !startEdges.isEmpty() ";
-		if (startEdges.size() != 1) {
-			return false;
-		} else {
-			return true;
-		}
-	}
-
 	// check that all faces are ok. calls face_ok()
-	public boolean allFacesOk() {
+	private boolean allFacesOk() {
 		for (Face f : g.faces) {
-			if (!face_ok(f)) {
+			if (!checkFace(f)) {
 				return false;
 			}
 		}
@@ -129,26 +82,17 @@ public class VoronoiDiagramChecker {
 	}
 
 	// check that the face is ok
-	public boolean face_ok(Face f) {
+	public static boolean checkFace(Face f) {
 		var current_edge = f.edge;
 
 		var start_edge = current_edge;
 		var k = current_edge.k;
 		if (!((k == 1) || (k == -1))) {
-			// std::cout << " VoronoiDiagramChecker::face_ok() f=" << f << " ERROR:\n";
-			// std::cout << " illegal k-value for edge:";
-			// std::cout << g[ g.source(current_edge)].index << " - ";
-			// std::cout << g[ g.target(current_edge)].index ;
-			// std::cout << " k= " << k << "\n";
 			return false;
 		}
 		if (f.site != null) { // guard against null-faces that dont have Site
 			if (f.site.isPoint()) {
 				if (!(k == 1)) {
-					// std::cout << " VoronoiDiagramChecker::face_ok() f=" << f << " ERROR:\n";
-					// std::cout << " f = " << f << " site is " << g[f].site->str() << " but k=" <<
-					// k << "\n";
-					// std::cout << " null? " << g[f].null << "\n";
 					return false;
 				}
 			}
@@ -158,11 +102,11 @@ public class VoronoiDiagramChecker {
 			if (current_edge.k != k) { // all edges should have the same k-value
 				return false;
 			}
-			if (!current_face_equals_next_face(current_edge)) {// all edges should have the same face
+			if (!currFaceEqualsNext(current_edge)) {// all edges should have the same face
 				return false;
 			}
 
-			if (!check_edge(current_edge)) {
+			if (!checkEdge(current_edge)) {
 				return false;
 			}
 
@@ -174,7 +118,7 @@ public class VoronoiDiagramChecker {
 	}
 
 	// check that current edge and next-edge are on the same face
-	public boolean current_face_equals_next_face(Edge e) {
+	private static boolean currFaceEqualsNext(Edge e) {
 		if (e.face != e.next.face) {
 			return false;
 		}
@@ -182,7 +126,7 @@ public class VoronoiDiagramChecker {
 	}
 
 	// sanity-check for edge
-	public boolean check_edge(Edge e) {
+	public static boolean checkEdge(Edge e) {
 		var src = e.source;
 		var trg = e.target;
 		var twine = e.twin;
