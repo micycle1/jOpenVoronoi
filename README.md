@@ -13,29 +13,7 @@ A fork of *Rogach*'s [port](https://github.com/Rogach/jopenvoronoi) of the origi
 
 # Fork Changes
 
-This fork has the following changes:
-
-<details>
-  <summary>Click to expand!</summary>
-  
-- Converts source code to Java 11
-- Introduces cell-point methods:
-  - `nearestFace()` 
-  - `nearestFaces()`
-- Splits the library into appropriate sub-packages
-- Converts source comments into proper Javadoc comments (only the most important comments converted so far...)
-- Removes the constraint that point sites had to be placed within a unit-circle centered on (0,0) — now points can have any coordinate! (this could have side-effects...)
-- Introduces *LindenmayerCurve*, *RandomLabyrinth* and *RandomPolygon* diagram generators (from the original's tests) into the main library under the *generate* sub-package
-- Introduces `buildIntoVoronoiDiagram()` for PlanarGraphs
-- Adds Javadoc comments to important arguments on generator classes
-- Removes SVG output functionality
-- Removes the debugging `step` argument (that was left in the code) from the main point/site insert methods
-- Implements `position()` on `Edge`, `LineSite` and `Pointsite` classes
-- Replace diagram's `HashSets` with `ArrayLists` for easier iteration
-- More error handling
-</details>
-
-
+*Rogach*'s work laid a strong foundation... This fork productionises the original codebase, transforming the proof-of-concept port into a modern, high-performance library. The project has undergone a significant overhaul to improve codebase health, performance, and ease of use.
 
 # Example code
 
@@ -179,6 +157,9 @@ List<OffsetLoop> insetLoops = new Offset(voronoi.getDiagram()).offset(0.2);
   <img src="resources/neighbours/single.gif" alt="" width="49%"/>
   <img src="resources/neighbours/multi.gif" alt="" width="49%"/>
 </p>
+
+### Known Limitations
+* The libary does not support >2 line sites terminating at the same vertex. Such arrangements *can* work, but it is not guaranteed.
 
 License
 =======
