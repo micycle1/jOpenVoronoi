@@ -153,14 +153,14 @@ public class VoronoiDiagram {
 	 * <p>
 	 * This is roughly "algorithm A" from the Sugihara-Iri 1994 paper, page 15/50 /
 	 * -# find the face that is closest to the new site, see FaceGrid -# among the
-	 * vertices on the closest face, find the seed vertex, see find_seed_vertex() -#
-	 * grow the tree of IN-vertices, see augment_vertex_set() -# add new
-	 * voronoi-vertices on all IN-OUT edges so they becone IN-NEW-OUT, see
-	 * add_vertices() -# add new face by splitting each INCIDENT face into two parts
-	 * by inserting a NEW-NEW edge. see add_edges() -# repair the next-pointers of
-	 * faces that have been modified. see repair_face() -# remove IN-IN edges and
-	 * IN-NEW edges, see remove_vertex_set() -# reset vertex/face status to be ready
-	 * for next incremental operation, see reset_status()
+	 * vertices on the closest face, find the seed vertex, see {@link #findSeedVertex} -#
+	 * grow the tree of IN-vertices, see {@link #augmentVertexSet} -# add new
+	 * voronoi-vertices on all IN-OUT edges so they become IN-NEW-OUT, see
+	 * {@link #addVertices} -# add new face by splitting each INCIDENT face into two parts
+	 * by inserting a NEW-NEW edge. see {@link #addEdges} -# repair the next-pointers of
+	 * faces that have been modified. see {@link #repairFace} -# remove IN-IN edges and
+	 * IN-NEW edges, see {@link #removeVertexSet} -# reset vertex/face status to be ready
+	 * for next incremental operation, see {@link #resetStatus}
 	 *
 	 * @param p position of site; must not be {@code null}
 	 * @return integer handle to the inserted point. use this integer when inserting
@@ -207,8 +207,8 @@ public class VoronoiDiagram {
 		removeVertexSet(); // remove all IN vertices and adjacent edges
 		resetStatus(); // reset all vertices to UNDECIDED
 
-		assert (checkFace(newface)) : " vd_checker.face_ok( newface ) ";
-		assert (vd_checker.isValid()) : " vd_checker.is_valid() ";
+		assert (checkFace(newface)) : "face check failed for newly added face";
+		assert (vd_checker.isValid()) : "diagram validity check failed";
 
 		return new_vert;
 	}
@@ -224,7 +224,7 @@ public class VoronoiDiagram {
 	 * The basic idea of the incremental diagram update is similar to that in
 	 * insertPointSite(). The major differences are: - the handling of null-faces
 	 * at the endpoints of the LineSite. - addition of SEPARATOR edges - addition of
-	 * SPLIT vertices during augment_vertex_set() - removal of SPLIT vertices at the
+	 * SPLIT vertices during {@link #augmentVertexSet} - removal of SPLIT vertices at the
 	 * end
 	 * <p>
 	 * The steps of the algorithm are: -# based on \a idx1 and \a idx2, look up the
@@ -233,11 +233,11 @@ public class VoronoiDiagram {
 	 * modify the null-faces at the startpoint and endpoint of the LineSite -#
 	 * create and add LINESITE pseudo-edges -# add NEW vertices on all IN-OUT edges.
 	 * -# add up to four SEPARATOR edges, where applicable -# add non-separator
-	 * edges by calling add_edges() on all INCIDENT faces -# repair the
-	 * next-pointers of faces that have been modified. see repair_face() -# remove
-	 * IN-IN edges and IN-NEW edges, see remove_vertex_set() -# remove SPLIT
+	 * edges by calling {@link #addEdges} on all INCIDENT faces -# repair the
+	 * next-pointers of faces that have been modified. see {@link #repairFace} -# remove
+	 * IN-IN edges and IN-NEW edges, see {@link #removeVertexSet} -# remove SPLIT
 	 * vertices -# reset vertex/face status to be ready for next incremental
-	 * operation, see reset_status()
+	 * operation, see {@link #resetStatus}
 	 * 
 	 * @param start startpoint of line-segment
 	 * @param end   endpoint of line-segment
@@ -340,7 +340,7 @@ public class VoronoiDiagram {
 		// add negative separator edge at start
 		addSeparator(start.face, start_null_face, neg_start_target, neg_sep_start, pos_face.site, neg_face.site);
 		start.face.status = FaceStatus.NONINCIDENT; // face is now done.
-		assert (checkFace(start.face)) : " vd_checker.face_ok( start.face ) ";
+		assert (checkFace(start.face)) : "face check failed for start endpoint face";
 
 		var pos_end_target = findSeparatorTarget(end.face, pos_sep_end);
 		var neg_end_target = findSeparatorTarget(end.face, neg_sep_end);
@@ -350,11 +350,11 @@ public class VoronoiDiagram {
 		// add negative separator edge at end
 		addSeparator(end.face, end_null_face, neg_end_target, neg_sep_end, pos_face.site, neg_face.site);
 		end.face.status = FaceStatus.NONINCIDENT;
-		assert (checkFace(end.face)) : " vd_checker.face_ok( end.face ) ";
+		assert (checkFace(end.face)) : "face check failed for end endpoint face";
 
-		// add non-separator edges by calling add_edges on all INCIDENT faces
+		// add non-separator edges by calling addEdges on all INCIDENT faces
 		for (Face f : incidentFaces) {
-			if (f.status == FaceStatus.INCIDENT) {// end-point faces already dealt with in add_separator()
+			if (f.status == FaceStatus.INCIDENT) {// end-point faces already dealt with in addSeparator()
 				addEdges(pos_face, f, neg_face, new Pair<Vertex, Vertex>(seg_start, seg_end)); // each INCIDENT face is
 																								// split into two parts:
 																								// newface and f
@@ -367,11 +367,11 @@ public class VoronoiDiagram {
 
 		repairFace(pos_face, new Pair<Vertex, Vertex>(seg_start, seg_end), new Pair<Face, Face>(start_to_null, end_to_null),
 				new Pair<Face, Face>(start_null_face, end_null_face));
-		assert (checkFace(pos_face)) : " vd_checker.face_ok( pos_face ) ";
+		assert (checkFace(pos_face)) : "face check failed for positive-side face";
 
 		repairFace(neg_face, new Pair<Vertex, Vertex>(seg_start, seg_end), new Pair<Face, Face>(start_to_null, end_to_null),
 				new Pair<Face, Face>(start_null_face, end_null_face));
-		assert (checkFace(neg_face)) : " vd_checker.face_ok( neg_face ) ";
+		assert (checkFace(neg_face)) : "face check failed for negative-side face";
 
 		// we are done and can remove split-vertices
 		for (Face f : incidentFaces) {
@@ -379,11 +379,11 @@ public class VoronoiDiagram {
 		}
 		resetStatus();
 
-		assert (checkFace(start_null_face)) : " vd_checker.face_ok( start_null_face ) ";
-		assert (checkFace(end_null_face)) : " vd_checker.face_ok( end_null_face ) ";
-		assert (checkFace(pos_face)) : " vd_checker.face_ok( pos_face ) ";
-		assert (checkFace(neg_face)) : " vd_checker.face_ok( neg_face ) ";
-		assert (vd_checker.isValid()) : " vd_checker.is_valid() ";
+		assert (checkFace(start_null_face)) : "face check failed for start null-face";
+		assert (checkFace(end_null_face)) : "face check failed for end null-face";
+		assert (checkFace(pos_face)) : "face check failed for positive-side face";
+		assert (checkFace(neg_face)) : "face check failed for negative-side face";
+		assert (vd_checker.isValid()) : "diagram validity check failed";
 
 		return true;
 	}
@@ -579,7 +579,7 @@ public class VoronoiDiagram {
 
 	// comparison-predicate for VertexQueue
 	/**
-	 * In {@code augment_vertex_set()} we grow the delete-tree by processing
+	 * In {@code augmentVertexSet()} we grow the delete-tree by processing
 	 * vertices one by one from a priority queue.
 	 * <p>
 	 * This is the priority queue sort predicate. We handle vertices with a large
@@ -725,7 +725,7 @@ public class VoronoiDiagram {
 		g.twinEdges(e6_1, e7_2);
 		g.twinEdges(e6_2, e7_1);
 
-		assert (vd_checker.isValid()) : " vd_checker.is_valid() ";
+		assert (vd_checker.isValid()) : "diagram validity check failed";
 
 	}
 
@@ -787,7 +787,7 @@ public class VoronoiDiagram {
 	 *
 	 * @param f face on which we search for vertices
 	 * @param startverts contains NEW-vertices already found, which are not valid
-	 *                   for this call to find_edge_data
+	 *                   for this call to findEdgeData
 	 * @param segment contains ENDPOINT vertices when we are inserting a
 	 *                line-segment; these vertices are needed to ensure finding
 	 *                correct points around sites/null-edges
@@ -860,7 +860,7 @@ public class VoronoiDiagram {
 	 * hurt to insert SPLIT-vertices in this case.
 	 */
 	private List<Edge> findSplitEdges(Face f, Point pt1, Point pt2) {
-		assert (checkFace(f)) : " vd_checker.face_ok(f) ";
+		assert (checkFace(f)) : "face check failed";
 		List<Edge> out = new ArrayList<>();
 		var current_edge = f.edge;
 		var start_edge = current_edge;
@@ -876,7 +876,7 @@ public class VoronoiDiagram {
 																												// instead?
 				if (src_is_right != trg_is_right) {
 					out.add(current_edge);
-					assert (checkEdge(current_edge)) : "vd_checker.check_edge(current_edge)";
+					assert (checkEdge(current_edge)) : "edge check failed during split-edge search";
 				}
 			}
 			current_edge = current_edge.next;
@@ -1006,7 +1006,7 @@ public class VoronoiDiagram {
 			}
 		}
 
-		assert (count > 0) : "count > 0";
+		assert (count > 0) : "vertex must have at least one incident face";
 
 		if (count > 0 && !faceHasAllowedNeighbor(v, f0)) {
 			return false;
@@ -1022,8 +1022,8 @@ public class VoronoiDiagram {
 	}
 
 	private boolean faceHasAllowedNeighbor(Vertex v, Face f) {
-	    assert (v != null) : "v != null";
-	    assert (f != null) : "f != null";
+	    assert (v != null) : "vertex must not be null";
+	    assert (f != null) : "face must not be null";
 
 	    Edge out = null;
 	    for (Edge e : v.outEdges) {
@@ -1077,15 +1077,18 @@ public class VoronoiDiagram {
 
 	// mark adjacent faces INCIDENT
 	// call this when inserting line-sites
-	// since we call add_split_vertex we can't use iterators, because they get
+	// since we call addSplitVertex we can't use iterators, because they get
 	// invalidated
 	// so use the slower adjacent_faces() instead.
 	private void markAdjacentFaces(Vertex v, Site site) {
-		assert (v.status == VertexStatus.IN) : "v.status == VertexStatus.IN ";
+		assert (v.status == VertexStatus.IN) : "vertex must have IN status";
 		var new_adjacent_faces = g.adjacentFaces(v);
 
-		assert ((v.type == VertexType.APEX && new_adjacent_faces.size() == 2) || (v.type == VertexType.SPLIT && new_adjacent_faces.size() == 2)
-				|| new_adjacent_faces.size() == 3);
+		assert ((v.type == VertexType.APEX && new_adjacent_faces.size() == 2)
+				|| (v.type == VertexType.SPLIT && new_adjacent_faces.size() == 2)
+				|| new_adjacent_faces.size() == 3) : String.format(
+				"unexpected adjacent face count %d for vertex type %s at %s",
+				new_adjacent_faces.size(), v.type, v.position);
 
 		for (Face adj_face : new_adjacent_faces) {
 			if (adj_face.status != FaceStatus.INCIDENT) {
@@ -1104,7 +1107,7 @@ public class VoronoiDiagram {
 	// and push them to the incident_faces queue
 	// NOTE: call this only when inserting point-sites
 	private void markAdjacentFacesP(Vertex v) {
-		assert (v.status == VertexStatus.IN) : "v.status == VertexStatus.IN ";
+		assert (v.status == VertexStatus.IN) : "vertex must have IN status";
 		for (Edge e : v.outEdges) {
 			var adj_face = e.face;
 			if (adj_face.status != FaceStatus.INCIDENT) {
@@ -1187,7 +1190,7 @@ public class VoronoiDiagram {
 	 * <p>
 	 * For linesegment or arc sites we pass in both the {@code k=+1} face
 	 * {@code newface} and the {@code k=-1} face {@code newface2}. The segment
-	 * endpoints are passed to find_edge_data().
+	 * endpoints are passed to {@link #findEdgeData}.
 	 */
 	private void addEdges(Face newface, Face f, Face newface2, Pair<Vertex, Vertex> segment) {
 		var new_count = numNewVertices(f);
@@ -1554,8 +1557,8 @@ public class VoronoiDiagram {
 		e2.setSepParameters(sep_endp.position, v_target.position);
 		e2_tw.setSepParameters(sep_endp.position, v_target.position);
 
-		assert (checkEdge(e2)) : " vd_checker.check_edge(e2) ";
-		assert (checkEdge(e2_tw)) : " vd_checker.check_edge(e2_tw) ";
+		assert (checkEdge(e2)) : "edge check failed for separator edge";
+		assert (checkEdge(e2_tw)) : "edge check failed for separator twin edge";
 
 	}
 
@@ -1563,7 +1566,7 @@ public class VoronoiDiagram {
 	 * Adds one or many SPLIT vertices to the edges of the give face. These are
 	 * projections/mirrors of the site of f with the new Site s acting as the
 	 * mirror. SPLIT vertices are inserted to avoid deleting loops during //
-	 * augment_vertex_set().
+	 * {@link #augmentVertexSet}.
 	 * 
 	 * @param f
 	 * @param s
@@ -1620,7 +1623,7 @@ public class VoronoiDiagram {
 
 				var v = g.addVertex(new Vertex(split_pt_pos, VertexStatus.UNDECIDED, VertexType.SPLIT, fs.position()));
 
-				assert (checkEdge(split_edge)) : " vd_checker.check_edge(split_edge) ";
+				assert (checkEdge(split_edge)) : "edge check failed for split edge";
 				// 3) insert new SPLIT vertex into the edge
 				g.addVertexInEdge(v, split_edge);
 			}
@@ -1686,8 +1689,8 @@ public class VoronoiDiagram {
 		} else {
 			throw new RuntimeException();
 		}
-		// this is used below and in find_null_face()
-		// k3_sign is already calculated in insert_line_segment() ??
+		// this is used below and in findNullFace()
+		// k3_sign is already calculated in insertLineSite() ??
 
 		if (start.nullFace != null) { // there is an existing null face
 			start_null_face = start.nullFace;
@@ -1857,7 +1860,9 @@ public class VoronoiDiagram {
 		var src = next_edge.source;
 
 		var adj = next_prev ? trg : src; // this is the vertex adjacent to the end-point, on the null face
-		assert ((next_prev ? src : trg).type == VertexType.ENDPOINT) : " (next_prev ? src : trg).type == VertexType.ENDPOINT ";
+		assert ((next_prev ? src : trg).type == VertexType.ENDPOINT) : String.format(
+				"expected ENDPOINT vertex on null-face, got type %s at %s",
+				(next_prev ? src : trg).type, (next_prev ? src : trg).position);
 
 		Vertex sep_point = null;
 		double dir_mult = next_prev ? +1 : -1;
@@ -1883,7 +1888,7 @@ public class VoronoiDiagram {
 			return new Pair<Vertex, Face>(null, null);
 		} else {
 			// Not an ENDPOINT vertex.
-			assert (adj.type != VertexType.ENDPOINT) : " adj.type != VertexType.ENDPOINT ";
+			assert (adj.type != VertexType.ENDPOINT) : "adjacent vertex on null-face should not be ENDPOINT here";
 			var mid = 0D;
 			var seppoint_pred = false;
 			var parallel_pred = false;
@@ -1926,12 +1931,12 @@ public class VoronoiDiagram {
 				Edge sep_edge = null;
 
 				for (Edge e : adj.outEdges) {
-					assert (e.source == adj) : "e.source == adj";
+					assert (e.source == adj) : "outgoing edge source must match the adjacent vertex";
 					if (e.type == EdgeType.SEPARATOR) {
 						sep_edge = e;
 					}
 				}
-				assert (sep_edge != null) : "sep_edge != null";
+				assert (sep_edge != null) : "separator edge must exist for SEPPOINT vertex";
 
 				Edge sep_twin = sep_edge.twin;
 				Face sep_face = sep_edge.face;
@@ -1956,7 +1961,7 @@ public class VoronoiDiagram {
 			}
 
 			var adj_out = nullVertexTarget(adj);
-			assert (adj_out != null) : "adj_out != null";
+			assert (adj_out != null) : "null-vertex target must exist for adjacent vertex";
 
 			if (adj_out.status == VertexStatus.OUT || adj_out.status == VertexStatus.UNDECIDED) {
 				sep_point = addSeparatorVertex(src, next_edge, sep_dir);
@@ -1999,10 +2004,8 @@ public class VoronoiDiagram {
 	}
 
 	/**
-	 * one-argument version of repair_face() used by {@link #insertPointSite(Point)}
-	 * 
-	 * @see #repair_face(Face, Pair, Pair, Pair)
-	 * @param f
+	 * One-argument version of {@link #repairFace(Face, Pair, Pair, Pair)} used by
+	 * {@link #insertPointSite(Point)}.
 	 */
 	private void repairFace(Face f) {
 		repairFace(f, new Pair<Vertex, Vertex>(null, null), new Pair<Face, Face>(null, null), new Pair<Face, Face>(null, null));
@@ -2117,19 +2120,19 @@ public class VoronoiDiagram {
 
 	// remove all SPLIT type vertices on the HEFace \a f
 	private void removeSplitVertex(Face f) {
-		assert (checkFace(f)) : " vd_checker.face_ok( f ) ";
+		assert (checkFace(f)) : "face check failed";
 
 		Vertex v;
 		while ((v = findSplitVertex(f)) != null) {
-			assert (v.type == VertexType.SPLIT) : "v.type == VertexType.SPLIT";
+			assert (v.type == VertexType.SPLIT) : "vertex must be SPLIT type for removal";
 
 			g.removeDeg2Vertex(v);
 			modifiedVertices.remove(v);
 
-			assert (checkFace(f)) : " vd_checker.face_ok( f ) ";
+			assert (checkFace(f)) : "face check failed";
 		}
 
-		assert (checkFace(f)) : " vd_checker.face_ok( f ) ";
+		assert (checkFace(f)) : "face check failed";
 	}
 
 	// reset status of modified_vertices and incident_faces
