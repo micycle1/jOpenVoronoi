@@ -15,31 +15,6 @@ A fork of *Rogach*'s [port](https://github.com/Rogach/jopenvoronoi) of the origi
 
 *Rogach*'s work laid a strong foundation... This fork productionises the original codebase, transforming the proof-of-concept port into a modern, high-performance library. The project has undergone a significant overhaul to improve codebase health, performance, and ease of use.
 
-# Package layout
-
-The current package split is broadly sensible:
-
-- `org.rogach.jopenvoronoi`: public entry points and the incremental construction algorithm
-- `geometry`: half-edge entities and geometric primitives
-- `vertex`: vertex state, typing, and positioning support
-- `site`: point/line/arc site hierarchy
-- `solver`: specialised vertex-position solvers
-- `filter`: post-processing filters over the completed diagram
-- `offset`: offset extraction from a diagram
-- `generate`: sample/generator utilities
-- `util`: internal helper types
-
-The main area that would benefit from a future refactor is class layout rather than package layout:
-
-- `VoronoiDiagram` currently combines public API, site insertion orchestration, vertex augmentation, null-face handling, and topology repair. If it is split, the lowest-risk direction is to extract package-private helpers for insertion state, vertex processing, and face repair while keeping the public API on `VoronoiDiagram`.
-- `Edge` is still a reasonable home for the half-edge model, but its curve-parameterisation logic could be extracted later if more edge families or parametrisation variants are added.
-- The solver classes should remain separate rather than being consolidated; they already act as focused strategies for different site combinations.
-
-For enums, the current top-level placement is also mostly sensible:
-
-- Keep `EdgeType`, `VertexType`, and `VertexStatus` as top-level enums because they are shared across multiple packages.
-- `FaceStatus` is the only enum small and local enough that it could be nested inside `Face` in the future, but there is no strong need to move it while `VoronoiDiagram` still manipulates it directly.
-
 # Example code
 
 
