@@ -972,39 +972,95 @@ public class VoronoiDiagram {
 	private boolean predicateC5(Vertex v) {
 		if (v.type == VertexType.APEX || v.type == VertexType.SPLIT) {
 			return true;
-		} // ?
-		List<Face> adjacent_incident_faces = new ArrayList<>();
+		}
+
+		Face f0 = null, f1 = null, f2 = null;
+		int count = 0;
 
 		for (Edge e : v.outEdges) {
-			if (e.face.status == FaceStatus.INCIDENT) {
-				adjacent_incident_faces.add(e.face);
+			Face f = e.face;
+			if (f.status != FaceStatus.INCIDENT) {
+				continue;
 			}
-		}
-
-		assert (!adjacent_incident_faces.isEmpty()) : " !adjacent_incident_faces.isEmpty() ";
-
-		for (Face f : adjacent_incident_faces) {
-			// check each adjacent face f for an IN-vertex
-			var face_ok = false;
-			var current = f.edge;
-			var start = current;
-			do {
-				var w = current.target;
-				if (!w.equals(v) && w.status == VertexStatus.IN && g.has_edge(w, v)) { // v should be adjacent to an IN vertex on the face
-					face_ok = true;
-				} else if (!w.equals(v) && (w.type == VertexType.ENDPOINT || w.type == VertexType.APEX || w.type == VertexType.SPLIT)) { // if we are next to an ENDPOINT, then ok(?)
-					face_ok = true;
-				} else if (!w.equals(v) && w.type == VertexType.SEPPOINT && g.has_edge(w, v)) {
-					face_ok = true;
+			if (f != f0 && f != f1 && f != f2) {
+				if (count == 0) {
+					f0 = f;
+				} else if (count == 1) {
+					f1 = f;
+				} else {
+					f2 = f;
 				}
-				current = current.next;
-			} while (!current.equals(start));
-
-			if (!face_ok) {
-				return false;
+				count++;
 			}
 		}
-		return true; // if we get here we found all ok
+
+		assert (count > 0) : "count > 0";
+
+		if (count > 0 && !faceHasAllowedNeighbor(v, f0)) {
+			return false;
+		}
+		if (count > 1 && !faceHasAllowedNeighbor(v, f1)) {
+			return false;
+		}
+		if (count > 2 && !faceHasAllowedNeighbor(v, f2)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	private boolean faceHasAllowedNeighbor(Vertex v, Face f) {
+	    assert (v != null) : "v != null";
+	    assert (f != null) : "f != null";
+
+	    Edge out = null;
+	    for (Edge e : v.outEdges) {
+	        if (e.face == f) {
+	            out = e;
+	            break;
+	        }
+	    }
+
+	    assert (out != null) : "v must have an outgoing edge on face f";
+	    assert (out.prev != null) : "prev pointers must be maintained";
+	    assert (out.prev.target == v) : "out.prev should enter v on face f";
+
+	    Vertex next = out.target;
+	    Vertex prev = out.prev.source;
+
+	    if (isAllowedC5Neighbor(prev, v) || isAllowedC5Neighbor(next, v)) {
+	        return true;
+	    }
+
+	    // Conservative fallback to preserve legacy behavior for special vertices
+	    Edge current = out.next;
+	    while (current != out) {
+	        Vertex w = current.target;
+	        if (w != v && (w.type == VertexType.ENDPOINT
+	                || w.type == VertexType.APEX
+	                || w.type == VertexType.SPLIT)) {
+	            return true;
+	        }
+	        current = current.next;
+	    }
+
+	    return false;
+	}
+
+	private boolean isAllowedC5Neighbor(Vertex w, Vertex v) {
+		if (w == null || w == v) {
+			return false;
+		}
+
+		if (w.status == VertexStatus.IN) {
+			return true;
+		}
+
+		if (w.type == VertexType.ENDPOINT || w.type == VertexType.APEX || w.type == VertexType.SPLIT || w.type == VertexType.SEPPOINT) {
+			return true;
+		}
+
+		return false;
 	}
 
 	// mark adjacent faces INCIDENT
