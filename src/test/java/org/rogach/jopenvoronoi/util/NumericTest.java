@@ -25,8 +25,11 @@ public class NumericTest {
 
 	@Test
 	public void areCloseSupportsAbsoluteAndRelativeTolerance() {
+		assertTrue(Numeric.areClose(0.0, Numeric.DOUBLE_COMPARISON_EPSILON * 0.5, Numeric.DISTANCE_EPSILON,
+				Numeric.DOUBLE_COMPARISON_EPSILON));
 		assertTrue(Numeric.areClose(1.0, 1.0 + Numeric.DOUBLE_COMPARISON_EPSILON * 0.5,
 				Numeric.DISTANCE_EPSILON, Numeric.DOUBLE_COMPARISON_EPSILON));
+		assertTrue(Numeric.areClose(1000.0, 1001.0, Numeric.DISTANCE_EPSILON, Numeric.DOUBLE_COMPARISON_EPSILON));
 		assertTrue(Numeric.areClose(1000.0, 1000.5, Numeric.DISTANCE_EPSILON, Numeric.DOUBLE_COMPARISON_EPSILON));
 		assertFalse(Numeric.areClose(1000.0, 1002.0, Numeric.DISTANCE_EPSILON, Numeric.DOUBLE_COMPARISON_EPSILON));
 	}
