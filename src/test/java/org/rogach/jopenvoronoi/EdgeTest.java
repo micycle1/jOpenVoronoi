@@ -17,7 +17,7 @@ import org.rogach.jopenvoronoi.vertex.VertexType;
 public class EdgeTest {
 
 	@Test
-	public void pointAndRadiusInterpolatesLinearEdges() {
+	public void micSampleInterpolatesLinearEdges() {
 		Edge edge = new Edge(new Vertex(new Point(0, 0), VertexStatus.UNDECIDED, VertexType.NORMAL, 0.0),
 				new Vertex(new Point(2, 0), VertexStatus.UNDECIDED, VertexType.NORMAL, 0.0));
 		edge.type = EdgeType.LINE;
@@ -26,15 +26,14 @@ public class EdgeTest {
 		face.setSite(new PointSite(new Point(1, 1), face));
 		edge.face = face;
 
-		Entry<Point, Double> sample = edge.pointAndRadius(0.25);
+		Entry<Point, Double> sample = edge.micSample(0.25);
 
 		assertPointEquals(new Point(0.5, 0.0), sample.getKey());
 		Assertions.assertEquals(Math.sqrt(1.25), sample.getValue(), 1e-12);
 	}
 
 	@Test
-	@SuppressWarnings("deprecation")
-	public void edgePointDelegatesToPointAndRadiusForParabolas() {
+	public void micSampleInterpolatesParabolaRadius() {
 		PointSite pointSite = new PointSite(new Point(0, 0));
 		LineSite lineSite = new LineSite(new Point(-2, 1), new Point(2, 1), 1.0);
 
@@ -46,13 +45,10 @@ public class EdgeTest {
 		edge.source = new Vertex(edge.point(startRadius), VertexStatus.UNDECIDED, VertexType.NORMAL, startRadius);
 		edge.target = new Vertex(edge.point(endRadius), VertexStatus.UNDECIDED, VertexType.NORMAL, endRadius);
 
-		Entry<Point, Double> sample = edge.pointAndRadius(0.5);
-		Entry<Point, Double> deprecatedSample = edge.edgePoint(0.5);
+		Entry<Point, Double> sample = edge.micSample(0.5);
 
 		assertPointEquals(edge.point(2.0), sample.getKey());
 		Assertions.assertEquals(2.0, sample.getValue(), 1e-12);
-		assertPointEquals(sample.getKey(), deprecatedSample.getKey());
-		Assertions.assertEquals(sample.getValue(), deprecatedSample.getValue(), 1e-12);
 	}
 
 	private static void assertPointEquals(Point expected, Point actual) {

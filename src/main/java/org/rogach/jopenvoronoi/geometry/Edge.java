@@ -347,8 +347,6 @@ public class Edge {
 	// Set parameters for a point/arc bisector.
 	private void setPaParameters(Site s1, Site s2) {
 		assert (s1.isPoint() && s2.isArc()) : " s1.isPoint() && s2.isArc() ";
-		// std::cout << "set_pa_parameters()\n";
-
 		type = EdgeType.HYPERBOLA; // hyperbola or ellipse?
 		var lamb2 = 1.0;
 
@@ -397,8 +395,7 @@ public class Edge {
 		var alfa2 = s1.b(); // b2
 		var alfa3 = (s1.a() * s2.x() + s1.b() * s2.y() + s1.c());
 		var alfa4 = s2.r();
-		double kk = +1; // # positive line-offset
-		// figure out sign?
+		double kk = +1;
 
 		x[0] = s2.x();
 		x[1] = alfa1 * alfa3;
@@ -471,14 +468,14 @@ public class Edge {
 	}
 	
 	/**
-	 * Sample a point and its exact clearance radius at normalized parameter
-	 * {@code u} along this edge.
+	 * Sample a MIC candidate point and its exact clearance radius at normalized
+	 * parameter {@code u} along this edge.
 	 *
 	 * @param u normalized edge parameter from {@code 0.0} at {@link #source} to
 	 *          {@code 1.0} at {@link #target}
 	 * @return a pair containing the sampled point and its exact clearance radius
 	 */
-	public Entry<Point, Double> pointAndRadius(double u) {
+	public Entry<Point, Double> micSample(double u) {
 		Point p;
 		double r;
 
@@ -503,18 +500,10 @@ public class Edge {
 			p = point(uT);
 			r = uT;
 		} else {
-			throw new RuntimeException("Unsupported edge type for pointAndRadius: " + type);
+			throw new RuntimeException("Unsupported edge type for micSample: " + type);
 		}
 
 		return new SimpleEntry<>(p, r);
-	}
-
-	/**
-	 * @deprecated use {@link #pointAndRadius(double)} instead.
-	 */
-	@Deprecated
-	public Entry<Point, Double> edgePoint(double u) {
-		return pointAndRadius(u);
 	}
 
 	@Override
