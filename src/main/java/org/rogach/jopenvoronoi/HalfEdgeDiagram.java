@@ -46,20 +46,19 @@ import org.rogach.jopenvoronoi.vertex.Vertex;
  */
 public class HalfEdgeDiagram {
 
-	public Set<Vertex> vertices = new HashSet<>();
-	public Set<Edge> edges = new HashSet<>();
-	public Set<Face> faces = new HashSet<>();
+	public List<Vertex> vertices = new ArrayList<>();
+	public List<Edge> edges = new ArrayList<>();
+	public List<Face> faces = new ArrayList<>();
 
 	Vertex addVertex() {
-		var v = new Vertex();
-		vertices.add(v);
-		return v;
+	    var v = new Vertex();
+	    registerVertex(v);
+	    return v;
 	}
 
-	// add a vertex with given properties, return vertex descriptor
 	Vertex addVertex(Vertex v) {
-		vertices.add(v);
-		return v;
+	    registerVertex(v);
+	    return v;
 	}
 
 	// return number of faces in graph
@@ -84,11 +83,11 @@ public class HalfEdgeDiagram {
 
 	// add an edge between vertices v1-v2
 	Edge add_edge(Vertex v1, Vertex v2) {
-		var e = new Edge(v1, v2);
-		v1.outEdges.add(e);
-		v2.inEdges.add(e);
-		edges.add(e);
-		return e;
+	    var e = new Edge(v1, v2);
+	    v1.outEdges.add(e);
+	    v2.inEdges.add(e);
+	    registerEdge(e);
+	    return e;
 	}
 
 	// return true if v1-v2 edge exists
@@ -113,28 +112,27 @@ public class HalfEdgeDiagram {
 
 	// clear given vertex. this removes all edges connecting to the vertex.
 	void clearVertex(Vertex v) {
-		for (Edge e : v.outEdges) {
-			e.target.inEdges.remove(e);
-			edges.remove(e);
-		}
-		v.outEdges.clear();
-		for (Edge e : v.inEdges) {
-			e.source.outEdges.remove(e);
-			edges.remove(e);
-		}
-		v.inEdges.clear();
+	    while (!v.outEdges.isEmpty()) {
+	        removeEdge(v.outEdges.get(v.outEdges.size() - 1));
+	    }
+	    while (!v.inEdges.isEmpty()) {
+	        removeEdge(v.inEdges.get(v.inEdges.size() - 1));
+	    }
 	}
 
 	// remove given vertex. call clear_vertex() before this!
 	void removeVertex(Vertex v) {
-		vertices.remove(v);
+	    unregisterVertexFromStore(v);
 	}
 
 	// remove given edge
 	void removeEdge(Edge e) {
-		e.source.outEdges.remove(e);
-		e.target.inEdges.remove(e);
-		edges.remove(e);
+	    if (e.diagramIndex < 0) {
+	        throw new IllegalStateException("removeEdge on unregistered edge: " + e);
+	    }
+	    e.source.outEdges.remove(e);
+	    e.target.inEdges.remove(e);
+	    unregisterEdgeFromStore(e);
 	}
 
 	// delete a vertex. clear and remove.
@@ -178,8 +176,8 @@ public class HalfEdgeDiagram {
 		copyEdgeData(e2, e);
 		copyEdgeData(te2, eTwin);
 
-		edges.add(e2);
-		edges.add(te2);
+		registerEdge(e2);
+		registerEdge(te2);
 
 		v.outEdges.add(e2);
 		v.outEdges.add(te2);
@@ -286,10 +284,10 @@ public class HalfEdgeDiagram {
 
 	// add a face, with given properties
 	public Face addFace() {
-		var f = new Face();
-		f.attachDiagram(this);
-		faces.add(f);
-		return f;
+	    var f = new Face();
+	    f.attachDiagram(this);
+	    registerFace(f);
+	    return f;
 	}
 
 	// return all vertices adjecent to given vertex
@@ -437,15 +435,15 @@ public class HalfEdgeDiagram {
 		v.outEdges.remove(e1);
 
 		v1.inEdges.remove(e0);
-		edges.remove(e0);
+		unregisterEdgeFromStore(e0);
 
 		v2.inEdges.remove(e1);
-		edges.remove(e1);
+		unregisterEdgeFromStore(e1);
 
-		assert (v.outEdges.isEmpty()) : "v.outEdges empty";
-		assert (v.inEdges.isEmpty()) : "v.inEdges empty";
+		assert v.outEdges.isEmpty() : "v.outEdges empty";
+		assert v.inEdges.isEmpty() : "v.inEdges empty";
 
-		vertices.remove(v);
+		removeVertex(v);
 	}
 
 	// set next-pointer of e1 to e2
@@ -516,5 +514,74 @@ public class HalfEdgeDiagram {
 		assert (next_edge != null) : " next_edge != null ";
 		assert (prev_edge != null) : " prev_edge != null ";
 		return new Pair<Edge, Edge>(next_edge, prev_edge);
+	}
+	
+	private void registerEdge(Edge e) {
+	    assert e.diagramIndex == -1 : "edge already registered";
+	    e.diagramIndex = edges.size();
+	    edges.add(e);
+	}
+
+	private void unregisterEdgeFromStore(Edge e) {
+	    if (e.diagramIndex < 0) {
+	        throw new IllegalStateException("Edge not registered in diagram: " + e);
+	    }
+
+	    int idx = e.diagramIndex;
+	    int lastIdx = edges.size() - 1;
+	    Edge last = edges.get(lastIdx);
+
+	    if (idx != lastIdx) {
+	        edges.set(idx, last);
+	        last.diagramIndex = idx;
+	    }
+	    edges.remove(lastIdx);
+	    e.diagramIndex = -1;
+	}
+
+	private void registerVertex(Vertex v) {
+	    assert v.diagramIndex == -1 : "vertex already registered";
+	    v.diagramIndex = vertices.size();
+	    vertices.add(v);
+	}
+
+	private void unregisterVertexFromStore(Vertex v) {
+	    if (v.diagramIndex < 0) {
+	        throw new IllegalStateException("Vertex not registered in diagram: " + v);
+	    }
+
+	    int idx = v.diagramIndex;
+	    int lastIdx = vertices.size() - 1;
+	    Vertex last = vertices.get(lastIdx);
+
+	    if (idx != lastIdx) {
+	        vertices.set(idx, last);
+	        last.diagramIndex = idx;
+	    }
+	    vertices.remove(lastIdx);
+	    v.diagramIndex = -1;
+	}
+
+	private void registerFace(Face f) {
+	    assert f.diagramIndex == -1 : "face already registered";
+	    f.diagramIndex = faces.size();
+	    faces.add(f);
+	}
+
+	private void unregisterFaceFromStore(Face f) {
+	    if (f.diagramIndex < 0) {
+	        throw new IllegalStateException("Face not registered in diagram: " + f);
+	    }
+
+	    int idx = f.diagramIndex;
+	    int lastIdx = faces.size() - 1;
+	    Face last = faces.get(lastIdx);
+
+	    if (idx != lastIdx) {
+	        faces.set(idx, last);
+	        last.diagramIndex = idx;
+	    }
+	    faces.remove(lastIdx);
+	    f.diagramIndex = -1;
 	}
 }

@@ -990,18 +990,9 @@ public class VoronoiDiagram {
 			var start = current;
 			do {
 				var w = current.target;
-				if (!w.equals(v) && w.status == VertexStatus.IN && g.has_edge(w, v)) { // v should be adjacent to an IN
-																						// vertex on the face
+				if (!w.equals(v) && w.status == VertexStatus.IN && g.has_edge(w, v)) { // v should be adjacent to an IN vertex on the face
 					face_ok = true;
-				} else if (!w.equals(v) && (w.type == VertexType.ENDPOINT || w.type == VertexType.APEX || w.type == VertexType.SPLIT)) {// if
-																																		// we
-																																		// are
-																																		// next
-																																		// to
-																																		// an
-																																		// ENDPOINT,
-																																		// then
-																																		// ok(?)
+				} else if (!w.equals(v) && (w.type == VertexType.ENDPOINT || w.type == VertexType.APEX || w.type == VertexType.SPLIT)) { // if we are next to an ENDPOINT, then ok(?)
 					face_ok = true;
 				} else if (!w.equals(v) && w.type == VertexType.SEPPOINT && g.has_edge(w, v)) {
 					face_ok = true;

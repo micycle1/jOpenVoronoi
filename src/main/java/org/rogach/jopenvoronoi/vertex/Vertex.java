@@ -61,6 +61,7 @@ public class Vertex {
 	public Face face;
 	/** clearance-disk radius, i.e. the closest Site is at this distance */
 	public double r;
+	public int diagramIndex = -1;
 
 	public Vertex() {
 	}

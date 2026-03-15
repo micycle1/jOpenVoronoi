@@ -16,6 +16,7 @@ public class Face {
 	public FaceStatus status;
 	public boolean is_null_face;
 	private HalfEdgeDiagram diagram;
+	public int diagramIndex = -1;
 
 	public Face() {
 	}
