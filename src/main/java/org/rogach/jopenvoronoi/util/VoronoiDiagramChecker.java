@@ -15,39 +15,19 @@ import org.rogach.jopenvoronoi.vertex.VertexStatus;
 public class VoronoiDiagramChecker {
 
 	/** vd-graph */
-	private HalfEdgeDiagram g;
+	private final HalfEdgeDiagram g;
 
 	public VoronoiDiagramChecker(HalfEdgeDiagram gi) {
 		this.g = gi;
 	}
 	
 	public VoronoiDiagramChecker(VoronoiDiagram vd) {
-		this.g = vd.getDiagram();
+		this(vd.getDiagram());
 	}
 
 	// overall sanity-check for the diagram, calls other sanity-check functions
 	public boolean isValid() {
-		return (allFacesOk() && vertexDegreeOk() && faceCountEqualsGeneratorCount());
-	}
-
-	// check that number of faces equals the number of generators
-	// TODO not implemented!
-	private boolean faceCountEqualsGeneratorCount() {
-		// Euler formula for planar graphs
-		// v - e + f = 2
-		// in a half-edge diagram all edges occur twice, so:
-		// f = 2-v+e
-		// int vertex_count = hedi::num_vertices(g);
-		/*
-		 * int vertex_count = 0; BOOST_FOREACH( HEVertex v, hedi::vertices( g ) ) { if (
-		 * g[v].type == NORMAL ) vertex_count++; } int face_count = (vertex_count- 4)/2
-		 * + 3; // degree three graph //int face_count = hed.num_faces(); if (face_count
-		 * != gen_count) { std::cout << " face_count_equals_generator_count() ERROR:\n";
-		 * std::cout << " num_vertices = " << vertex_count << "\n"; std::cout <<
-		 * " gen_count = " << gen_count << "\n"; std::cout << " face_count = " <<
-		 * face_count << "\n"; } return ( face_count == gen_count );
-		 */
-		return true;
+		return allFacesOk() && vertexDegreeOk();
 	}
 
 	// check that the diagram is of degree three.

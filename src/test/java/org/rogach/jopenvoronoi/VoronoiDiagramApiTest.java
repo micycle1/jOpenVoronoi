@@ -71,5 +71,6 @@ public class VoronoiDiagramApiTest {
 		Assertions.assertTrue(diagram.getFaces().stream().noneMatch(Face::isNullFace));
 		Assertions.assertEquals(diagram.getNonNullFaces().size(), diagram.getFaces().size());
 		Assertions.assertTrue(diagram.getAllFaces().stream().anyMatch(Face::isNullFace));
+		Assertions.assertTrue(diagram.check());
 	}
 }
