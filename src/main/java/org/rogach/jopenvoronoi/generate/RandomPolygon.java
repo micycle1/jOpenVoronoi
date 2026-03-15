@@ -3,7 +3,6 @@ package org.rogach.jopenvoronoi.generate;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**

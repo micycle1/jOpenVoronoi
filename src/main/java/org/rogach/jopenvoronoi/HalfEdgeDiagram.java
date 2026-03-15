@@ -567,21 +567,4 @@ public class HalfEdgeDiagram {
 	    f.diagramIndex = faces.size();
 	    faces.add(f);
 	}
-
-	private void unregisterFaceFromStore(Face f) {
-	    if (f.diagramIndex < 0) {
-	        throw new IllegalStateException("Face not registered in diagram: " + f);
-	    }
-
-	    int idx = f.diagramIndex;
-	    int lastIdx = faces.size() - 1;
-	    Face last = faces.get(lastIdx);
-
-	    if (idx != lastIdx) {
-	        faces.set(idx, last);
-	        last.diagramIndex = idx;
-	    }
-	    faces.remove(lastIdx);
-	    f.diagramIndex = -1;
-	}
 }

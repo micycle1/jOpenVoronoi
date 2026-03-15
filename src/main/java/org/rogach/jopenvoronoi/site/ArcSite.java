@@ -73,7 +73,6 @@ public class ArcSite extends Site {
 		var cen_start = _start.sub(_center);
 		var cen_end = _end.sub(_center);
 		var cen_pt = pt.sub(_center);
-		var proj = _center.add(cen_pt.mult(_radius / cen_pt.norm()));
 
 		double diangle_min;
 		double diangle_max;
