@@ -6,9 +6,12 @@ import static org.rogach.jopenvoronoi.util.VoronoiDiagramChecker.verticesAllIN;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
@@ -140,6 +143,24 @@ public class VoronoiDiagram {
 	}
 
 	/**
+	 * Inserts multiple point sites into the Voronoi diagram.
+	 *
+	 * @param points point-site positions to insert; must not be {@code null}
+	 * @return handles to the inserted point sites in iteration order
+	 */
+	public List<Vertex> insertPointSites(Collection<Point> points) {
+		if (points == null) {
+			throw new IllegalArgumentException("Point site collection cannot be null.");
+		}
+
+		List<Vertex> inserted = new ArrayList<>(points.size());
+		for (Point point : points) {
+			inserted.add(insertPointSite(point));
+		}
+		return inserted;
+	}
+
+	/**
 	 * Insert a PointSite into the voronoi diagram.
 	 *
 	 * <p>
@@ -210,6 +231,54 @@ public class VoronoiDiagram {
 		assert (vd_checker.isValid()) : "diagram validity check failed";
 
 		return new_vert;
+	}
+
+	/**
+	 * Inserts multiple line segments into the diagram.
+	 * <p>
+	 * Any segment endpoints that do not already exist as point sites are inserted
+	 * automatically before the corresponding line site is added.
+	 *
+	 * @param lineSegments line segments to insert as pairs of start/end points; must
+	 *                     not be {@code null}
+	 */
+	public void insertLineSegments(Collection<Pair<Point, Point>> lineSegments) {
+		if (lineSegments == null) {
+			throw new IllegalArgumentException("Line segment collection cannot be null.");
+		}
+
+		List<Pair<Point, Point>> normalizedSegments = new ArrayList<>(lineSegments.size());
+		Map<Point, Vertex> pointVertices = new HashMap<>();
+		for (Vertex vertex : g.vertices) {
+			if (vertex.type == VertexType.POINTSITE) {
+				pointVertices.put(vertex.position, vertex);
+			}
+		}
+
+		for (Pair<Point, Point> lineSegment : lineSegments) {
+			if (lineSegment == null) {
+				throw new IllegalArgumentException("Line segment cannot be null.");
+			}
+
+			Point startPoint = lineSegment.getFirst();
+			Point endPoint = lineSegment.getSecond();
+			if (startPoint == null || endPoint == null) {
+				throw new IllegalArgumentException("Line segment endpoints cannot be null.");
+			}
+			normalizedSegments.add(lineSegment);
+			if (!pointVertices.containsKey(startPoint)) {
+				pointVertices.put(startPoint, insertPointSite(startPoint));
+			}
+			if (!pointVertices.containsKey(endPoint)) {
+				pointVertices.put(endPoint, insertPointSite(endPoint));
+			}
+		}
+
+		for (Pair<Point, Point> lineSegment : normalizedSegments) {
+			Vertex start = pointVertices.get(lineSegment.getFirst());
+			Vertex end = pointVertices.get(lineSegment.getSecond());
+			insertLineSite(start, end);
+		}
 	}
 
 	/**
