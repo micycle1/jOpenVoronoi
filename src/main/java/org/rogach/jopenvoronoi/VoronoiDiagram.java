@@ -37,14 +37,15 @@ import ags.utils.dataStructures.trees.thirdGenKD.KdTree;
 import ags.utils.dataStructures.trees.thirdGenKD.SquareEuclideanDistanceFunction;
 
 /**
- * Voronoi diagram. The diagram builds incrementally as sites are added.
+ * Incremental Voronoi diagram for point and line sites.
  * <p>
- * See <a href="http://en.wikipedia.org/wiki/Voronoi_diagram">Wikipedia:
- * Voronoi diagram</a>.
+ * A typical workflow is to create a diagram, insert all point sites first, and
+ * then insert line sites between those point-site vertices when needed.
+ * Point sites must be added before any line sites.
  * <p>
- * The dual of a Voronoi diagram is the Delaunay diagram (triangulation).
- * Voronoi faces are dual to Delaunay vertices; Voronoi vertices are dual to
- * Delaunay faces; Voronoi edges are dual to Delaunay edges.
+ * The diagram is stored as a half-edge structure. Most callers will use the
+ * public query methods on this class; {@link #getDiagram()} exposes the backing
+ * graph for lower-level access.
  */
 public class VoronoiDiagram {
 
@@ -106,6 +107,10 @@ public class VoronoiDiagram {
 	 * current incremental site insertion.
 	 */
 	protected List<Vertex> inVertices = new ArrayList<>();
+
+	/**
+	 * Creates an empty Voronoi diagram with a default far radius of {@code 5000}.
+	 */
 	public VoronoiDiagram() {
 		this(5000);
 	}
@@ -387,7 +392,11 @@ public class VoronoiDiagram {
 		return true;
 	}
 
-	// return the far radius
+	/**
+	 * Returns the configured far radius that bounds the valid site insertion area.
+	 *
+	 * @return the far radius used when initializing the diagram
+	 */
 	public double getFarRadius() {
 		return farRadius;
 	}
@@ -420,10 +429,26 @@ public class VoronoiDiagram {
 		return new ArrayList<>(g.faces);
 	}
 
+	/**
+	 * Returns the same user-visible faces as {@link #getFaces()}.
+	 *
+	 * @return all non-null faces in the diagram
+	 */
 	public List<Face> getNonNullFaces() {
 		return getFaces();
 	}
 
+	/**
+	 * Returns the face directly associated with a vertex.
+	 * <p>
+	 * Point-site vertices reference their ordinary face via {@link Vertex#face},
+	 * while vertices on null-face structures reference {@link Vertex#nullFace}.
+	 *
+	 * @param vertex the vertex whose associated face should be returned
+	 * @return the face associated with the vertex
+	 * @throws IllegalArgumentException if {@code vertex} is {@code null} or is not
+	 *                                  directly associated with a face
+	 */
 	public Face getFace(Vertex vertex) {
 		if (vertex == null) {
 			throw new IllegalArgumentException("vertex cannot be null");
@@ -437,6 +462,13 @@ public class VoronoiDiagram {
 		throw new IllegalArgumentException("vertex is not directly associated with a face");
 	}
 
+	/**
+	 * Returns the half-edges that bound a face.
+	 *
+	 * @param face the face whose boundary edges should be returned
+	 * @return the boundary edges of {@code face}
+	 * @throws IllegalArgumentException if {@code face} is {@code null}
+	 */
 	public List<Edge> getFaceEdges(Face face) {
 		if (face == null) {
 			throw new IllegalArgumentException("face cannot be null");
@@ -444,6 +476,13 @@ public class VoronoiDiagram {
 		return face.getEdges();
 	}
 
+	/**
+	 * Returns the vertices that lie on the boundary of a face.
+	 *
+	 * @param face the face whose boundary vertices should be returned
+	 * @return the boundary vertices of {@code face}
+	 * @throws IllegalArgumentException if {@code face} is {@code null}
+	 */
 	public List<Vertex> getFaceVertices(Face face) {
 		if (face == null) {
 			throw new IllegalArgumentException("face cannot be null");
@@ -451,6 +490,13 @@ public class VoronoiDiagram {
 		return face.getVertices();
 	}
 
+	/**
+	 * Returns the faces adjacent to a face across its boundary edges.
+	 *
+	 * @param face the face whose neighboring faces should be returned
+	 * @return the faces adjacent to {@code face}
+	 * @throws IllegalArgumentException if {@code face} is {@code null}
+	 */
 	public List<Face> getAdjacentFaces(Face face) {
 		if (face == null) {
 			throw new IllegalArgumentException("face cannot be null");
@@ -458,10 +504,21 @@ public class VoronoiDiagram {
 		return face.getAdjacentFaces();
 	}
 
+	/**
+	 * Returns all half-edges in the underlying diagram graph.
+	 *
+	 * @return every edge currently stored in the diagram
+	 */
 	public List<Edge> getEdges() {
 		return new ArrayList<>(g.edges);
 	}
 
+	/**
+	 * Returns all vertices in the underlying diagram graph, including site and
+	 * constructed Voronoi vertices.
+	 *
+	 * @return every vertex currently stored in the diagram
+	 */
 	public List<Vertex> getVertices() {
 		return new ArrayList<>(g.vertices);
 	}
@@ -482,7 +539,7 @@ public class VoronoiDiagram {
 	 *
 	 * @param x x-coordinate of the query point
 	 * @param y y-coordinate of the query point
-	 * @param n maximum number of nearest faces to return
+	 * @param n maximum number of nearest faces to return; must be positive
 	 * @return the nearest faces in ascending distance order
 	 */
 	public List<Face> nearestFaces(double x, double y, int n) {
@@ -496,28 +553,50 @@ public class VoronoiDiagram {
 		return faces;
 	}
 
-	// return number of point sites in diagram
+	/**
+	 * Returns the number of user-inserted point sites in the diagram.
+	 *
+	 * @return the number of point sites, excluding the three bootstrap vertices
+	 */
 	public int numPointSites() {
 		// the three initial vertices don't count
 		return numPsites - 3;
 	}
 
-	// return number of line-segments sites in diagram
+	/**
+	 * Returns the number of inserted line sites.
+	 *
+	 * @return the number of line-segment sites
+	 */
 	public int numLineSites() {
 		return numLsites;
 	}
 
-	// return number of arc-sites in diagram
+	/**
+	 * Returns the number of inserted arc sites.
+	 *
+	 * @return the number of arc sites
+	 */
 	public int numArcSites() {
 		return numAsites;
 	}
 
-	// return number of voronoi-vertices
+	/**
+	 * Returns the number of constructed Voronoi vertices.
+	 * <p>
+	 * Point-site vertices used as site handles are excluded from this count.
+	 *
+	 * @return the number of Voronoi vertices in the diagram
+	 */
 	public int numVertices() {
 		return g.vertices.size() - numPointSites();
 	}
 
-	// return number of user-visible faces in graph
+	/**
+	 * Returns the number of user-visible faces in the diagram.
+	 *
+	 * @return the number of non-null faces
+	 */
 	public int numFaces() {
 		var count = 0;
 		for (Face face : g.faces) {
@@ -528,12 +607,20 @@ public class VoronoiDiagram {
 		return count;
 	}
 
-	// return total number of faces in graph, including internal null-faces
+	/**
+	 * Returns the total number of faces in the underlying graph.
+	 *
+	 * @return the number of all faces, including internal null faces
+	 */
 	public int numAllFaces() {
 		return g.faces.size();
 	}
 
-	// return number of SPLIT vertices
+	/**
+	 * Returns the number of temporary split vertices currently present.
+	 *
+	 * @return the number of vertices with type {@link VertexType#SPLIT}
+	 */
 	public int numSplitVertices() {
 		var count = 0;
 		for (Vertex v : g.vertices) {
@@ -544,22 +631,42 @@ public class VoronoiDiagram {
 		return count;
 	}
 
-	// return reference to graph \todo not elegant. only used by vd2svg ?
+	/**
+	 * Returns the underlying half-edge diagram used to store the Voronoi graph.
+	 *
+	 * @return the mutable backing half-edge diagram
+	 */
 	public HalfEdgeDiagram getDiagram() {
 		return g;
 	}
 
-	// reset vertex index count \todo not very elegant...
+	/**
+	 * Resets the global vertex numbering used by {@link Vertex}.
+	 * <p>
+	 * This is primarily useful in tests or tooling that expects deterministic
+	 * vertex indices across independent diagram instances.
+	 */
 	public static void resetVertexCount() {
 		Vertex.resetCount();
 	}
 
-	// run topology/geometry check on diagram
+	/**
+	 * Runs the internal topology and geometry consistency checks.
+	 *
+	 * @return {@code true} if the current diagram passes the checker
+	 */
 	public boolean check() {
 		return vd_checker.isValid();
 	}
 
-	// filter the graph using given Filter \a flt
+	/**
+	 * Applies an edge filter to the underlying graph.
+	 * <p>
+	 * Any edge for which the filter returns {@code false} is marked invalid until
+	 * {@link #filterReset()} is called.
+	 *
+	 * @param flt the filter to apply to every edge
+	 */
 	public void filter(Filter flt) {
 		flt.setGraph(g);
 		for (Edge e : g.edges) {
@@ -569,7 +676,9 @@ public class VoronoiDiagram {
 		}
 	}
 
-	// reset filtering by setting all edges valid
+	/**
+	 * Clears any active edge filtering and marks every edge as valid again.
+	 */
 	public void filterReset() {
 		for (Edge e : g.edges) {
 			e.valid = true;
