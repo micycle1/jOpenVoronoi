@@ -6,6 +6,7 @@ import org.rogach.jopenvoronoi.geometry.Point;
 import org.rogach.jopenvoronoi.offset.LineOfs;
 import org.rogach.jopenvoronoi.offset.Ofs;
 import org.rogach.jopenvoronoi.solver.Eq;
+import org.rogach.jopenvoronoi.util.Numeric;
 
 /**
  * Representation of a line-segment generator (LineSite) for the Voronoi
@@ -151,13 +152,7 @@ public class LineSite extends Site {
 		var s_p = p.sub(_start);
 		var s_e = _end.sub(_start);
 		var t = s_p.dot(s_e) / s_e.dot(s_e);
-		var eps = 1e-7;
-		if (Math.abs(t) < eps) {
-			t = 0.0;
-		} else if (Math.abs(t - 1.0) < eps) {
-			t = 1.0;
-		}
-		return t;
+		return Numeric.snapUnitInterval(t);
 	}
 
 	@Override

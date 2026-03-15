@@ -58,13 +58,7 @@ public class ArcSite extends Site {
 	@Override
 	public double inRegionT(Point pt) {
 		var t = inRegionTRaw(pt); // (diangle_pt - diangle_min) / (diangle_max-diangle_min);
-		var eps = 1e-7;
-		if (Math.abs(t) < eps) {
-			t = 0.0;
-		} else if (Math.abs(t - 1.0) < eps) {
-			t = 1.0;
-		}
-		return t;
+		return Numeric.snapUnitInterval(t);
 	}
 
 	@Override
