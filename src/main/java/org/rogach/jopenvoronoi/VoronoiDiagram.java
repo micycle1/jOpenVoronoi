@@ -1765,6 +1765,7 @@ public class VoronoiDiagram {
 				var next_trg = next_next.target; // source
 				mid = Numeric.diangleMid(src.alfa, next_trg.alfa); // prev_src, trg
 				seppoint_pred = (next_trg.type != VertexType.ENDPOINT);
+
 				var next_out_trg = nullVertexTarget(next_edge.target);
 				var prev_out_trg = nullVertexTarget(next_previous.source);
 				if (next_out_trg != null && prev_out_trg != null) {
@@ -1790,6 +1791,39 @@ public class VoronoiDiagram {
 				}
 
 			} // predicates now set.
+
+			if (parallel_pred && adj.type == VertexType.SEPPOINT) {
+				Edge sep_edge = null;
+
+				for (Edge e : adj.outEdges) {
+					assert (e.source == adj) : "e.source == adj";
+					if (e.type == EdgeType.SEPARATOR) {
+						sep_edge = e;
+					}
+				}
+				assert (sep_edge != null) : "sep_edge != null";
+
+				Edge sep_twin = sep_edge.twin;
+				Face sep_face = sep_edge.face;
+				var sep_site = sep_face.site;
+				Face sep_twin_face = sep_twin.face;
+				var sep_twin_site = sep_twin_face.site;
+
+				Edge pointsite_edge = null;
+				if (sep_site.isPoint()) {
+					pointsite_edge = sep_edge;
+				} else if (sep_twin_site.isPoint()) {
+					pointsite_edge = sep_twin;
+				}
+
+				// set the separator target to NEW
+				Vertex sep_target = sep_edge.target;
+				sep_target.status = VertexStatus.NEW;
+				sep_target.k3 = new_k3;
+				modifiedVertices.add(sep_target);
+
+				return new Pair<Vertex, Face>(null, pointsite_edge.face); // Returns the resolved face!
+			}
 
 			var adj_out = nullVertexTarget(adj);
 			assert (adj_out != null) : "adj_out != null";
