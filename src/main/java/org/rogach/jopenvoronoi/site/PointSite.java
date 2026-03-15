@@ -12,7 +12,7 @@ public class PointSite extends Site {
 	/** position */
 	private Point _p;
 	/** vertex descriptor of this PointSite */
-	public Vertex v;
+	private Vertex v;
 
 	public PointSite(Point p) {
 		this._p = p;
@@ -101,6 +101,11 @@ public class PointSite extends Site {
 	@Override
 	public Vertex vertex() {
 		return v;
+	}
+
+	/** Set the vertex associated with this PointSite. */
+	public void setVertex(Vertex vert) {
+		this.v = vert;
 	}
 
 	@Override

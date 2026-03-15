@@ -38,7 +38,7 @@ public class LineSite extends Site {
 	/**
 	 * the pseudo-edge associated with this LineSite (if any)
 	 */
-	public Edge e;
+	private Edge e;
 
 	/**
 	 * Create a LineSite from segment endpoints and an offset-direction.
@@ -228,6 +228,11 @@ public class LineSite extends Site {
 	@Override
 	public Edge edge() {
 		return e;
+	}
+
+	/** Set the pseudo-edge associated with this LineSite. */
+	public void setEdge(Edge edge) {
+		this.e = edge;
 	}
 
 	@Override

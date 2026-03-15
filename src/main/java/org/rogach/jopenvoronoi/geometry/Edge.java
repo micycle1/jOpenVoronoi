@@ -34,11 +34,11 @@ public class Edge {
 	public EdgeType type;
 	public boolean valid;
 	/** 8-parameter parametrization */
-	public double[] x = new double[8];
+	private double[] x = new double[8];
 	/** 8-parameter parametrization */
-	public double[] y = new double[8];
+	private double[] y = new double[8];
 	/** flag to choose either +/- in front of sqrt() */
-	public boolean sign;
+	private boolean sign;
 	/** true if ::LINESITE-edge inserted in this direction */
 	public boolean insertedDirection;
 	public int diagramIndex = -1;
@@ -145,7 +145,7 @@ public class Edge {
 	}
 
 	// set edge parameters for PointSite-PointSite edge
-	public void setPpParameters(Site s1, Site s2) {
+	private void setPpParameters(Site s1, Site s2) {
 		assert (s1.isPoint() && s2.isPoint()) : " s1.isPoint() && s2.isPoint() ";
 		var d = (s1.position().sub(s2.position())).norm();
 		var alfa1 = (s2.x() - s1.x()) / d;
@@ -172,7 +172,7 @@ public class Edge {
 	}
 
 	// set ::PARABOLA edge parameters (between PointSite and LineSite).
-	public void setPlParameters(Site s1, Site s2) {
+	private void setPlParameters(Site s1, Site s2) {
 		assert (s1.isPoint() && s2.isLine()) : " s1.isPoint() && s2.isLine() ";
 
 		type = EdgeType.PARABOLA;
@@ -224,7 +224,7 @@ public class Edge {
 	}
 
 	// set edge parametrization for LineSite-LineSite edge (parallel case)
-	public void setLlParaParameters(Site s1, Site s2) {
+	private void setLlParaParameters(Site s1, Site s2) {
 		assert (s1.isLine() && s2.isLine()) : " s1.isLine() && s2.isLine() ";
 		type = EdgeType.PARA_LINELINE;
 
@@ -291,7 +291,7 @@ public class Edge {
 	}
 
 	// set edge parametrization for LineSite-LineSite edge
-	public void setLlParameters(Site s1, Site s2) { // Held thesis p96
+	private void setLlParameters(Site s1, Site s2) { // Held thesis p96
 		assert (s1.isLine() && s2.isLine()) : " s1.isLine() && s2.isLine() ";
 		type = EdgeType.LINELINE;
 		var delta = s1.a() * s2.b() - s1.b() * s2.a();
@@ -331,7 +331,7 @@ public class Edge {
 	}
 
 	// set edge parameters when s1 is PointSite and s2 is ArcSite
-	public void setPaParameters(Site s1, Site s2) {
+	private void setPaParameters(Site s1, Site s2) {
 		assert (s1.isPoint() && s2.isArc()) : " s1.isPoint() && s2.isArc() ";
 		// std::cout << "set_pa_parameters()\n";
 
@@ -370,7 +370,7 @@ public class Edge {
 	}
 
 	// set edge parameters when s1 is ArcSite and s2 is LineSite
-	public void setLaParameters(Site s1, Site s2) {
+	private void setLaParameters(Site s1, Site s2) {
 		assert (s1.isLine() && s2.isArc()) : " s1.isLine() && s2.isArc() ";
 		type = EdgeType.PARABOLA;
 		double lamb2;
@@ -434,7 +434,7 @@ public class Edge {
 	}
 
 	// minimum t-value for LINE edge between PointSite and PointSite
-	public double minimumPpT(Site s1, Site s2) {
+	private double minimumPpT(Site s1, Site s2) {
 		assert (s1.isPoint() && s2.isPoint()) : " s1.isPoint() && s2.isPoint() ";
 		var p1p2 = s1.position().sub(s2.position()).norm();
 		assert (p1p2 >= 0) : " p1p2 >=0 ";
@@ -442,14 +442,14 @@ public class Edge {
 	}
 
 	// minimum t-value for ::PARABOLA edge
-	public double minimumPlT(Site s1, Site s2) {
+	private double minimumPlT(Site s1, Site s2) {
 		var mint = -x[6] / (2.0 * x[7]);
 		assert (mint >= 0) : " mint >=0 ";
 		return mint;
 	}
 
 	// minimum t-value for edge between PointSite and ArcSite
-	public double minimumPaT(Site s1, Site s2) {
+	private double minimumPaT(Site s1, Site s2) {
 		assert (s1.isPoint() && s2.isArc()) : " s1.isPoint() && s2.isArc() ";
 		var p1p2 = s1.position().sub(s2.apexPoint(s1.position())).norm(); // - s2->r() ;
 		assert (p1p2 >= 0) : " p1p2 >=0 ";

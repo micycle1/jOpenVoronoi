@@ -17,7 +17,7 @@ import org.rogach.jopenvoronoi.util.Numeric;
 public class Vertex {
 
 	/** global vertex count TODO hold this in hedigraph instead? */
-	public static int count = 0;
+	private static int count = 0;
 
 	// A map of this type is used by VoronoiDiagramChecker to check that all
 	// vertices
@@ -92,7 +92,7 @@ public class Vertex {
 	}
 
 	// set index, increase count, initialize in_queue to false.
-	public void init() {
+	private void init() {
 		count++;
 		inQueue = false;
 		alfa = -1; // invalid/non-initialized alfa value
@@ -103,26 +103,26 @@ public class Vertex {
 	}
 
 	// set position and status
-	public void init(Point p, VertexStatus st) {
+	private void init(Point p, VertexStatus st) {
 		init();
 		position = p;
 		status = st;
 	}
 
 	// set position, status and type
-	public void init(Point p, VertexStatus st, VertexType t) {
+	private void init(Point p, VertexStatus st, VertexType t) {
 		init(p, st);
 		type = t;
 	}
 
 	// set position, status, type, and clearance-disk through givem apex-point
-	public void init(Point p, VertexStatus st, VertexType t, Point initDist) {
+	private void init(Point p, VertexStatus st, VertexType t, Point initDist) {
 		init(p, st, t);
 		initDist(initDist);
 	}
 
 	// set position, status, type, clerance-disk radius, and k3-side
-	public void init(Point p, VertexStatus st, VertexType t, Point initDist, double lk3) {
+	private void init(Point p, VertexStatus st, VertexType t, Point initDist, double lk3) {
 		init(p, st, t, initDist);
 		k3 = lk3;
 	}

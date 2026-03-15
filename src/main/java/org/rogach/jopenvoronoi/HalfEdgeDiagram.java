@@ -215,17 +215,7 @@ public class HalfEdgeDiagram {
 	}
 
 	private static void copyEdgeData(Edge dst, Edge src) {
-		dst.face = src.face;
-		dst.nullFace = src.nullFace;
-		dst.hasNullFace = src.hasNullFace;
-		dst.k = src.k;
-		dst.type = src.type;
-		dst.valid = src.valid;
-		dst.sign = src.sign;
-		dst.insertedDirection = src.insertedDirection;
-
-		System.arraycopy(src.x, 0, dst.x, 0, src.x.length);
-		System.arraycopy(src.y, 0, dst.y, 0, src.y.length);
+		dst.copyFrom(src);
 	}
 
 	/**

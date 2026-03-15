@@ -192,7 +192,7 @@ public class VoronoiDiagram {
 
 		var new_vert = g.addVertex(new Vertex(p, VertexStatus.OUT, VertexType.POINTSITE));
 		var new_site = new PointSite(p);
-		new_site.v = new_vert;
+		new_site.setVertex(new_vert);
 		var v_seed = findSeedVertex(nearest.face, new_site);
 		markVertex(v_seed, new_site);
 		augmentVertexSet(new_site); // grow the tree to maximum size
@@ -323,8 +323,8 @@ public class VoronoiDiagram {
 		neg_edge.face = neg_face;
 
 		// associate sites with LINESITE edges
-		pos_site.e = pos_edge;
-		neg_site.e = neg_edge;
+		pos_site.setEdge(pos_edge);
+		neg_site.setEdge(neg_edge);
 
 		addVertices(pos_site); // add NEW vertices on all IN-OUT edges.
 
