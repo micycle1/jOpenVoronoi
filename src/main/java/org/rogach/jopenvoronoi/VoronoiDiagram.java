@@ -247,7 +247,7 @@ public class VoronoiDiagram {
 			throw new IllegalArgumentException("Line segment collection cannot be null.");
 		}
 
-		List<Pair<Point, Point>> normalizedSegments = new ArrayList<>(lineSegments.size());
+		List<Pair<Point, Point>> validatedSegments = new ArrayList<>(lineSegments.size());
 		Map<Point, Vertex> pointVertices = new HashMap<>();
 		for (Vertex vertex : g.vertices) {
 			if (vertex.type == VertexType.POINTSITE) {
@@ -265,7 +265,7 @@ public class VoronoiDiagram {
 			if (startPoint == null || endPoint == null) {
 				throw new IllegalArgumentException("Line segment endpoints cannot be null.");
 			}
-			normalizedSegments.add(lineSegment);
+			validatedSegments.add(lineSegment);
 			if (!pointVertices.containsKey(startPoint)) {
 				pointVertices.put(startPoint, insertPointSite(startPoint));
 			}
@@ -274,7 +274,7 @@ public class VoronoiDiagram {
 			}
 		}
 
-		for (Pair<Point, Point> lineSegment : normalizedSegments) {
+		for (Pair<Point, Point> lineSegment : validatedSegments) {
 			Vertex start = pointVertices.get(lineSegment.getFirst());
 			Vertex end = pointVertices.get(lineSegment.getSecond());
 			insertLineSite(start, end);
