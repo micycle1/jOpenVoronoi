@@ -12,7 +12,7 @@ import org.rogach.jopenvoronoi.site.Site;
  * <p>
  * Minimizes error by searching for a point on the solution-edge.
  */
-public class VertexError implements UnivariateFunction {
+class VertexError implements UnivariateFunction {
 	/** vd-graph */
 	HalfEdgeDiagram g;
 	/** existing edge on which we have positioned a new vertex */

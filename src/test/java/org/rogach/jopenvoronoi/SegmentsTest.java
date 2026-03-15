@@ -47,8 +47,8 @@ public class SegmentsTest {
 		HalfEdgeDiagram diagram = vd.getDiagram();
 		Assertions.assertNotNull(diagram, "HalfEdgeDiagram should not be null");
 		vd.getFaces().forEach(face -> {
-			Point pos = face.site.position();
-			Assertions.assertNotNull(pos, "face.site.position() should not be null");
+			Point pos = face.getSite().position();
+			Assertions.assertNotNull(pos, "face.getSite().position() should not be null");
 			diagram.faceEdges(face).forEach(edge -> {
 				Assertions.assertNotNull(edge.source);
 				Assertions.assertNotNull(edge.target);
@@ -111,7 +111,7 @@ public class SegmentsTest {
 			if (checkedFaces++ > 10) {
 				break;
 			}
-			Point pos = f.site.position();
+			Point pos = f.getSite().position();
 			Assertions.assertNotNull(pos);
 		}
 	}

@@ -90,8 +90,8 @@ public class VertexPositioner {
 		tMin = Math.min(t_src, t_trg); // the solution we seek must have t_min<t<t_max
 		tMax = Math.max(t_src, t_trg);
 
-		var s1 = face.site;
-		var s2 = twin_face.site;
+		var s1 = face.getSite();
+		var s2 = twin_face.getSite();
 
 		var sl = position(s1, e.k, s2, twin.k, s3);
 
@@ -158,7 +158,7 @@ public class VertexPositioner {
 						&& (s3.start().equals(s2.position()) || s3.end().equals(s2.position()))))) {
 			var ptsite = s1.isPoint() ? s1 : s2;
 			var ed = edge;
-			if (ed.face.site != ptsite) {
+			if (ed.face.getSite() != ptsite) {
 				ed = edge.twin;
 			}
 			assert (ed.source.status == VertexStatus.IN || ed.target.status == VertexStatus.IN)
@@ -307,11 +307,11 @@ public class VertexPositioner {
 				// the parallell lineseg case v0 --s1 --> pt -- s2 --> v1
 				// find t
 				if (edge.hasNullFace) {
-					s2 = edge.nullFace.site;
+					s2 = edge.nullFace.getSite();
 					assert (s2.isPoint()) : " s2.isPoint() ";
 					k2 = +1;
 				} else if (edge.twin.hasNullFace) {
-					s2 = edge.twin.nullFace.site;
+					s2 = edge.twin.nullFace.getSite();
 					assert (s2.isPoint()) : " s2.isPoint() ";
 					k2 = +1;
 				}
@@ -384,26 +384,26 @@ public class VertexPositioner {
 		}
 
 		var src_null_face = src_out.face;
-		if (src_null_face.is_null_face == false) {
+		if (src_null_face.isNullFace() == false) {
 			// take twin face instead
 			var src_out_twin = src_out.twin;
 			src_null_face = src_out_twin.face;
 		}
 
 		var trg_null_face = trg_out.face;
-		if (trg_null_face.is_null_face == false) {
+		if (trg_null_face.isNullFace() == false) {
 			var trg_out_twin = trg_out.twin;
 			trg_null_face = trg_out_twin.face;
 		}
-		assert (src_null_face.is_null_face && trg_null_face.is_null_face)
-				: " src_null_face.is_null_face && trg_null_face.is_null_face ";
+		assert (src_null_face.isNullFace() && trg_null_face.isNullFace())
+				: " src_null_face.isNullFace() && trg_null_face.isNullFace() ";
 
 		// do we want src_out face??
 		// OR src_out_twin face??
 		// we want the null-face !
 
-		var src_site = src_null_face.site;
-		var trg_site = trg_null_face.site;
+		var src_site = src_null_face.getSite();
+		var trg_site = trg_null_face.getSite();
 		if (src_site == null || trg_site == null) {
 			throw new RuntimeException();
 		}
@@ -475,8 +475,8 @@ public class VertexPositioner {
 		var tw_edge = e.twin;
 		var twin_face = tw_edge.face;
 
-		var s1 = face.site;
-		var s2 = twin_face.site;
+		var s1 = face.getSite();
+		var s2 = twin_face.getSite();
 
 		var d1 = sl.p.sub(s1.apexPoint(sl.p)).norm();
 		var d2 = sl.p.sub(s2.apexPoint(sl.p)).norm();
@@ -503,8 +503,8 @@ public class VertexPositioner {
 		var tw_edge = e.twin;
 		var twin_face = tw_edge.face;
 
-		var s1 = face.site;
-		var s2 = twin_face.site;
+		var s1 = face.getSite();
+		var s2 = twin_face.getSite();
 
 		var d1 = sl.p.sub(s1.apexPoint(sl.p)).norm();
 		var d2 = sl.p.sub(s2.apexPoint(sl.p)).norm();

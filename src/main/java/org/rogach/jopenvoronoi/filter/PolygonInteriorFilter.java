@@ -41,7 +41,7 @@ public class PolygonInteriorFilter extends Filter {
 		// for islands and the outside the edge is id2->id1
 
 		var f = e.face;
-		var s = f.site;
+		var s = f.getSite();
 		if (s.isLine() && linesiteCcw(f)) {
 			return true;
 		} else if (s.isPoint()) {
@@ -63,14 +63,14 @@ public class PolygonInteriorFilter extends Filter {
 
 	// on the face f, find the adjacent linesite
 	private Edge findAdjacentLinesite(Face f) {
-		var current = f.edge;
+		var current = f.getEdge();
 		var start = current;
 
 		do {
 			var twin = current.twin;
 			if (twin != null) {
 				var twf = twin.face;
-				if (twf.site.isLine()) {
+				if (twf.getSite().isLine()) {
 					return current;
 				}
 			}
@@ -82,7 +82,7 @@ public class PolygonInteriorFilter extends Filter {
 
 	// return true if linesite was inserted in the direction indicated by _side
 	private boolean linesiteCcw(Face f) {
-		var current = f.edge;
+		var current = f.getEdge();
 		var start = current;
 		do {
 			if ((current.insertedDirection ? side && current.type == EdgeType.LINESITE

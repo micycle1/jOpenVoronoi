@@ -215,17 +215,7 @@ public class HalfEdgeDiagram {
 	}
 
 	private static void copyEdgeData(Edge dst, Edge src) {
-		dst.face = src.face;
-		dst.nullFace = src.nullFace;
-		dst.hasNullFace = src.hasNullFace;
-		dst.k = src.k;
-		dst.type = src.type;
-		dst.valid = src.valid;
-		dst.sign = src.sign;
-		dst.insertedDirection = src.insertedDirection;
-
-		System.arraycopy(src.x, 0, dst.x, 0, src.x.length);
-		System.arraycopy(src.y, 0, dst.y, 0, src.y.length);
+		dst.copyFrom(src);
 	}
 
 	/**
@@ -302,7 +292,7 @@ public class HalfEdgeDiagram {
 	// return all vertices of given face
 	public List<Vertex> faceVertices(Face face) {
 		List<Vertex> verts = new ArrayList<>();
-		var startedge = face.edge; // the edge where we start
+		var startedge = face.getEdge(); // the edge where we start
 		var start_target = startedge.target;
 		verts.add(start_target);
 
@@ -325,7 +315,7 @@ public class HalfEdgeDiagram {
 	// NOTE: it is faster to write a do-while loop in client code than to call this
 	// function!
 	public List<Edge> faceEdges(Face f) {
-		var start_edge = f.edge;
+		var start_edge = f.getEdge();
 		var current_edge = start_edge;
 		List<Edge> out = new ArrayList<>();
 		do {
@@ -428,8 +418,8 @@ public class HalfEdgeDiagram {
 		t0.base = canonical;
 		t1.base = canonical;
 
-		face1.edge = t0;
-		face2.edge = t1;
+		face1.setEdge(t0);
+		face2.setEdge(t1);
 
 		v.outEdges.remove(e0);
 		v.outEdges.remove(e1);
@@ -457,7 +447,7 @@ public class HalfEdgeDiagram {
 	// e1->e2->...->e1
 	// for all edges, set edge.face=f, and edge.k=k
 	void setNextCycle(List<Edge> list, Face f, double k) {
-		f.edge = list.get(0);
+		f.setEdge(list.get(0));
 		for (var q = 0; q < list.size(); q++) {
 			var e = list.get(q);
 			e.face = f;
@@ -473,7 +463,7 @@ public class HalfEdgeDiagram {
 	// set next-pointers for the given list (but don't close to form a cycle)
 	// also set face and k properties for edge
 	void setNextChain(List<Edge> list, Face f, double k) {
-		f.edge = list.get(0);
+		f.setEdge(list.get(0));
 		for (var q = 0; q < list.size(); q++) {
 			var e = list.get(q);
 			e.face = f;
@@ -496,7 +486,7 @@ public class HalfEdgeDiagram {
 
 	// on a face, search and return the left/right edge from endp
 	Pair<Edge, Edge> findNextPrev(Face f, Vertex endp) {
-		var current = f.edge;
+		var current = f.getEdge();
 		var start_edge = current;
 		Edge next_edge = null;
 		Edge prev_edge = null;
