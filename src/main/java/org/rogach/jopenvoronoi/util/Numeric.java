@@ -9,6 +9,20 @@ import java.util.List;
  */
 public class Numeric {
 
+	public static final double DEFAULT_CHOP_EPSILON = 1e-10;
+
+	public static final double UNIT_INTERVAL_EPSILON = 1e-7;
+
+	public static final double STRICT_ZERO_EPSILON = 1e-14;
+
+	public static final double DOUBLE_COMPARISON_EPSILON = 1e-15;
+
+	public static final double DISTANCE_EPSILON = 1e-3;
+
+	public static final double SOLUTION_EDGE_EPSILON = 9e-4;
+
+	public static final double BRENT_SOLVER_ABSOLUTE_EPSILON = 1e-20;
+
 	// solve quadratic eqn: a*x*x + b*x + c = 0
 	// returns real roots (0, 1, or 2) as vector
 	public static List<Double> quadraticRoots(double a, double b, double c) {
@@ -72,12 +86,29 @@ public class Numeric {
 	}
 
 	public static double chop(double val) {
-		var _epsilon = 1e-10;
+		var _epsilon = DEFAULT_CHOP_EPSILON;
 		if (Math.abs(val) < _epsilon) {
 			return 0;
 		} else {
 			return val;
 		}
+	}
+
+	public static double snapUnitInterval(double val) {
+		if (Math.abs(val) < UNIT_INTERVAL_EPSILON) {
+			return 0.0;
+		} else if (Math.abs(val - 1.0) < UNIT_INTERVAL_EPSILON) {
+			return 1.0;
+		}
+		return val;
+	}
+
+	public static boolean areClose(double a, double b, double relativeTolerance, double absoluteTolerance) {
+		var delta = Math.abs(a - b);
+		if (delta < absoluteTolerance) {
+			return true;
+		}
+		return delta <= relativeTolerance * Math.max(Math.abs(a), Math.abs(b));
 	}
 
 	public static double diangle(double x, double y) {

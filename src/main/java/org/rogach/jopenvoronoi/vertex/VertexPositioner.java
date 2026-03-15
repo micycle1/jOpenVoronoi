@@ -20,6 +20,7 @@ import org.rogach.jopenvoronoi.solver.PPPSolver;
 import org.rogach.jopenvoronoi.solver.QLLSolver;
 import org.rogach.jopenvoronoi.solver.SEPSolver;
 import org.rogach.jopenvoronoi.solver.Solver;
+import org.rogach.jopenvoronoi.util.Numeric;
 
 /**
  * Calculates the {@code (x, y)} position of a Voronoi vertex in the
@@ -267,10 +268,10 @@ public class VertexPositioner {
 
 		double t_sln;
 		// Guard against zero-length or negative search intervals
-		if (Math.abs(tMax - tMin) < 1e-14) {
+		if (Math.abs(tMax - tMin) < Numeric.STRICT_ZERO_EPSILON) {
 			t_sln = tMin; // Interval is effectively zero, skip the optimizer
 		} else {
-			var optimizer = new BrentOptimizer(1e-10, 1e-14);
+			var optimizer = new BrentOptimizer(Numeric.DEFAULT_CHOP_EPSILON, Numeric.STRICT_ZERO_EPSILON);
 			t_sln = optimizer.optimize(
 					new MaxEval(1000), 
 					new UnivariateObjectiveFunction(err_functor),
@@ -455,7 +456,7 @@ public class VertexPositioner {
 	// check that the new solution lies on the edge
 	boolean solution_on_edge(Solution s) {
 		var err = edgeError(s);
-		var limit = 9E-4;
+		var limit = Numeric.SOLUTION_EDGE_EPSILON;
 		return (err < limit);
 	}
 
@@ -516,14 +517,7 @@ public class VertexPositioner {
 
 	// are \a d1 and \a d2 roughly equal?
 	boolean equal(double d1, double d2) {
-		var tol = 1e-3;
-		if (Math.abs(d1 - d2) < 1e-15) {
-			return true;
-		}
-		if (Math.abs(d1 - d2) > tol * Math.max(d1, d2)) {
-			return false;
-		}
-		return true;
+		return Numeric.areClose(d1, d2, Numeric.DISTANCE_EPSILON, Numeric.DOUBLE_COMPARISON_EPSILON);
 	}
 
 }

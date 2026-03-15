@@ -6,6 +6,7 @@ import static org.rogach.jopenvoronoi.util.Numeric.sq;
 import java.util.Map.Entry;
 
 import org.rogach.jopenvoronoi.site.Site;
+import org.rogach.jopenvoronoi.util.Numeric;
 import org.rogach.jopenvoronoi.vertex.Vertex;
 
 /*
@@ -91,8 +92,8 @@ public class Edge {
 	 * @return point on the edge at offset distance {@code t}
 	 */
 	public Point point(double t) {
-		var discr1 = chop(sq(x[4] + x[5] * t) - sq(x[6] + x[7] * t), 1e-14);
-		var discr2 = chop(sq(y[4] + y[5] * t) - sq(y[6] + y[7] * t), 1e-14);
+		var discr1 = chop(sq(x[4] + x[5] * t) - sq(x[6] + x[7] * t), Numeric.STRICT_ZERO_EPSILON);
+		var discr2 = chop(sq(y[4] + y[5] * t) - sq(y[6] + y[7] * t), Numeric.STRICT_ZERO_EPSILON);
 		if ((discr1 >= 0) && (discr2 >= 0)) {
 			double psig = sign ? +1 : -1;
 			double nsig = sign ? -1 : +1;
@@ -298,7 +299,7 @@ public class Edge {
 
 		// (numerically) parallel line segments - the generic LLL solver
 		// is numerically unstable for parallel cases
-		if (Math.abs(delta) <= 1e-14) {
+		if (Math.abs(delta) <= Numeric.STRICT_ZERO_EPSILON) {
 			setLlParaParameters(s1, s2);
 			return;
 		}
