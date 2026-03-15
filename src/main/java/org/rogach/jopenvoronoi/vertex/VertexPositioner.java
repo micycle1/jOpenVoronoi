@@ -41,7 +41,7 @@ public class VertexPositioner {
 	/** alternative separator solver */
 	Solver altSepSolver;
 
-// DATA
+	// DATA
 	/** reference to the VD graph. */
 	HalfEdgeDiagram g;
 	/** minimum offset-distance */
@@ -50,10 +50,6 @@ public class VertexPositioner {
 	double tMax;
 	/** the edge on which we position a new vertex */
 	Edge edge;
-	/** error-statistics */
-	List<Double> errstat = new ArrayList<>();
-	/** silent mode (outputs no warnings to stdout) */
-	boolean silent;
 
 	// create positioner, set graph.
 	public VertexPositioner(HalfEdgeDiagram gi) {
@@ -64,8 +60,6 @@ public class VertexPositioner {
 		sepSolver = new SEPSolver();
 		altSepSolver = new ALTSEPSolver();
 		lllParaSolver = new LLLPARASolver();
-		silent = false;
-		errstat.clear();
 	}
 
 	/**
@@ -487,9 +481,6 @@ public class VertexPositioner {
 		var d1 = sl.p.sub(s1.apexPoint(sl.p)).norm();
 		var d2 = sl.p.sub(s2.apexPoint(sl.p)).norm();
 		var d3 = sl.p.sub(s3.apexPoint(sl.p)).norm();
-
-		var maxd = Math.max(Math.max(Math.abs(sl.t - d1), Math.abs(sl.t - d2)), Math.abs(sl.t - d3));
-		errstat.add(maxd);
 
 		if (!equal(d1, d2) || !equal(d1, d3) || !equal(d2, d3) || !equal(sl.t, d1) || !equal(sl.t, d2)
 				|| !equal(sl.t, d3)) {
