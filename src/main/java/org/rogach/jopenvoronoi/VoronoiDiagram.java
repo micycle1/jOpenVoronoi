@@ -37,14 +37,15 @@ import ags.utils.dataStructures.trees.thirdGenKD.KdTree;
 import ags.utils.dataStructures.trees.thirdGenKD.SquareEuclideanDistanceFunction;
 
 /**
- * Voronoi diagram. The diagram builds incrementally as sites are added.
+ * Incremental Voronoi diagram for point and line sites.
  * <p>
- * See <a href="http://en.wikipedia.org/wiki/Voronoi_diagram">Wikipedia:
- * Voronoi diagram</a>.
+ * A typical workflow is to create a diagram, insert all point sites first, and
+ * then insert line sites between those point-site vertices when needed.
+ * Point sites must be added before any line sites.
  * <p>
- * The dual of a Voronoi diagram is the Delaunay diagram (triangulation).
- * Voronoi faces are dual to Delaunay vertices; Voronoi vertices are dual to
- * Delaunay faces; Voronoi edges are dual to Delaunay edges.
+ * The diagram is stored as a half-edge structure. Most callers will use the
+ * public query methods on this class; {@link #getDiagram()} exposes the backing
+ * graph for lower-level access.
  */
 public class VoronoiDiagram {
 
