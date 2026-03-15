@@ -111,7 +111,7 @@ public class Eq {
 	}
 
 	// subtract two equations from eachother
-	public void subEq(Eq other) {
+	void subEq(Eq other) {
 		a -= other.a;
 		b -= other.b;
 		c -= other.c;
@@ -119,7 +119,7 @@ public class Eq {
 	}
 
 	// access parameters through operator[]
-	public double get(int idx) {
+	double get(int idx) {
 		switch (idx) {
 			case 0:
 				return a;
