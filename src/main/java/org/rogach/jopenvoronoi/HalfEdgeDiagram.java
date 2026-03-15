@@ -150,66 +150,84 @@ public class HalfEdgeDiagram {
 	 * @param e edge to split
 	 */
 	void addVertexInEdge(Vertex v, Edge e) {
-		// the vertex v is inserted into the middle of edge e
-		// edge e and its twin are replaced by four new edges: e1,e2 and their twins
-		// te2,te1
-		// before: face
-		// e
-		// previous-> source ------> target -> next
-		// tw_next<- tw_trg <----- tw_src <- tw_previous
-		// twin
-		// twin_face
+		// Split:
+		// e : esource -> etarget
+		// eTwin : etarget -> esource
 		//
-		// after: face
-		// e1 e2
-		// previous-> source -> v -> target -> next
-		// tw_next<- tw_trg <- v <- tw_src <- tw_previous
-		// te2 te1
-		// twin_face
-		//
+		// Into:
+		// e : esource -> v (reused)
+		// e2 : v -> etarget (new)
+		// eTwin : etarget -> v (reused)
+		// te2 : v -> esource (new)
 
-		var e_twin = e.twin;
-		assert (e_twin != null) : " e_twin != null ";
-		var esource = e.source;
-		var etarget = e.target;
-		var face = e.face;
-		var twin_face = e_twin.face;
-		var previous = previousEdge(e);
-		var twin_previous = previousEdge(e_twin);
+		final Edge eTwin = e.twin;
+		assert (eTwin != null) : "e.twin != null";
 
-		assert (previous.face == e.face) : " previous.face == e.face ";
-		assert (twin_previous.face == e_twin.face) : " twin_previous.face == e_twin.face ";
+		final Vertex esource = e.source;
+		final Vertex etarget = e.target;
 
-		var e1 = add_edge(esource, v);
-		var te2 = add_edge(v, esource);
-		twinEdges(e1, te2);
+		assert (eTwin.source == etarget) : "eTwin.source == etarget";
+		assert (eTwin.target == esource) : "eTwin.target == esource";
 
-		var e2 = add_edge(v, etarget);
-		var te1 = add_edge(etarget, v);
-		twinEdges(e2, te1);
+		final Edge eNext = e.next;
+		final Edge twinNext = eTwin.next;
 
-		// next-pointers
-		previous.next = e1;
-		e1.next = e2;
-		e2.next = e.next;
+		final Edge e2 = new Edge(v, etarget);
+		final Edge te2 = new Edge(v, esource);
 
-		twin_previous.next = te1;
-		te1.next = te2;
-		te2.next = e_twin.next;
+		copyEdgeData(e2, e);
+		copyEdgeData(te2, eTwin);
 
-		// this copies params, face, k, type
-		e1.copyFrom(e);
-		e2.copyFrom(e);
-		te1.copyFrom(e_twin);
-		te2.copyFrom(e_twin);
+		edges.add(e2);
+		edges.add(te2);
 
-		// update the faces
-		face.edge = e1;
-		twin_face.edge = te1;
+		v.outEdges.add(e2);
+		v.outEdges.add(te2);
 
-		// finally, remove the old edge
-		removeEdge(e);
-		removeEdge(e_twin);
+		etarget.inEdges.add(e2);
+		esource.inEdges.add(te2);
+
+		etarget.inEdges.remove(e);
+		e.target = v;
+		v.inEdges.add(e);
+
+		esource.inEdges.remove(eTwin);
+		eTwin.target = v;
+		v.inEdges.add(eTwin);
+
+		setNext(e, e2);
+		setNext(e2, eNext);
+
+		setNext(eTwin, te2);
+		setNext(te2, twinNext);
+
+		e.twin = te2;
+		te2.twin = e;
+
+		e2.twin = eTwin;
+		eTwin.twin = e2;
+
+		Edge base1 = chooseCanonicalByCoords(e, te2);
+		e.base = base1;
+		te2.base = base1;
+
+		Edge base2 = chooseCanonicalByCoords(e2, eTwin);
+		e2.base = base2;
+		eTwin.base = base2;
+	}
+
+	private static void copyEdgeData(Edge dst, Edge src) {
+		dst.face = src.face;
+		dst.nullFace = src.nullFace;
+		dst.hasNullFace = src.hasNullFace;
+		dst.k = src.k;
+		dst.type = src.type;
+		dst.valid = src.valid;
+		dst.sign = src.sign;
+		dst.insertedDirection = src.insertedDirection;
+
+		System.arraycopy(src.x, 0, dst.x, 0, src.x.length);
+		System.arraycopy(src.y, 0, dst.y, 0, src.y.length);
 	}
 
 	/**
@@ -275,7 +293,7 @@ public class HalfEdgeDiagram {
 	}
 
 	// return all vertices adjecent to given vertex
-	 List<Vertex> adjacentVertices(Vertex v) {
+	List<Vertex> adjacentVertices(Vertex v) {
 		List<Vertex> adj = new ArrayList<>();
 		for (Edge e : v.outEdges) {
 			adj.add(e.target);
@@ -284,7 +302,7 @@ public class HalfEdgeDiagram {
 	}
 
 	// return all vertices of given face
-	 public List<Vertex> faceVertices(Face face) {
+	public List<Vertex> faceVertices(Face face) {
 		List<Vertex> verts = new ArrayList<>();
 		var startedge = face.edge; // the edge where we start
 		var start_target = startedge.target;
@@ -308,7 +326,7 @@ public class HalfEdgeDiagram {
 	// return edges of face f as a vector
 	// NOTE: it is faster to write a do-while loop in client code than to call this
 	// function!
-	 public List<Edge> faceEdges(Face f) {
+	public List<Edge> faceEdges(Face f) {
 		var start_edge = f.edge;
 		var current_edge = start_edge;
 		List<Edge> out = new ArrayList<>();
@@ -319,13 +337,9 @@ public class HalfEdgeDiagram {
 		return out;
 	}
 
-	// return the previous edge. traverses all edges in face until previous found.
-	 public Edge previousEdge(Edge e) {
-		var previous = e.next;
-		while (previous.next != e) {
-			previous = previous.next;
-		}
-		return previous;
+	public Edge previousEdge(Edge e) {
+		assert (e.prev != null) : "e.prev != null";
+		return e.prev;
 	}
 
 	// return adjacent faces to the given vertex
@@ -353,50 +367,92 @@ public class HalfEdgeDiagram {
 	// remove a degree-two Vertex from the middle of an Edge
 	// preserve edge-properties (next, face, k)
 	void removeDeg2Vertex(Vertex v) {
-		// face1 e[1]
-		// v1_prev -> v1 -> SPLIT -> v2 -> v2_next
-		// v1_next <- v1 <- SPLIT <- v2 <- v2_prev
-		// e[0] face2
+		// Before:
 		//
-		// is replaced with a single edge:
-		// face1
-		// v1_prev -> v1 ----------> v2 -> v2_next
-		// v1_next <- v1 <---------- v2 <- v2_prev
-		// face2
+		// face1:
+		// v1_prev -> (v1 -> v) -> (v -> v2) -> v2_next
+		//
+		// face2:
+		// v2_prev -> (v2 -> v) -> (v -> v1) -> v1_next
+		//
+		// After:
+		//
+		// face1:
+		// v1_prev -> (v1 -> v2) -> v2_next
+		//
+		// face2:
+		// v2_prev -> (v2 -> v1) -> v1_next
 
-		var v_edges = v.outEdges;
-		assert (v_edges.size() == 2) : " v_edges.size() == 2";
-		assert (v_edges.get(0).source == v && v_edges.get(1).source == v) : " v_edges.get(0).source == v && v_edges.get(1).source == v ";
+		final var vEdges = v.outEdges;
+		assert (vEdges.size() == 2) : "v.outEdges.size() == 2";
 
-		var v1 = v_edges.get(0).target;
-		var v2 = v_edges.get(1).target;
-		var v1_next = v_edges.get(0).next;
-		var v1_prev = previousEdge(v_edges.get(0).twin);
-		var v2_next = v_edges.get(1).next;
-		var v2_prev = previousEdge(v_edges.get(1).twin);
-		var face1 = v_edges.get(1).face;
-		var face2 = v_edges.get(0).face;
+		final Edge e0 = vEdges.get(0); // v -> v1 on face2
+		final Edge e1 = vEdges.get(1); // v -> v2 on face1
 
-		var twinEdges = addTwinEdges(v1, v2);
-		var new1 = twinEdges.getFirst();
-		var new2 = twinEdges.getSecond();
-		setNext(new1, v2_next);
-		setNext(new2, v1_next);
-		setNext(v2_prev, new2);
-		setNext(v1_prev, new1);
-		face1.edge = new1;
-		face2.edge = new2;
-		new1.copyFrom(v_edges.get(1));
-		new2.copyFrom(v_edges.get(0));
-		removeTwinEdges(v, v1);
-		removeTwinEdges(v, v2);
-		removeVertex(v);
+		final Edge t0 = e0.twin; // v1 -> v on face1
+		final Edge t1 = e1.twin; // v2 -> v on face2
+
+		assert (t0 != null) : "e0.twin != null";
+		assert (t1 != null) : "e1.twin != null";
+
+		final Vertex v1 = e0.target;
+		final Vertex v2 = e1.target;
+
+		final Face face1 = e1.face;
+		final Face face2 = e0.face;
+
+		final Edge v1Next = e0.next;
+		final Edge v2Next = e1.next;
+
+		final Edge v1Prev = previousEdge(t0);
+		final Edge v2Prev = previousEdge(t1);
+
+		v.inEdges.remove(t0);
+		t0.target = v2;
+		v2.inEdges.add(t0);
+
+		v.inEdges.remove(t1);
+		t1.target = v1;
+		v1.inEdges.add(t1);
+
+		setNext(v1Prev, t0);
+		setNext(t0, v2Next);
+
+		setNext(v2Prev, t1);
+		setNext(t1, v1Next);
+
+		copyEdgeData(t0, e1);
+		copyEdgeData(t1, e0);
+
+		t0.twin = t1;
+		t1.twin = t0;
+		Edge canonical = chooseCanonicalByCoords(t0, t1);
+		t0.base = canonical;
+		t1.base = canonical;
+
+		face1.edge = t0;
+		face2.edge = t1;
+
+		v.outEdges.remove(e0);
+		v.outEdges.remove(e1);
+
+		v1.inEdges.remove(e0);
+		edges.remove(e0);
+
+		v2.inEdges.remove(e1);
+		edges.remove(e1);
+
+		assert (v.outEdges.isEmpty()) : "v.outEdges empty";
+		assert (v.inEdges.isEmpty()) : "v.inEdges empty";
+
+		vertices.remove(v);
 	}
 
 	// set next-pointer of e1 to e2
 	void setNext(Edge e1, Edge e2) {
 		assert (e1.target == e2.source) : " e1.target == e2.source ";
 		e1.next = e2;
+		e2.prev = e1;
 	}
 
 	// form a face from the edge-list:

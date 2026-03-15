@@ -25,6 +25,7 @@ public class Edge {
 	public Edge twin;
 	public Edge base;
 	public Edge next;
+	public Edge prev;
 	public Face face;
 	public Face nullFace;
 	public boolean hasNullFace;
