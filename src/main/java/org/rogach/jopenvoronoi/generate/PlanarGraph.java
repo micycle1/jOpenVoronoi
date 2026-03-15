@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.rogach.jopenvoronoi.VoronoiDiagram;
 import org.rogach.jopenvoronoi.geometry.Point;
+import org.rogach.jopenvoronoi.util.Numeric;
 import org.rogach.jopenvoronoi.vertex.Vertex;
 
 public class PlanarGraph {
@@ -225,7 +226,8 @@ public class PlanarGraph {
 		for (PlanarGraph.Segment s : input.segments) {
 			for (Point2D p : input.points) {
 				if (!p.equals(s.stt) && !p.equals(s.end)) {
-					if (Line2D.ptSegDist(s.stt.getX(), s.stt.getY(), s.end.getX(), s.end.getY(), p.getX(), p.getY()) < 1e-10) {
+					if (Line2D.ptSegDist(s.stt.getX(), s.stt.getY(), s.end.getX(), s.end.getY(),
+							p.getX(), p.getY()) < Numeric.DEFAULT_CHOP_EPSILON) {
 						return true;
 					}
 				}

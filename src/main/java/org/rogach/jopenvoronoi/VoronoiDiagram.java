@@ -1301,8 +1301,8 @@ public class VoronoiDiagram {
 				&& (new_source.position != f_site.end())
 				&& (new_target.position != f_site.start())
 				&& (new_target.position != f_site.end())
-				&& (new_source.position.sub(f_site.apexPoint(new_source.position)).norm() > 1e-3)
-				&& (new_target.position.sub(f_site.apexPoint(new_target.position)).norm() > 1e-3)) {
+				&& (new_source.position.sub(f_site.apexPoint(new_source.position)).norm() > Numeric.DISTANCE_EPSILON)
+				&& (new_target.position.sub(f_site.apexPoint(new_target.position)).norm() > Numeric.DISTANCE_EPSILON)) {
 			assert (!new_source.position.is_right(f_site.start(), f_site.end())) : "!new_source.position.is_right(f_site)";
 			assert (!new_target.position.is_right(f_site.start(), f_site.end())) : "!new_target.position.is_right(f_site)";
 			assert (!new_source.position.is_right(new_site.start(), new_site.end())) : "!new_source.position.is_right(new_site)";
@@ -1584,7 +1584,7 @@ public class VoronoiDiagram {
 					return;
 				}
 
-				var solver = new BracketingNthOrderBrentSolver(1e-20, 5);
+				var solver = new BracketingNthOrderBrentSolver(Numeric.BRENT_SOLVER_ABSOLUTE_EPSILON, 5);
 				var max_iter = 500;
 				var result = solver.solve(max_iter, errFunctr, min_t, max_t, AllowedSolution.ANY_SIDE);
 
