@@ -2,11 +2,26 @@ package org.rogach.jopenvoronoi.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 
 import org.junit.jupiter.api.Test;
 
 public class NumericTest {
+
+	@Test
+	public void numericIsUtilityClass() throws Exception {
+		var constructor = Numeric.class.getDeclaredConstructor();
+		assertTrue(Modifier.isPrivate(constructor.getModifiers()));
+		constructor.setAccessible(true);
+
+		var error = assertThrows(InvocationTargetException.class, constructor::newInstance);
+		assertInstanceOf(AssertionError.class, error.getCause());
+	}
 
 	@Test
 	public void chopUsesNamedDefaultEpsilon() {

@@ -7,7 +7,11 @@ import java.util.List;
  * Holds general numerical functions that are not specific to voronoi-diagrams
  * and may be useful elsewhere too
  */
-public class Numeric {
+public final class Numeric {
+
+	private Numeric() {
+		throw new AssertionError("Numeric is a utility class");
+	}
 
 	public static final double DEFAULT_CHOP_EPSILON = 1e-10;
 
