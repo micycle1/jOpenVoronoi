@@ -15,8 +15,12 @@ import org.rogach.jopenvoronoi.geometry.Face;
  * marks the remaining edges valid only on faces whose boundary orientation
  * matches the requested polygon interior side.
  * <p>
- * The constructor argument is expressed in terms of the direction used when
- * inserting each line site:
+ * In the common polygon-winding terminology used by Java geometry libraries,
+ * pass {@code true} for a counter-clockwise outer contour and clockwise holes,
+ * or {@code false} for a clockwise outer contour and counter-clockwise holes.
+ * <p>
+ * Equivalently, the constructor argument can be interpreted in terms of the
+ * direction used when inserting each line site:
  * <ul>
  * <li>pass {@code true} when the polygon interior lies to the left of the
  * inserted segment direction (the common case for a counter-clockwise outer
@@ -34,9 +38,10 @@ public class PolygonInteriorFilter extends Filter {
 	/**
 	 * Creates a polygon interior filter for a known boundary orientation.
 	 *
-	 * @param interiorOnLeft {@code true} if the polygon interior is on the left
-	 *                       side of each inserted boundary segment direction;
-	 *                       {@code false} if it is on the right side
+	 * @param interiorOnLeft {@code true} for counter-clockwise outer boundaries
+	 *                       (and clockwise holes), i.e. when the polygon interior
+	 *                       is on the left side of each inserted boundary
+	 *                       segment; {@code false} for the opposite winding
 	 */
 	public PolygonInteriorFilter(boolean interiorOnLeft) {
 		this.interiorOnLeft = interiorOnLeft;

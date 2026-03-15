@@ -15,8 +15,11 @@ import org.rogach.jopenvoronoi.vertex.VertexType;
 public class MedialAxisFilter extends Filter {
 
 	/**
-	 * A dot-product threshold in [0,1] for filtering out edges between nearly
-	 * parallel LineSite segments
+	 * Dot-product threshold in {@code [0,1]} for filtering out edges between
+	 * nearly parallel line-site segments.
+	 * <p>
+	 * Higher values prune less aggressively, because only segment pairs with a
+	 * dot product above this threshold are treated as parallel enough to remove.
 	 */
 	double dotProductThreshold;
 
@@ -26,7 +29,9 @@ public class MedialAxisFilter extends Filter {
 
 	/**
 	 * @param threshold dot-product threshold in {@code [0,1]} for filtering out
-	 *                  edges between nearly parallel line-site segments
+	 *                  edges between nearly parallel line-site segments; higher
+	 *                  values keep more edges, while lower values prune more
+	 *                  aggressively
 	 */
 	public MedialAxisFilter(double threshold) {
 		dotProductThreshold = threshold;
