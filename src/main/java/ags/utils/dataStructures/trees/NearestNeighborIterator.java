@@ -1,4 +1,4 @@
-package ags.utils.dataStructures.trees.thirdGenKD;
+package ags.utils.dataStructures.trees;
 
 import java.util.Arrays;
 import java.util.Iterator;

@@ -21,7 +21,7 @@ public class MedialAxisFilter extends Filter {
 	 * Higher values prune less aggressively, because only segment pairs with a
 	 * dot product above this threshold are treated as parallel enough to remove.
 	 */
-	double dotProductThreshold;
+	private final double dotProductThreshold;
 
 	public MedialAxisFilter() {
 		dotProductThreshold = 0.8;
@@ -114,7 +114,7 @@ public class MedialAxisFilter extends Filter {
 	 * @param v endpoint vertex on the polygon boundary
 	 * @return incident line-site edge
 	 */
-	Edge findSegment(Vertex v) {
+	private Edge findSegment(Vertex v) {
 		for (Edge e : v.outEdges) {
 			if (e.type == EdgeType.LINESITE) {
 				return e;
@@ -129,7 +129,7 @@ public class MedialAxisFilter extends Filter {
 	 * @param e edge from the Voronoi diagram
 	 * @return polygon endpoint associated with {@code e}
 	 */
-	Vertex findEndpoint(Edge e) {
+	private Vertex findEndpoint(Edge e) {
 		var next = e.next;
 		var prev = g.previousEdge(e);
 		Vertex endp;

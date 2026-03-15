@@ -33,8 +33,9 @@ import org.rogach.jopenvoronoi.vertex.VertexPositioner;
 import org.rogach.jopenvoronoi.vertex.VertexStatus;
 import org.rogach.jopenvoronoi.vertex.VertexType;
 
-import ags.utils.dataStructures.trees.thirdGenKD.KdTree;
-import ags.utils.dataStructures.trees.thirdGenKD.SquareEuclideanDistanceFunction;
+import ags.utils.dataStructures.trees.DistanceFunction;
+import ags.utils.dataStructures.trees.KdTree;
+import ags.utils.dataStructures.trees.SquareEuclideanDistance2D;
 
 /**
  * Incremental Voronoi diagram for point and line sites.
@@ -48,6 +49,8 @@ import ags.utils.dataStructures.trees.thirdGenKD.SquareEuclideanDistanceFunction
  * graph for lower-level access.
  */
 public class VoronoiDiagram {
+	
+	private static final DistanceFunction DISTANCE_FUNCTION = new SquareEuclideanDistance2D();
 
 	// HELPER-CLASSES
 	/**
@@ -182,7 +185,7 @@ public class VoronoiDiagram {
 		}
 		assert (p.norm() < farRadius) : "p.norm() < farRadius";
 
-		var nearest = kdTree.findNearestNeighbors(new double[] { p.x, p.y }, 1, new SquareEuclideanDistanceFunction()).getMax();
+		var nearest = kdTree.findNearestNeighbors(new double[] { p.x, p.y }, 1, DISTANCE_FUNCTION).getMax();
 
 		if (nearest.p.equals(p)) {
 			throw new IllegalArgumentException("Cannot insert duplicate point site at " + p + ".");
@@ -543,7 +546,7 @@ public class VoronoiDiagram {
 	 * @return the nearest faces in ascending distance order
 	 */
 	public List<Face> nearestFaces(double x, double y, int n) {
-		var heap = kdTree.findNearestNeighbors(new double[] { x, y }, n, new SquareEuclideanDistanceFunction());
+		var heap = kdTree.findNearestNeighbors(new double[] { x, y }, n, DISTANCE_FUNCTION);
 		var faces = new ArrayList<Face>(heap.size());
 
 		while (heap.size() > 0) {
