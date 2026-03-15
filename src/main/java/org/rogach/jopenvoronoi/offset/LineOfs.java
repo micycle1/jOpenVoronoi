@@ -7,9 +7,9 @@ import org.rogach.jopenvoronoi.geometry.Point;
  */
 public class LineOfs extends Ofs {
 	/** start point */
-	protected Point _start;
+	private Point _start;
 	/** end point */
-	protected Point _end;
+	private Point _end;
 	/**
 	 * @param p1 start point
 	 * @param p2 end point

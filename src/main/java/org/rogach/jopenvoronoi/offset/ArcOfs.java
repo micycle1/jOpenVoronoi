@@ -7,13 +7,13 @@ import org.rogach.jopenvoronoi.geometry.Point;
  */
 public class ArcOfs extends Ofs {
 	/** start */
-	Point _start;
+	private Point _start;
 	/** end */
-	Point _end;
+	private Point _end;
 	/** center */
-	Point c;
+	private Point c;
 	/** radius */
-	double r;
+	private double r;
 
 	/**
 	 * @param p1 start Point

@@ -28,9 +28,9 @@ import org.rogach.jopenvoronoi.solver.Eq;
 public class LineSite extends Site {
 
 	/** start Point of LineSite */
-	Point _start;
+	private Point _start;
 	/** end Point of LineSite */
-	Point _end;
+	private Point _end;
 	/**
 	 * midpoint used as the representative position
 	 */

@@ -9,7 +9,7 @@ public class OffsetLoop {
 	public List<OffsetVertex> vertices = new ArrayList<>();
 	public double offsetDistance;
 
-	public void add(OffsetVertex v) {
+	void add(OffsetVertex v) {
 		vertices.add(v);
 	}
 }
