@@ -11,14 +11,24 @@ import org.rogach.jopenvoronoi.vertex.Vertex;
 
 public class Face {
 
-	public Edge edge;
-	public Site site;
-	public FaceStatus status;
-	public boolean is_null_face;
+	private Edge edge;
+	private Site site;
+	private FaceStatus status;
+	private boolean is_null_face;
 	private HalfEdgeDiagram diagram;
 	public int diagramIndex = -1;
 
 	public Face() {
+	}
+
+	/** Returns the representative/starting edge of this face. */
+	public Edge getEdge() {
+		return edge;
+	}
+
+	/** Sets the representative/starting edge of this face. */
+	public void setEdge(Edge edge) {
+		this.edge = edge;
 	}
 
 	public List<Edge> getEdges() {
@@ -43,8 +53,18 @@ public class Face {
 		return site;
 	}
 
+	/** Sets the generator site for this face. */
+	public void setSite(Site site) {
+		this.site = site;
+	}
+
 	public FaceStatus getStatus() {
 		return status;
+	}
+
+	/** Sets the status of this face. */
+	public void setStatus(FaceStatus status) {
+		this.status = status;
 	}
 
 	/**
@@ -56,6 +76,11 @@ public class Face {
 	 */
 	public boolean isNullFace() {
 		return is_null_face;
+	}
+
+	/** Sets whether this face is a null face. */
+	public void setNullFace(boolean isNullFace) {
+		this.is_null_face = isNullFace;
 	}
 
 	public boolean isPointSiteFace() {

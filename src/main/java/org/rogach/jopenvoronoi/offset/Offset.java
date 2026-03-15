@@ -71,7 +71,7 @@ public class Offset {
 	// starting at the given face
 	private void offsetLoopWalk(Face start, double t) {
 		var out_in_mode = false;
-		var start_edge = findNextOffsetEdge(start.edge, t, out_in_mode); // the first edge on the start-face
+		var start_edge = findNextOffsetEdge(start.getEdge(), t, out_in_mode); // the first edge on the start-face
 		if (start_edge == null) {
 			throw new IllegalStateException("No bracketing edge found on start face for t=" + t);
 		}
@@ -97,7 +97,7 @@ public class Offset {
 
 	// return an offset-element corresponding to the current face
 	private OffsetVertex offsetElementFromFace(Face current_face, Edge current_edge, Edge next_edge, double t) {
-		var s = current_face.site;
+		var s = current_face.getSite();
 		var o = s.offset(current_edge.point(t), next_edge.point(t)); // ask the Site for offset-geometry here.
 		var cw = true;
 		if (!s.isLine()) { // point and arc-sites produce arc-offsets, for which cw must be set.
@@ -160,7 +160,7 @@ public class Offset {
 	// go through all faces and set flag=0 if the face requires an offset.
 	private void setFlags(double t) {
 		for (Face f : g.faces) {
-			var start = f.edge;
+			var start = f.getEdge();
 			var current = start;
 			do {
 				var src = current.source;
@@ -180,7 +180,7 @@ public class Offset {
 		// edges,
 		// but not all, on a face where we do not want offsets.
 		for (Face f : g.faces) {
-			var start = f.edge;
+			var start = f.getEdge();
 			var current = start;
 			do {
 				if (!current.valid) {

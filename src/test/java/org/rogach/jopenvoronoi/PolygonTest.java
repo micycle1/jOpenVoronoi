@@ -51,7 +51,7 @@ public class PolygonTest {
 
 		// Optionally iterate faces/edges to exercise the API
 		vd.getFaces().forEach(face -> {
-			Point pos = face.site.position();
+			Point pos = face.getSite().position();
 			// ensure site position is present (just a basic non-null check)
 			Assertions.assertNotNull(pos);
 			diagram.faceEdges(face).forEach(edge -> {

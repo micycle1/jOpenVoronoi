@@ -83,15 +83,15 @@ public class VoronoiDiagramChecker {
 
 	// check that the face is ok
 	public static boolean checkFace(Face f) {
-		var current_edge = f.edge;
+		var current_edge = f.getEdge();
 
 		var start_edge = current_edge;
 		var k = current_edge.k;
 		if (!((k == 1) || (k == -1))) {
 			return false;
 		}
-		if (f.site != null) { // guard against null-faces that dont have Site
-			if (f.site.isPoint()) {
+		if (f.getSite() != null) { // guard against null-faces that dont have Site
+			if (f.getSite().isPoint()) {
 				if (!(k == 1)) {
 					return false;
 				}

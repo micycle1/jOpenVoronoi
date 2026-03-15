@@ -474,7 +474,7 @@ public class Edge {
 			p = src.add(trg.sub(src).mult(u));
 
 			// Exact geometric radius: distance from p to the generating site
-			Site s = face.site;
+			Site s = face.getSite();
 			Point pa = s.apexPoint(p);
 			r = p.sub(pa).norm();
 		} else if (type == EdgeType.PARABOLA) {
