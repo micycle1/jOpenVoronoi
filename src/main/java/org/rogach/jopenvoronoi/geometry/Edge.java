@@ -4,6 +4,8 @@ import static org.rogach.jopenvoronoi.util.Numeric.chop;
 import static org.rogach.jopenvoronoi.util.Numeric.sq;
 
 import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 
 import org.rogach.jopenvoronoi.site.Site;
@@ -533,6 +535,33 @@ public class Edge {
 		Point f2 = s2.apexPoint(p);
 
 		return new Point[] { f1, f2 };
+	}
+
+	/**
+	 * Returns {@code n} evenly-spaced sample points along this edge, including the
+	 * start ({@link #source}) and end ({@link #target}) positions.
+	 * <p>
+	 * Sampling is performed by interpolating the offset-distance parameter
+	 * {@code t} uniformly between {@code source.dist()} and {@code target.dist()},
+	 * then evaluating {@link #point(double)} at each step.
+	 *
+	 * @param n number of sample points; must be at least 2
+	 * @return list of {@code n} points sampled uniformly from source to target
+	 * @throws IllegalArgumentException if {@code n} is less than 2
+	 */
+	public List<Point> samplePoints(int n) {
+		if (n < 2) {
+			throw new IllegalArgumentException("n must be at least 2, got " + n);
+		}
+		double srcT = source.dist();
+		double trgT = target.dist();
+		List<Point> points = new ArrayList<>(n);
+		for (int i = 0; i < n; i++) {
+			double u = (double) i / (n - 1);
+			double t = srcT + u * (trgT - srcT);
+			points.add(point(t));
+		}
+		return points;
 	}
 
 	/** First site adjacent to this edge. */
