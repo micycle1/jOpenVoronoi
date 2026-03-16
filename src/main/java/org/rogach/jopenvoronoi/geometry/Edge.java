@@ -3,22 +3,29 @@ package org.rogach.jopenvoronoi.geometry;
 import static org.rogach.jopenvoronoi.util.Numeric.chop;
 import static org.rogach.jopenvoronoi.util.Numeric.sq;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;
 
 import org.rogach.jopenvoronoi.site.Site;
 import org.rogach.jopenvoronoi.util.Numeric;
 import org.rogach.jopenvoronoi.vertex.Vertex;
 
-/*
-* bisector formulas
-* x = x1 - x2 - x3*t +/- x4 * sqrt( square(x5+x6*t) - square(x7+x8*t) )
-* (same formula for y-coordinate)
-* line (line/line)
-* parabola (circle/line)
-* hyperbola (circle/circle)
-* ellipse (circle/circle)
-*/
-
+/**
+ * Half-edge in the Voronoi diagram.
+ * <p>
+ * Besides the topological links ({@link #twin}, {@link #next}, {@link #prev}),
+ * an edge stores an eight-parameter geometric parametrization for its x/y
+ * coordinates:
+ *
+ * <pre>
+ * x = x1 - x2 - x3*t +/- x4 * sqrt(square(x5 + x6*t) - square(x7 + x8*t))
+ * </pre>
+ *
+ * <p>
+ * The same formula is used for the y-coordinate. Depending on the adjacent
+ * sites, this parametrization describes linear bisectors (line/line),
+ * parabolas (point/line), or conics such as hyperbolas/ellipses (point/arc).
+ */
 public class Edge {
 
 	public Vertex source;
@@ -117,7 +124,13 @@ public class Edge {
 		return (source.position.add(target.position)).mult(0.5); // TODO pre-calculate?
 	}
 
-	// dispatch to setter functions based on type of \a s1 and \a s2
+	/**
+	 * Initialize the geometric parametrization for the bisector between two sites.
+	 *
+	 * @param s1  first adjacent site
+	 * @param s2  second adjacent site
+	 * @param sig selects the sign used in front of the square-root term
+	 */
 	public void setParameters(Site s1, Site s2, boolean sig) {
 		sign = sig; // sqrt() sign for edge-parametrization
 		if (s1.isPoint() && s2.isPoint()) {
@@ -145,7 +158,7 @@ public class Edge {
 		}
 	}
 
-	// set edge parameters for PointSite-PointSite edge
+	// Set parameters for a point/point bisector.
 	private void setPpParameters(Site s1, Site s2) {
 		assert (s1.isPoint() && s2.isPoint()) : " s1.isPoint() && s2.isPoint() ";
 		var d = (s1.position().sub(s2.position())).norm();
@@ -172,7 +185,7 @@ public class Edge {
 		y[7] = 0;
 	}
 
-	// set ::PARABOLA edge parameters (between PointSite and LineSite).
+	// Set parameters for a point/line parabola bisector.
 	private void setPlParameters(Site s1, Site s2) {
 		assert (s1.isPoint() && s2.isLine()) : " s1.isPoint() && s2.isLine() ";
 
@@ -199,7 +212,7 @@ public class Edge {
 		y[7] = +1; // kk; // -1 = k2 side of line??
 	}
 
-	// set ::SEPARATOR edge parameters
+	/** Set parameters for a separator edge. */
 	public void setSepParameters(Point endp, Point p) {
 		type = EdgeType.SEPARATOR;
 		var dx = p.x - endp.x;
@@ -224,7 +237,7 @@ public class Edge {
 		y[7] = 0;
 	}
 
-	// set edge parametrization for LineSite-LineSite edge (parallel case)
+	// Set parameters for a parallel line/line bisector.
 	private void setLlParaParameters(Site s1, Site s2) {
 		assert (s1.isLine() && s2.isLine()) : " s1.isLine() && s2.isLine() ";
 		type = EdgeType.PARA_LINELINE;
@@ -291,7 +304,7 @@ public class Edge {
 		y[7] = 0;
 	}
 
-	// set edge parametrization for LineSite-LineSite edge
+	// Set parameters for a non-parallel line/line bisector.
 	private void setLlParameters(Site s1, Site s2) { // Held thesis p96
 		assert (s1.isLine() && s2.isLine()) : " s1.isLine() && s2.isLine() ";
 		type = EdgeType.LINELINE;
@@ -331,11 +344,9 @@ public class Edge {
 		y[7] = 0;
 	}
 
-	// set edge parameters when s1 is PointSite and s2 is ArcSite
+	// Set parameters for a point/arc bisector.
 	private void setPaParameters(Site s1, Site s2) {
 		assert (s1.isPoint() && s2.isArc()) : " s1.isPoint() && s2.isArc() ";
-		// std::cout << "set_pa_parameters()\n";
-
 		type = EdgeType.HYPERBOLA; // hyperbola or ellipse?
 		var lamb2 = 1.0;
 
@@ -370,7 +381,7 @@ public class Edge {
 		y[7] = alfa4;
 	}
 
-	// set edge parameters when s1 is ArcSite and s2 is LineSite
+	// Set parameters for a line/arc bisector.
 	private void setLaParameters(Site s1, Site s2) {
 		assert (s1.isLine() && s2.isArc()) : " s1.isLine() && s2.isArc() ";
 		type = EdgeType.PARABOLA;
@@ -384,8 +395,7 @@ public class Edge {
 		var alfa2 = s1.b(); // b2
 		var alfa3 = (s1.a() * s2.x() + s1.b() * s2.y() + s1.c());
 		var alfa4 = s2.r();
-		double kk = +1; // # positive line-offset
-		// figure out sign?
+		double kk = +1;
 
 		x[0] = s2.x();
 		x[1] = alfa1 * alfa3;
@@ -434,7 +444,7 @@ public class Edge {
 		}
 	}
 
-	// minimum t-value for LINE edge between PointSite and PointSite
+	// Minimum t-value for a point/point edge.
 	private double minimumPpT(Site s1, Site s2) {
 		assert (s1.isPoint() && s2.isPoint()) : " s1.isPoint() && s2.isPoint() ";
 		var p1p2 = s1.position().sub(s2.position()).norm();
@@ -442,14 +452,14 @@ public class Edge {
 		return p1p2 / 2; // this splits point-point edges at APEX
 	}
 
-	// minimum t-value for ::PARABOLA edge
+	// Minimum t-value for a point/line parabola.
 	private double minimumPlT(Site s1, Site s2) {
 		var mint = -x[6] / (2.0 * x[7]);
 		assert (mint >= 0) : " mint >=0 ";
 		return mint;
 	}
 
-	// minimum t-value for edge between PointSite and ArcSite
+	// Minimum t-value for a point/arc edge.
 	private double minimumPaT(Site s1, Site s2) {
 		assert (s1.isPoint() && s2.isArc()) : " s1.isPoint() && s2.isArc() ";
 		var p1p2 = s1.position().sub(s2.apexPoint(s1.position())).norm(); // - s2->r() ;
@@ -458,41 +468,42 @@ public class Edge {
 	}
 	
 	/**
-	 * Returns the point and its exact clearance radius at parameter u [0, 1] 
-	 * along the edge.
-	 * 
-	 * @param u The parameter along the edge from 0.0 (source) to 1.0 (target)
-	 * @return A pair containing the Point on the edge and its clearance radius
+	 * Sample a MIC candidate point and its exact clearance radius at normalized
+	 * parameter {@code u} along this edge.
+	 *
+	 * @param u normalized edge parameter from {@code 0.0} at {@link #source} to
+	 *          {@code 1.0} at {@link #target}
+	 * @return a pair containing the sampled point and its exact clearance radius
 	 */
-	public Entry<Point, Double> edgePoint(double u) {
+	public Entry<Point, Double> micSample(double u) {
 		Point p;
 		double r;
 
 		if (type == EdgeType.LINE || type == EdgeType.LINELINE || type == EdgeType.PARA_LINELINE) {
-			// Linear interpolation of the position
+			// Linear interpolation of the position.
 			Point src = source.position;
 			Point trg = target.position;
 			p = src.add(trg.sub(src).mult(u));
 
-			// Exact geometric radius: distance from p to the generating site
+			// Exact geometric radius: distance from p to the generating site.
 			Site s = face.getSite();
 			Point pa = s.apexPoint(p);
 			r = p.sub(pa).norm();
 		} else if (type == EdgeType.PARABOLA) {
 			// For parabolas, the distance (radius) is the parameter t.
-			// We interpolate the t-parameter between the source and target radii.
+			// Interpolate t between the source and target clearance radii.
 			double srcT = source.dist();
 			double trgT = target.dist();
 			double uT = srcT + u * (trgT - srcT);
 			
-			// Get the position using the existing 8-parameter point(t) formula
+			// Recover the position using the existing point(t) parametrization.
 			p = point(uT);
 			r = uT;
 		} else {
-			throw new RuntimeException("Unsupported edge type for edgePoint: " + type);
+			throw new RuntimeException("Unsupported edge type for micSample: " + type);
 		}
 
-		return new java.util.AbstractMap.SimpleEntry<>(p, r);
+		return new SimpleEntry<>(p, r);
 	}
 
 	@Override
