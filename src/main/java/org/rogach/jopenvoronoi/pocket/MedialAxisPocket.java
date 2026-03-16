@@ -75,16 +75,9 @@ import org.rogach.jopenvoronoi.vertex.Vertex;
  * pocket.setWidth(0.05);   // 0.05 units step-over
  * pocket.run();
  * List<List<MIC>> components = pocket.getMicComponents();
- *
- * // Convert to a continuous toolpath:
- * for (List<MIC> comp : components) {
- *     List<PocketPath.Segment> path = PocketPath.toPath(comp);
- *     // feed path segments to a CNC controller ...
- * }
- * }</pre>
+ * </pre>
  *
  * @see MIC
- * @see PocketPath
  */
 public class MedialAxisPocket {
 

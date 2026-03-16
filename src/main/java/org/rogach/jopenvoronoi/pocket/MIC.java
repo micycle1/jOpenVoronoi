@@ -9,8 +9,7 @@ import org.rogach.jopenvoronoi.geometry.Point;
  * Each MIC pairs a previously-cut circle ({@link #c1}/{@link #r1}) with a new
  * circle to cut ({@link #c2}/{@link #r2}), together with four bi-tangent points
  * ({@link #t1}–{@link #t4}) that define the material boundaries between the two
- * circles. A downstream algorithm (see {@link PocketPath}) converts the
- * sequence of MICs into a continuous toolpath of line and arc segments.
+ * circles.
  * <p>
  * When {@link #newBranch} is {@code true}, the tool must retract (or rapid)
  * from the end of the previous branch to the branch origin stored in
