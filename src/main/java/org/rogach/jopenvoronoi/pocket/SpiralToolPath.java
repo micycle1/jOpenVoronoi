@@ -241,10 +241,8 @@ public class SpiralToolPath {
 			return null;
 		}
 
-		Map<Vertex, OriginalNode> nodes = new HashMap<>();
 		OriginalNode root = new OriginalNode();
 		root.vertex = rootVertex;
-		nodes.put(rootVertex, root);
 
 		Set<Vertex> visited = identitySet();
 		visited.add(rootVertex);
@@ -275,7 +273,6 @@ public class SpiralToolPath {
 				child.vertex = neighbor;
 				child.parent = current;
 				child.parentHalfEdge = oriented;
-				nodes.put(neighbor, child);
 				current.children.add(child);
 
 				visited.add(neighbor);
@@ -323,14 +320,12 @@ public class SpiralToolPath {
 	private void buildDiscreteChildren(OriginalNode originalParent, DiscreteNode discreteParent, Set<Edge> componentCanonicalSet, DiscreteTree tree) {
 
 		for (OriginalNode originalChild : originalParent.children) {
-			Edge e = originalChild.parentHalfEdge; // oriented parent -> child
+			Edge e = originalChild.parentHalfEdge;
 			if (e == null) {
 				continue;
 			}
 
-			boolean linear = isLinearVoronoiEdge(e);
-			int segments = linear ? 1 : samplesPerCurveEdge;
-
+			int segments = (e.type == EdgeType.LINE) ? 1 : samplesPerCurveEdge;
 			DiscreteNode prev = discreteParent;
 
 			for (int i = 1; i < segments; i++) {
@@ -342,7 +337,6 @@ public class SpiralToolPath {
 			DiscreteNode childVertexNode = createVertexNode(originalChild.vertex, componentCanonicalSet, tree);
 			prev = connectOrMerge(prev, childVertexNode, tree);
 
-			// recurse only after the child vertex node exists in the tree
 			buildDiscreteChildren(originalChild, childVertexNode, componentCanonicalSet, tree);
 		}
 	}
@@ -352,34 +346,28 @@ public class SpiralToolPath {
 		n.id = tree.nextId++;
 		n.point = v.position;
 		n.clearance = v.dist();
-		n.boundaryLeaf = false;
 
 		for (Edge oe : v.outEdges) {
 			Edge canonical = canonicalRepresentative(oe, componentCanonicalSet);
 			if (canonical == null) {
 				continue;
 			}
-			Point[] tps = oe.micTouchPoints(0.0);
-			addTouchPoints(n.touchPoints, tps);
+			addTouchPoints(n.touchPoints, oe.micTouchPoints(0.0));
 		}
 
-		tree.nodes.add(n);
 		tree.maNodes.add(n);
 		return n;
 	}
 
 	private DiscreteNode createSampleNode(Edge e, double u, DiscreteTree tree) {
 		Entry<Point, Double> sample = e.micSample(u);
-		Point[] touch = e.micTouchPoints(u);
 
 		DiscreteNode n = new DiscreteNode();
 		n.id = tree.nextId++;
 		n.point = sample.getKey();
 		n.clearance = sample.getValue();
-		n.boundaryLeaf = false;
-		addTouchPoints(n.touchPoints, touch);
+		addTouchPoints(n.touchPoints, e.micTouchPoints(u));
 
-		tree.nodes.add(n);
 		tree.maNodes.add(n);
 		return n;
 	}
@@ -389,7 +377,6 @@ public class SpiralToolPath {
 
 		if (len <= EPS) {
 			addTouchPoints(parent.touchPoints, child.touchPoints.toArray(new Point[0]));
-			tree.nodes.remove(child);
 			tree.maNodes.remove(child);
 			return parent;
 		}
@@ -408,14 +395,9 @@ public class SpiralToolPath {
 	}
 
 	private void attachClearanceLeaves(DiscreteTree tree) {
-		List<DiscreteNode> centers = new ArrayList<>(tree.maNodes);
-
-		for (DiscreteNode center : centers) {
+		for (DiscreteNode center : new ArrayList<>(tree.maNodes)) {
 			for (Point tp : center.touchPoints) {
-				if (tp == null) {
-					continue;
-				}
-				if (distance(center.point, tp) <= EPS) {
+				if (tp == null || distance(center.point, tp) <= EPS) {
 					continue;
 				}
 
@@ -433,8 +415,6 @@ public class SpiralToolPath {
 				leaf.parent = center;
 				leaf.parentEdge = edge;
 				center.children.add(edge);
-
-				tree.nodes.add(leaf);
 				tree.edges.add(edge);
 			}
 		}
@@ -559,8 +539,7 @@ public class SpiralToolPath {
 		}
 
 		List<TreePosition> firstLap = buildEndpointLap(branches, 0.0, dt);
-		List<TreePosition> lastLap = buildEndpointLap(branches, 1.0 - dt, 1.0);
-		lastLap = adjustLastLap(firstLap, lastLap, m, dt);
+		List<TreePosition> lastLap = adjustLastLap(firstLap, buildEndpointLap(branches, 1.0 - dt, 1.0), m, dt);
 
 		out.add(firstLap);
 
@@ -585,14 +564,9 @@ public class SpiralToolPath {
 					pm = pi;
 				}
 
-				double nu = (pi.height - pm.height) / remaining;
-				if (nu < 0) {
-					nu = 0;
-				}
-
+				double nu = Math.max(0, (pi.height - pm.height) / remaining);
 				TreePosition q = advanceAlongLongestBranch(pi, nu, branchByLeaf);
-				TreePosition next = pointOnBranchAtTime(pi.branch, q.time);
-				nextLap.add(next);
+				nextLap.add(pointOnBranchAtTime(pi.branch, q.time));
 			}
 
 			out.add(nextLap);
@@ -613,8 +587,7 @@ public class SpiralToolPath {
 
 		for (int j = 0; j < branches.size(); j++) {
 			if (j > 0 && openLen > EPS) {
-				double d = distance(wf.get(j - 1).point, wf.get(j).point);
-				tau += (d / openLen) * span;
+				tau += (distance(wf.get(j - 1).point, wf.get(j).point) / openLen) * span;
 			}
 			lap.add(pointOnBranchAtTime(branches.get(j), tau));
 		}
@@ -622,19 +595,13 @@ public class SpiralToolPath {
 	}
 
 	private List<TreePosition> adjustLastLap(List<TreePosition> firstLap, List<TreePosition> lastLap, int m, double dt) {
-
 		List<TreePosition> out = new ArrayList<>(lastLap.size());
 
 		for (int i = 0; i < lastLap.size(); i++) {
 			TreePosition p = firstLap.get(i);
 			TreePosition q = lastLap.get(i);
-
 			double maxTime = p.time + (m - 1) * dt;
-			if (q.time > maxTime + EPS) {
-				out.add(pointOnBranchAtTime(q.branch, maxTime));
-			} else {
-				out.add(q);
-			}
+			out.add(q.time > maxTime + EPS ? pointOnBranchAtTime(q.branch, maxTime) : q);
 		}
 
 		return out;
@@ -657,13 +624,7 @@ public class SpiralToolPath {
 	}
 
 	private Branch longestDescendantBranch(TreePosition p, Map<DiscreteNode, Branch> branchByLeaf) {
-		DiscreteNode bestLeaf = null;
-
-		if (p.node != null) {
-			bestLeaf = p.node.bestLeaf;
-		} else if (p.edge != null) {
-			bestLeaf = p.edge.child.bestLeaf;
-		}
+		DiscreteNode bestLeaf = (p.node != null) ? p.node.bestLeaf : (p.edge != null) ? p.edge.child.bestLeaf : null;
 
 		Branch b = bestLeaf != null ? branchByLeaf.get(bestLeaf) : null;
 		return b != null ? b : p.branch;
@@ -678,7 +639,6 @@ public class SpiralToolPath {
 			if (dist <= EPS) {
 				return positionAtNode(longest, start.node);
 			}
-
 			DiscreteNode current = start.node;
 			while (true) {
 				DiscreteEdge next = current.bestChild;
@@ -734,14 +694,8 @@ public class SpiralToolPath {
 				continue;
 			}
 
-			double offset;
-			if (Double.isInfinite(e.velocity)) {
-				offset = e.length;
-			} else {
-				offset = (time - e.parent.startTime) * e.velocity;
-			}
-			offset = clamp(offset, 0.0, e.length);
-			return positionOnEdge(branch, e, offset);
+			double offset = Double.isInfinite(e.velocity) ? e.length : (time - e.parent.startTime) * e.velocity;
+			return positionOnEdge(branch, e, clamp(offset, 0.0, e.length));
 		}
 
 		return positionAtNode(branch, branch.leaf);
@@ -751,8 +705,6 @@ public class SpiralToolPath {
 		TreePosition p = new TreePosition();
 		p.branch = branch;
 		p.node = node;
-		p.edge = null;
-		p.offset = 0.0;
 		p.point = node.point;
 		p.time = node.startTime;
 		p.height = node.height;
@@ -764,15 +716,10 @@ public class SpiralToolPath {
 
 		TreePosition p = new TreePosition();
 		p.branch = branch;
-		p.node = null;
 		p.edge = edge;
 		p.offset = offset;
 		p.point = interpolate(edge.parent.point, edge.child.point, edge.length <= EPS ? 0.0 : offset / edge.length);
-		if (Double.isInfinite(edge.velocity)) {
-			p.time = edge.child.startTime;
-		} else {
-			p.time = edge.parent.startTime + offset / edge.velocity;
-		}
+		p.time = Double.isInfinite(edge.velocity) ? edge.child.startTime : edge.parent.startTime + offset / edge.velocity;
 		p.height = edge.child.height + (edge.length - offset);
 		return p;
 	}
@@ -806,8 +753,7 @@ public class SpiralToolPath {
 				seen.add(e);
 				comp.add(e);
 
-				Vertex[] vv = new Vertex[] { e.source, e.target };
-				for (Vertex v : vv) {
+				for (Vertex v : new Vertex[] { e.source, e.target }) {
 					for (Edge oe : v.outEdges) {
 						Edge c = canonicalRepresentative(oe, canonicalSet);
 						if (c != null && !seen.contains(c)) {
@@ -887,11 +833,7 @@ public class SpiralToolPath {
 		if (p == null) {
 			return;
 		}
-		if (out.isEmpty()) {
-			out.add(p);
-			return;
-		}
-		if (distance(out.get(out.size() - 1), p) > EPS) {
+		if (out.isEmpty() || distance(out.get(out.size() - 1), p) > EPS) {
 			out.add(p);
 		}
 	}
@@ -904,45 +846,33 @@ public class SpiralToolPath {
 		if (pts == null) {
 			return;
 		}
-		for (Point p : pts) {
-			addUniquePoint(target, p);
-		}
-	}
-
-	private void addUniquePoint(List<Point> pts, Point p) {
-		if (p == null) {
-			return;
-		}
-		for (Point q : pts) {
-			if (distance(p, q) <= EPS) {
-				return;
+		outer: for (Point p : pts) {
+			if (p == null) {
+				continue;
 			}
+			for (Point q : target) {
+				if (distance(p, q) <= EPS) {
+					continue outer;
+				}
+			}
+			target.add(p);
 		}
-		pts.add(p);
 	}
 
 	private Vertex otherEndpoint(Edge e, Vertex v) {
-		if (e.source == v) {
+		if (e.source == v)
 			return e.target;
-		}
-		if (e.target == v) {
+		if (e.target == v)
 			return e.source;
-		}
 		return null;
 	}
 
 	private Edge orientFrom(Edge e, Vertex from) {
-		if (e.source == from) {
+		if (e.source == from)
 			return e;
-		}
-		if (e.target == from) {
+		if (e.target == from)
 			return e.twin;
-		}
 		return null;
-	}
-
-	private boolean isLinearVoronoiEdge(Edge e) {
-		return e.type == EdgeType.LINE;
 	}
 
 	private static double distance(Point a, Point b) {
@@ -958,25 +888,16 @@ public class SpiralToolPath {
 	}
 
 	private static double angleOf(Point from, Point to) {
-		double dx = to.x - from.x;
-		double dy = to.y - from.y;
-		return Math.atan2(dy, dx);
+		return Math.atan2(to.y - from.y, to.x - from.x);
 	}
 
 	private static double ccwDelta(double base, double angle) {
-		double d = angle - base;
-		double twoPi = 2.0 * Math.PI;
-		while (d < 0) {
-			d += twoPi;
-		}
-		while (d >= twoPi) {
-			d -= twoPi;
-		}
-		return d;
+		double d = (angle - base) % (2 * Math.PI);
+		return d < 0 ? d + 2 * Math.PI : d;
 	}
 
 	private static <T> Set<T> identitySet() {
-		return Collections.newSetFromMap(new IdentityHashMap<T, Boolean>());
+		return Collections.newSetFromMap(new IdentityHashMap<>());
 	}
 
 	// -------------------------------------------------------------------------
@@ -986,14 +907,13 @@ public class SpiralToolPath {
 	private static class OriginalNode {
 		Vertex vertex;
 		OriginalNode parent;
-		Edge parentHalfEdge; // oriented parent -> this
+		Edge parentHalfEdge;
 		final List<OriginalNode> children = new ArrayList<>();
 	}
 
 	private static class DiscreteTree {
 		int nextId = 0;
 		DiscreteNode root;
-		final List<DiscreteNode> nodes = new ArrayList<>();
 		final List<DiscreteNode> maNodes = new ArrayList<>();
 		final List<DiscreteEdge> edges = new ArrayList<>();
 	}
