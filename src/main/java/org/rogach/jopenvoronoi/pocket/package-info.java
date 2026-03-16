@@ -5,6 +5,5 @@
  *
  * @see org.rogach.jopenvoronoi.pocket.MedialAxisPocket
  * @see org.rogach.jopenvoronoi.pocket.MIC
- * @see org.rogach.jopenvoronoi.pocket.PocketPath
  */
 package org.rogach.jopenvoronoi.pocket;
