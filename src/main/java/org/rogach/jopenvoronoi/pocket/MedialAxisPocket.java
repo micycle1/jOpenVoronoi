@@ -19,21 +19,72 @@ import org.rogach.jopenvoronoi.geometry.Point;
 import org.rogach.jopenvoronoi.vertex.Vertex;
 
 /**
- * Experimental medial-axis pocketing.
+ * Medial-axis pocketing: walks the medial axis of a Voronoi diagram and
+ * produces a sequence of {@link MIC Maximal Inscribed Circles} whose
+ * envelopes cover the pocket interior.
+ *
+ * <p><b>Algorithm overview</b></p>
+ * <ol>
+ *   <li>The input graph must be a Voronoi diagram filtered through
+ *       {@link org.rogach.jopenvoronoi.filter.PolygonInteriorFilter PolygonInteriorFilter}
+ *       and then {@link org.rogach.jopenvoronoi.filter.MedialAxisFilter MedialAxisFilter}
+ *       so that only interior medial-axis edges remain.</li>
+ *   <li>The algorithm begins at the vertex with the <em>largest</em>
+ *       clearance-disk radius (the deepest interior point) and walks outward
+ *       along medial-axis edges, emitting MICs at intervals governed by
+ *       {@link #setWidth(double) maxWidth}.</li>
+ *   <li>At medial-axis junctions the algorithm pushes un-visited branches
+ *       onto a stack and backtracks to them once the current branch ends.</li>
+ *   <li>Separate connected components of the medial axis are processed
+ *       independently.</li>
+ * </ol>
+ *
+ * <p><b>Cut width</b></p>
  * <p>
- * The input graph should be a Voronoi diagram that has already been passed
- * through a {@link org.rogach.jopenvoronoi.filter.MedialAxisFilter MedialAxisFilter}.
- * The algorithm walks the medial-axis edges, producing a sequence of
- * {@link MIC Maximal Inscribed Circles} that cover the interior of the pocket
- * with a controlled maximum cut width.
+ * The <em>cut width</em> (also called <em>step-over</em> in CNC terminology)
+ * is the maximum width of new material removed by a single MIC step. It is
+ * defined as:
+ * <pre>
+ *   w = |c₂ − c₁| + r₂ − r₁
+ * </pre>
+ * where (c₁, r₁) is the previously-cut circle and (c₂, r₂) is the new one.
  * <p>
- * Usage:
+ * A smaller cut width produces more, closely-spaced MICs (finer step-over,
+ * better surface finish, lower cutting forces). A larger cut width produces
+ * fewer MICs but may still generate small circles in convex corners where the
+ * medial axis tapers to a point — the algorithm simply reaches those corners
+ * in fewer steps.
+ *
+ * <p><b>Connected components</b></p>
+ * <p>
+ * {@link #getMicComponents()} returns one MIC list per connected component of
+ * the medial axis. A simple polygon (no holes) produces a single connected
+ * medial axis and therefore one component. When the pocket contains internal
+ * holes (islands), the medial axis splits into multiple disconnected
+ * components, each of which is processed independently and returned as a
+ * separate list.
+ *
+ * <p><b>Usage</b></p>
  * <pre>{@code
- * MedialAxisPocket pocket = new MedialAxisPocket(voronoi.getDiagram());
- * pocket.setWidth(0.05);
+ * VoronoiDiagram vd = new VoronoiDiagram();
+ * // ... insert point/line sites ...
+ * vd.filter(new PolygonInteriorFilter(true));
+ * vd.filter(new MedialAxisFilter());
+ *
+ * MedialAxisPocket pocket = new MedialAxisPocket(vd.getDiagram());
+ * pocket.setWidth(0.05);   // 0.05 units step-over
  * pocket.run();
  * List<List<MIC>> components = pocket.getMicComponents();
+ *
+ * // Convert to a continuous toolpath:
+ * for (List<MIC> comp : components) {
+ *     List<PocketPath.Segment> path = PocketPath.toPath(comp);
+ *     // feed path segments to a CNC controller ...
+ * }
  * }</pre>
+ *
+ * @see MIC
+ * @see PocketPath
  */
 public class MedialAxisPocket {
 
@@ -73,12 +124,31 @@ public class MedialAxisPocket {
 		maxWidth = 0.05;
 	}
 
-	/** Sets the maximum cut width. */
+	/**
+	 * Sets the maximum cut width (step-over).
+	 * <p>
+	 * In CNC milling this controls how much fresh material is engaged on each
+	 * step: a smaller value yields a finer finish but more MICs (and therefore
+	 * more tool moves), while a larger value is more aggressive but still
+	 * produces small MICs where the medial axis tapers into convex corners.
+	 *
+	 * @param w maximum cut width in diagram units (must be positive)
+	 */
 	public void setWidth(double w) {
 		maxWidth = w;
 	}
 
-	/** Returns the algorithm output: a list of MIC lists, one per connected component. */
+	/**
+	 * Returns the algorithm output: one MIC list per connected component of the
+	 * medial axis.
+	 * <p>
+	 * A simple polygon (no holes) has a single connected medial axis and will
+	 * produce exactly one component. Pockets with interior holes (islands) cause
+	 * the medial axis to split into multiple disconnected components, each
+	 * returned as a separate list.
+	 *
+	 * @return list of MIC lists, one per connected component
+	 */
 	public List<List<MIC>> getMicComponents() {
 		return maComponents;
 	}

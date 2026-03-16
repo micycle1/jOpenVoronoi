@@ -3,11 +3,21 @@ package org.rogach.jopenvoronoi.pocket;
 import org.rogach.jopenvoronoi.geometry.Point;
 
 /**
- * Maximal Inscribed Circle — a pair of clearance disks plus bi-tangent data.
+ * Maximal Inscribed Circle (MIC) — describes one machining step in
+ * medial-axis pocketing.
  * <p>
- * It is the responsibility of a downstream algorithm to lay down a toolpath
- * that machines the area between {@link #c2}/{@link #r2} (the new circle) and
- * {@link #c1}/{@link #r1} (the circle that is assumed already cut).
+ * Each MIC pairs a previously-cut circle ({@link #c1}/{@link #r1}) with a new
+ * circle to cut ({@link #c2}/{@link #r2}), together with four bi-tangent
+ * points ({@link #t1}–{@link #t4}) that define the material boundaries
+ * between the two circles. A downstream algorithm (see {@link PocketPath})
+ * converts the sequence of MICs into a continuous toolpath of line and arc
+ * segments.
+ * <p>
+ * When {@link #newBranch} is {@code true}, the tool must retract (or rapid)
+ * from the end of the previous branch to the branch origin stored in
+ * {@link #cPrev}/{@link #rPrev} before cutting this MIC. This occurs at
+ * junctions of the medial axis — for example, the center of a square pocket
+ * where the medial axis forks into four branches.
  */
 public class MIC {
 
