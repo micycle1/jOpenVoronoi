@@ -540,6 +540,10 @@ public class Edge {
 	/**
 	 * Returns {@code n} evenly-spaced sample points along this edge, including the
 	 * start ({@link #source}) and end ({@link #target}) positions.
+	 * <p>
+	 * Sampling is performed by interpolating the offset-distance parameter
+	 * {@code t} uniformly between {@code source.dist()} and {@code target.dist()},
+	 * then evaluating {@link #point(double)} at each step.
 	 *
 	 * @param n number of sample points; must be at least 2
 	 * @return list of {@code n} points sampled uniformly from source to target
@@ -549,29 +553,15 @@ public class Edge {
 		if (n < 2) {
 			throw new IllegalArgumentException("n must be at least 2, got " + n);
 		}
+		double srcT = source.dist();
+		double trgT = target.dist();
 		List<Point> points = new ArrayList<>(n);
 		for (int i = 0; i < n; i++) {
 			double u = (double) i / (n - 1);
-			points.add(interpolatedPoint(u));
+			double t = srcT + u * (trgT - srcT);
+			points.add(point(t));
 		}
 		return points;
-	}
-
-	/**
-	 * Returns the point on this edge at normalized parameter {@code u}, where
-	 * {@code 0.0} corresponds to {@link #source} and {@code 1.0} corresponds to
-	 * {@link #target}.
-	 */
-	private Point interpolatedPoint(double u) {
-		if (type == EdgeType.LINE || type == EdgeType.LINELINE || type == EdgeType.PARA_LINELINE
-				|| type == EdgeType.SEPARATOR) {
-			return source.position.add(target.position.sub(source.position).mult(u));
-		} else if (type == EdgeType.PARABOLA || type == EdgeType.HYPERBOLA) {
-			double uT = source.dist() + u * (target.dist() - source.dist());
-			return point(uT);
-		} else {
-			throw new RuntimeException("Unsupported edge type for samplePoints: " + type);
-		}
 	}
 
 	/** First site adjacent to this edge. */

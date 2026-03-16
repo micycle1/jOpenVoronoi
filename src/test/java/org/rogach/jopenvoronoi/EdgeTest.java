@@ -59,18 +59,24 @@ public class EdgeTest {
 
 	@Test
 	public void samplePointsLinearEdgeIncludesStartAndEnd() {
-		Edge edge = new Edge(new Vertex(new Point(0, 0), VertexStatus.UNDECIDED, VertexType.NORMAL, 0.0),
-				new Vertex(new Point(4, 0), VertexStatus.UNDECIDED, VertexType.NORMAL, 0.0));
-		edge.type = EdgeType.LINE;
+		// PP bisector of (0,0) and (2,0) is the vertical line x=1.
+		// point(t) for t >= 1 gives (1, sqrt(t^2-1)) [sign=true].
+		PointSite s1 = new PointSite(new Point(0, 0));
+		PointSite s2 = new PointSite(new Point(2, 0));
+		Edge edge = new Edge(new Vertex(), new Vertex());
+		edge.setParameters(s1, s2, true);
 
-		List<Point> pts = edge.samplePoints(5);
+		double startT = 1.0;              // apex
+		double endT = Math.sqrt(2.0);     // t giving (1, 1)
+		edge.source = new Vertex(edge.point(startT), VertexStatus.UNDECIDED, VertexType.NORMAL, startT);
+		edge.target = new Vertex(edge.point(endT), VertexStatus.UNDECIDED, VertexType.NORMAL, endT);
 
-		Assertions.assertEquals(5, pts.size());
-		assertPointEquals(new Point(0, 0), pts.get(0));
-		assertPointEquals(new Point(1, 0), pts.get(1));
-		assertPointEquals(new Point(2, 0), pts.get(2));
-		assertPointEquals(new Point(3, 0), pts.get(3));
-		assertPointEquals(new Point(4, 0), pts.get(4));
+		List<Point> pts = edge.samplePoints(3);
+
+		Assertions.assertEquals(3, pts.size());
+		assertPointEquals(edge.point(startT), pts.get(0));
+		assertPointEquals(edge.point((startT + endT) / 2), pts.get(1));
+		assertPointEquals(edge.point(endT), pts.get(2));
 	}
 
 	@Test
@@ -96,22 +102,31 @@ public class EdgeTest {
 
 	@Test
 	public void samplePointsReturnsExactlyTwoPointsWhenNIsTwo() {
-		Edge edge = new Edge(new Vertex(new Point(0, 0), VertexStatus.UNDECIDED, VertexType.NORMAL, 0.0),
-				new Vertex(new Point(6, 0), VertexStatus.UNDECIDED, VertexType.NORMAL, 0.0));
-		edge.type = EdgeType.LINE;
+		PointSite s1 = new PointSite(new Point(0, 0));
+		PointSite s2 = new PointSite(new Point(2, 0));
+		Edge edge = new Edge(new Vertex(), new Vertex());
+		edge.setParameters(s1, s2, true);
+
+		double startT = 1.0;
+		double endT = Math.sqrt(2.0);
+		edge.source = new Vertex(edge.point(startT), VertexStatus.UNDECIDED, VertexType.NORMAL, startT);
+		edge.target = new Vertex(edge.point(endT), VertexStatus.UNDECIDED, VertexType.NORMAL, endT);
 
 		List<Point> pts = edge.samplePoints(2);
 
 		Assertions.assertEquals(2, pts.size());
-		assertPointEquals(new Point(0, 0), pts.get(0));
-		assertPointEquals(new Point(6, 0), pts.get(1));
+		assertPointEquals(edge.point(startT), pts.get(0));
+		assertPointEquals(edge.point(endT), pts.get(1));
 	}
 
 	@Test
 	public void samplePointsThrowsForNLessThanTwo() {
-		Edge edge = new Edge(new Vertex(new Point(0, 0), VertexStatus.UNDECIDED, VertexType.NORMAL, 0.0),
-				new Vertex(new Point(1, 0), VertexStatus.UNDECIDED, VertexType.NORMAL, 0.0));
-		edge.type = EdgeType.LINE;
+		PointSite s1 = new PointSite(new Point(0, 0));
+		PointSite s2 = new PointSite(new Point(2, 0));
+		Edge edge = new Edge(new Vertex(), new Vertex());
+		edge.setParameters(s1, s2, true);
+		edge.source = new Vertex(edge.point(1.0), VertexStatus.UNDECIDED, VertexType.NORMAL, 1.0);
+		edge.target = new Vertex(edge.point(Math.sqrt(2.0)), VertexStatus.UNDECIDED, VertexType.NORMAL, Math.sqrt(2.0));
 
 		Assertions.assertThrows(IllegalArgumentException.class, () -> edge.samplePoints(1));
 		Assertions.assertThrows(IllegalArgumentException.class, () -> edge.samplePoints(0));
