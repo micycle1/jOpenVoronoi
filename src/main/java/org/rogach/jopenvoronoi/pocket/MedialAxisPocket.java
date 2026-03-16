@@ -65,7 +65,8 @@ import org.rogach.jopenvoronoi.vertex.Vertex;
  * separate list.
  *
  * <p><b>Usage</b></p>
- * <pre>{@code
+ * <pre>
+ * {@code
  * VoronoiDiagram vd = new VoronoiDiagram();
  * // ... insert point/line sites ...
  * vd.filter(new PolygonInteriorFilter(true));
@@ -75,6 +76,7 @@ import org.rogach.jopenvoronoi.vertex.Vertex;
  * pocket.setWidth(0.05);   // 0.05 units step-over
  * pocket.run();
  * List<List<MIC>> components = pocket.getMicComponents();
+ * }
  * </pre>
  *
  * @see MIC
