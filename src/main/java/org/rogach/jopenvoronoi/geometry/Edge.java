@@ -505,6 +505,51 @@ public class Edge {
 
 		return new SimpleEntry<>(p, r);
 	}
+	
+	/**
+	 * Returns the two boundary touchpoints of the MIC sampled at normalized
+	 * parameter {@code u} along this edge.
+	 * <p>
+	 * For a Voronoi / medial-axis edge, the sampled MIC center is equidistant
+	 * from the two generator sites adjacent to the edge. The MIC touchpoints are
+	 * the closest / support points on those two sites.
+	 *
+	 * @param u normalized edge parameter from {@code 0.0} at {@link #source} to
+	 *          {@code 1.0} at {@link #target}
+	 * @return array of length 2: {footA, footB}
+	 */
+	public Point[] micTouchPoints(double u) {
+		Entry<Point, Double> sample = micSample(u);
+		Point p = sample.getKey();
+
+		Site s1 = adjacentSiteA();
+		Site s2 = adjacentSiteB();
+
+		if (s1 == null || s2 == null) {
+			throw new RuntimeException("micFootPoints requires two adjacent sites on edge " + this);
+		}
+
+		Point f1 = s1.apexPoint(p);
+		Point f2 = s2.apexPoint(p);
+
+		return new Point[] { f1, f2 };
+	}
+
+	/** First site adjacent to this edge. */
+	private Site adjacentSiteA() {
+		return (face != null) ? face.getSite() : null;
+	}
+
+	/** Second site adjacent to this edge. */
+	private Site adjacentSiteB() {
+		if (twin != null && twin.face != null) {
+			return twin.face.getSite();
+		}
+		if (hasNullFace && nullFace != null) {
+			return nullFace.getSite();
+		}
+		return null;
+	}
 
 	@Override
 	public String toString() {

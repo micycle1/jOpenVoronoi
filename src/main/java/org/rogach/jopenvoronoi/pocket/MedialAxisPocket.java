@@ -226,6 +226,14 @@ public class MedialAxisPocket {
 		newBranch = false;
 		mic.newBranch = newBranch;
 		micList.add(mic);
+		
+		Point[] fp = edgeFootPoints(currentEdge, 0.0);
+		if (fp != null && fp.length == 2) {
+			mic.tp1a = fp[0];
+			mic.tp1b = fp[1];
+			mic.tp2a = fp[0];
+			mic.tp2b = fp[1];
+		}
 		return true;
 	}
 
@@ -443,6 +451,18 @@ public class MedialAxisPocket {
 		currentRadius = r2;
 		currentCenter = c2;
 		currentU = nextU;
+		
+		Point[] fp1 = edgeFootPoints(currentEdge, currentU);
+		if (fp1 != null && fp1.length == 2) {
+			mic.tp1a = fp1[0];
+			mic.tp1b = fp1[1];
+		}
+
+		Point[] fp2 = edgeFootPoints(currentEdge, nextU);
+		if (fp2 != null && fp2.length == 2) {
+			mic.tp2a = fp2[0];
+			mic.tp2b = fp2[1];
+		}
 	}
 
 	/**
@@ -514,8 +534,12 @@ public class MedialAxisPocket {
 	 * @param u normalized parameter from 0.0 (source) to 1.0 (target)
 	 * @return pair of (point, clearanceRadius)
 	 */
-	static Entry<Point, Double> edgePoint(Edge e, double u) {
+	private static Entry<Point, Double> edgePoint(Edge e, double u) {
 		return e.micSample(u);
+	}
+	
+	private Point[] edgeFootPoints(Edge e, double u) {
+		return e.micTouchPoints(u);
 	}
 
 	/**
