@@ -209,8 +209,7 @@ public class SpiralToolPath {
 			int m = Math.max(1, (int) Math.ceil(discreteTree.root.height / maxStepOver));
 			if (m > maxLaps) {
 				throw new IllegalArgumentException(
-						"Requested step-over creates too many laps: " + m + " (height=" + discreteTree.root.height
-								+ ", stepOver=" + maxStepOver + ")");
+						"Requested step-over creates too many laps: " + m + " (height=" + discreteTree.root.height + ", stepOver=" + maxStepOver + ")");
 			}
 			double dt = 1.0 / m;
 
@@ -318,8 +317,7 @@ public class SpiralToolPath {
 		return tree;
 	}
 
-	private void buildDiscreteChildren(OriginalNode originalParent, DiscreteNode discreteParent,
-			Set<Edge> componentCanonicalSet, DiscreteTree tree) {
+	private void buildDiscreteChildren(OriginalNode originalParent, DiscreteNode discreteParent, Set<Edge> componentCanonicalSet, DiscreteTree tree) {
 
 		for (OriginalNode originalChild : originalParent.children) {
 			Edge e = originalChild.parentHalfEdge;
@@ -531,15 +529,8 @@ public class SpiralToolPath {
 		return out;
 	}
 
-	private List<List<TreePosition>> buildLaps(List<Branch> branches, Map<DiscreteNode, Branch> branchByLeaf, int m,
-			double dt) {
-
+	private List<List<TreePosition>> buildLaps(List<Branch> branches, Map<DiscreteNode, Branch> branchByLeaf, int m, double dt) {
 		List<List<TreePosition>> out = new ArrayList<>();
-
-		if (m == 1) {
-			out.add(buildEndpointLap(branches, 0.0, 1.0));
-			return out;
-		}
 
 		List<TreePosition> firstLap = buildEndpointLap(branches, 0.0, dt);
 		List<TreePosition> lastLap = adjustLastLap(firstLap, buildEndpointLap(branches, 1.0 - dt, 1.0), m, dt);
@@ -597,8 +588,7 @@ public class SpiralToolPath {
 		return lap;
 	}
 
-	private List<TreePosition> adjustLastLap(List<TreePosition> firstLap, List<TreePosition> lastLap, int m,
-			double dt) {
+	private List<TreePosition> adjustLastLap(List<TreePosition> firstLap, List<TreePosition> lastLap, int m, double dt) {
 		List<TreePosition> out = new ArrayList<>(lastLap.size());
 
 		for (int i = 0; i < lastLap.size(); i++) {
@@ -624,6 +614,9 @@ public class SpiralToolPath {
 		for (int i = 1; i < polyline.size(); i++) {
 			len += distance(polyline.get(i - 1).point, polyline.get(i).point);
 		}
+		if (polyline.size() > 1) {
+			len += distance(polyline.get(polyline.size() - 1).point, polyline.get(0).point);
+		}
 		return len;
 	}
 
@@ -634,8 +627,7 @@ public class SpiralToolPath {
 		return b != null ? b : p.branch;
 	}
 
-	private TreePosition advanceAlongLongestBranch(TreePosition start, double dist,
-			Map<DiscreteNode, Branch> branchByLeaf) {
+	private TreePosition advanceAlongLongestBranch(TreePosition start, double dist, Map<DiscreteNode, Branch> branchByLeaf) {
 
 		dist = Math.max(0, dist);
 		Branch longest = longestDescendantBranch(start, branchByLeaf);
@@ -724,8 +716,7 @@ public class SpiralToolPath {
 		p.edge = edge;
 		p.offset = offset;
 		p.point = interpolate(edge.parent.point, edge.child.point, edge.length <= EPS ? 0.0 : offset / edge.length);
-		p.time = Double.isInfinite(edge.velocity) ? edge.child.startTime
-				: edge.parent.startTime + offset / edge.velocity;
+		p.time = Double.isInfinite(edge.velocity) ? edge.child.startTime : edge.parent.startTime + offset / edge.velocity;
 		p.height = edge.child.height + (edge.length - offset);
 		return p;
 	}
