@@ -564,6 +564,60 @@ public class Edge {
 		return points;
 	}
 
+	/**
+	 * Computes the arc length of this edge analytically where possible. 
+	 * Returns the exact length for line segments and parabolas, and falls back to 
+	 * numerical approximation for higher-order conics like ellipses or hyperbolas.
+	 * 
+	 * @return the total arc length from the source to the target vertex
+	 */
+	public double length() {
+		if (type == EdgeType.LINE || type == EdgeType.LINELINE || type == EdgeType.PARA_LINELINE || type == EdgeType.SEPARATOR || type == EdgeType.OUTEDGE
+				|| type == EdgeType.LINESITE) {
+			return source.position.distance(target.position);
+		} else if (type == EdgeType.NULLEDGE) {
+			return 0.0;
+		} else if (type == EdgeType.PARABOLA) {
+			// Extract focal length p algebraically using the stored 8-parameter edge parametrization
+			// $p$ natively equals $|x_4 x_5 - x_6 x_7| / 2$.
+			double p = Math.abs(x[4] * x[5] - x[6] * x[7]) / 2.0;
+			
+			if (p > 1e-9) {
+				// The parameter t is naturally the clearance radius (dist) at the vertex
+				double t1 = source.dist();
+				double t2 = target.dist();
+				
+				// Calculate the lateral offsets squared (X^2)
+				double discr1 = sq(x[4] + x[5] * t1) - sq(x[6] + x[7] * t1);
+				double discr2 = sq(x[4] + x[5] * t2) - sq(x[6] + x[7] * t2);
+				
+				// Use the lengths from the apex directly without branching
+				double X1 = Math.sqrt(Math.max(0.0, discr1));
+				double X2 = Math.sqrt(Math.max(0.0, discr2));
+				
+				return Math.abs(parabolaArcLength(X1, p) - parabolaArcLength(X2, p));
+			} else {
+				return source.position.distance(target.position);
+			}
+		}
+
+		// Fallback for HYPERBOLA, ELLIPSE, or unhandled cases: Discretize and sum
+		int numSamples = 32;
+		List<Point> pts = samplePoints(numSamples);
+		double len = 0;
+		for (int i = 0; i < numSamples - 1; i++) {
+			len += pts.get(i).distance(pts.get(i + 1));
+		}
+		return len;
+	}
+
+	private double parabolaArcLength(double X, double p) {
+		double u = X / (2 * p);
+		double hyp = Math.sqrt(1 + u * u);
+		double ln = (u >= 0) ? Math.log(u + hyp) : -Math.log(hyp - u);
+		return p * (u * hyp + ln);
+	}
+
 	/** First site adjacent to this edge. */
 	private Site adjacentSiteA() {
 		return (face != null) ? face.getSite() : null;
