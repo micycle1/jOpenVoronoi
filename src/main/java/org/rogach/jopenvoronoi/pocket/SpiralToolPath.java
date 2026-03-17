@@ -127,7 +127,7 @@ public class SpiralToolPath {
 	 * construction. The returned nesting is:
 	 * 
 	 * <pre>
-	 * component -> lap -> polyline points
+	 * component -&gt; lap -&gt; polyline points
 	 * </pre>
 	 * 
 	 * Lap {@code 0} is the innermost lap and the last lap lies nearest the pocket
@@ -152,7 +152,7 @@ public class SpiralToolPath {
 	 * impulse-propagation model at a specific time value. The returned nesting is:
 	 * 
 	 * <pre>
-	 * component -> wavefront -> polyline points
+	 * component -&gt; wavefront -&gt; polyline points
 	 * </pre>
 	 * 
 	 * Wavefronts are ordered by increasing time, from the initial wavefront near
@@ -209,7 +209,8 @@ public class SpiralToolPath {
 			int m = Math.max(1, (int) Math.ceil(discreteTree.root.height / maxStepOver));
 			if (m > maxLaps) {
 				throw new IllegalArgumentException(
-						"Requested step-over creates too many laps: " + m + " (height=" + discreteTree.root.height + ", stepOver=" + maxStepOver + ")");
+						"Requested step-over creates too many laps: " + m + " (height=" + discreteTree.root.height
+								+ ", stepOver=" + maxStepOver + ")");
 			}
 			double dt = 1.0 / m;
 
@@ -317,7 +318,8 @@ public class SpiralToolPath {
 		return tree;
 	}
 
-	private void buildDiscreteChildren(OriginalNode originalParent, DiscreteNode discreteParent, Set<Edge> componentCanonicalSet, DiscreteTree tree) {
+	private void buildDiscreteChildren(OriginalNode originalParent, DiscreteNode discreteParent,
+			Set<Edge> componentCanonicalSet, DiscreteTree tree) {
 
 		for (OriginalNode originalChild : originalParent.children) {
 			Edge e = originalChild.parentHalfEdge;
@@ -529,7 +531,8 @@ public class SpiralToolPath {
 		return out;
 	}
 
-	private List<List<TreePosition>> buildLaps(List<Branch> branches, Map<DiscreteNode, Branch> branchByLeaf, int m, double dt) {
+	private List<List<TreePosition>> buildLaps(List<Branch> branches, Map<DiscreteNode, Branch> branchByLeaf, int m,
+			double dt) {
 
 		List<List<TreePosition>> out = new ArrayList<>();
 
@@ -594,7 +597,8 @@ public class SpiralToolPath {
 		return lap;
 	}
 
-	private List<TreePosition> adjustLastLap(List<TreePosition> firstLap, List<TreePosition> lastLap, int m, double dt) {
+	private List<TreePosition> adjustLastLap(List<TreePosition> firstLap, List<TreePosition> lastLap, int m,
+			double dt) {
 		List<TreePosition> out = new ArrayList<>(lastLap.size());
 
 		for (int i = 0; i < lastLap.size(); i++) {
@@ -630,7 +634,8 @@ public class SpiralToolPath {
 		return b != null ? b : p.branch;
 	}
 
-	private TreePosition advanceAlongLongestBranch(TreePosition start, double dist, Map<DiscreteNode, Branch> branchByLeaf) {
+	private TreePosition advanceAlongLongestBranch(TreePosition start, double dist,
+			Map<DiscreteNode, Branch> branchByLeaf) {
 
 		dist = Math.max(0, dist);
 		Branch longest = longestDescendantBranch(start, branchByLeaf);
@@ -719,7 +724,8 @@ public class SpiralToolPath {
 		p.edge = edge;
 		p.offset = offset;
 		p.point = interpolate(edge.parent.point, edge.child.point, edge.length <= EPS ? 0.0 : offset / edge.length);
-		p.time = Double.isInfinite(edge.velocity) ? edge.child.startTime : edge.parent.startTime + offset / edge.velocity;
+		p.time = Double.isInfinite(edge.velocity) ? edge.child.startTime
+				: edge.parent.startTime + offset / edge.velocity;
 		p.height = edge.child.height + (edge.length - offset);
 		return p;
 	}
