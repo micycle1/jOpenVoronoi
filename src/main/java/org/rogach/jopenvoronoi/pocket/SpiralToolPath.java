@@ -5,10 +5,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -183,19 +181,16 @@ public class SpiralToolPath {
 			Set<Edge> componentCanonicalSet = identitySet();
 			componentCanonicalSet.addAll(component);
 
-			OriginalNode originalRoot = buildRootedOriginalTree(component, componentCanonicalSet);
-			if (originalRoot == null) {
+			DiscreteTree discreteTree = buildDiscreteTree(component, componentCanonicalSet);
+			if (discreteTree == null || discreteTree.root == null) {
 				continue;
 			}
-
-			DiscreteTree discreteTree = buildDiscreteTree(originalRoot, componentCanonicalSet);
 			if (discreteTree == null || discreteTree.root == null) {
 				continue;
 			}
 
 			sortChildrenByEmbedding(discreteTree.root);
-			computeHeights(discreteTree.root);
-			computeStartTimes(discreteTree.root);
+			computeHeightsAndStartTimes(discreteTree.root);
 
 			List<DiscreteNode> leafOrder = new ArrayList<>();
 			collectLeaves(discreteTree.root, leafOrder);
@@ -203,8 +198,7 @@ public class SpiralToolPath {
 				continue;
 			}
 
-			Map<DiscreteNode, Branch> branchByLeaf = new HashMap<>();
-			List<Branch> branches = buildBranches(leafOrder, branchByLeaf);
+			List<Branch> branches = buildBranches(leafOrder);
 
 			int m = Math.max(1, (int) Math.ceil(discreteTree.root.height / maxStepOver));
 			if (m > maxLaps) {
@@ -221,7 +215,7 @@ public class SpiralToolPath {
 				wavefrontComponents.add(toPointChains(wavefronts));
 			}
 
-			List<List<TreePosition>> laps = buildLaps(branches, branchByLeaf, m, dt);
+			List<List<TreePosition>> laps = buildLaps(branches, m, dt);
 
 			if (storeLaps) {
 				lapComponents.add(toPointChains(laps));
@@ -234,54 +228,6 @@ public class SpiralToolPath {
 	// -------------------------------------------------------------------------
 	// Build rooted original MA tree
 	// -------------------------------------------------------------------------
-
-	private OriginalNode buildRootedOriginalTree(List<Edge> component, Set<Edge> componentCanonicalSet) {
-		Vertex rootVertex = selectRootVertex(component);
-		if (rootVertex == null) {
-			return null;
-		}
-
-		OriginalNode root = new OriginalNode();
-		root.vertex = rootVertex;
-
-		Set<Vertex> visited = identitySet();
-		visited.add(rootVertex);
-
-		Deque<OriginalNode> stack = new ArrayDeque<>();
-		stack.push(root);
-
-		while (!stack.isEmpty()) {
-			OriginalNode current = stack.pop();
-
-			for (Edge oe : current.vertex.outEdges) {
-				Edge canonical = canonicalRepresentative(oe, componentCanonicalSet);
-				if (canonical == null) {
-					continue;
-				}
-
-				Vertex neighbor = otherEndpoint(canonical, current.vertex);
-				if (neighbor == null || visited.contains(neighbor)) {
-					continue;
-				}
-
-				Edge oriented = orientFrom(canonical, current.vertex);
-				if (oriented == null) {
-					continue;
-				}
-
-				OriginalNode child = new OriginalNode();
-				child.vertex = neighbor;
-				child.parent = current;
-				child.parentHalfEdge = oriented;
-				current.children.add(child);
-
-				visited.add(neighbor);
-				stack.push(child);
-			}
-		}
-
-		return root;
-	}
 
 	private Vertex selectRootVertex(List<Edge> component) {
 		Vertex best = null;
@@ -305,39 +251,74 @@ public class SpiralToolPath {
 	// Build discrete tree
 	// -------------------------------------------------------------------------
 
-	private DiscreteTree buildDiscreteTree(OriginalNode originalRoot, Set<Edge> componentCanonicalSet) {
+	private DiscreteTree buildDiscreteTree(List<Edge> component, Set<Edge> componentCanonicalSet) {
+		Vertex rootVertex = selectRootVertex(component);
+		if (rootVertex == null) {
+			return null;
+		}
+
 		DiscreteTree tree = new DiscreteTree();
+		tree.root = createVertexNode(rootVertex, componentCanonicalSet, tree);
 
-		DiscreteNode root = createVertexNode(originalRoot.vertex, componentCanonicalSet, tree);
-		tree.root = root;
+		Set<Vertex> visited = identitySet();
+		visited.add(rootVertex);
 
-		buildDiscreteChildren(originalRoot, root, componentCanonicalSet, tree);
+		Deque<VertexFrame> stack = new ArrayDeque<>();
+		stack.push(new VertexFrame(rootVertex, tree.root));
+
+		while (!stack.isEmpty()) {
+			VertexFrame frame = stack.pop();
+			Vertex v = frame.vertex;
+			DiscreteNode discreteParent = frame.node;
+
+			for (Edge oe : v.outEdges) {
+				Edge canonical = canonicalRepresentative(oe, componentCanonicalSet);
+				if (canonical == null) {
+					continue;
+				}
+
+				Vertex neighbor = otherEndpoint(canonical, v);
+				if (neighbor == null || visited.contains(neighbor)) {
+					continue;
+				}
+
+				Edge oriented = orientFrom(canonical, v);
+				if (oriented == null) {
+					continue;
+				}
+
+				DiscreteNode prev = discreteParent;
+				int segments = segmentCount(oriented);
+
+				for (int i = 1; i < segments; i++) {
+					double u = i / (double) segments;
+					DiscreteNode sampleNode = createSampleNode(oriented, u, tree);
+					prev = connectOrMerge(prev, sampleNode, tree);
+				}
+
+				DiscreteNode childVertexNode = createVertexNode(neighbor, componentCanonicalSet, tree);
+				prev = connectOrMerge(prev, childVertexNode, tree);
+
+				visited.add(neighbor);
+				stack.push(new VertexFrame(neighbor, childVertexNode));
+			}
+		}
+
 		attachClearanceLeaves(tree);
-
 		return tree;
 	}
 
-	private void buildDiscreteChildren(OriginalNode originalParent, DiscreteNode discreteParent, Set<Edge> componentCanonicalSet, DiscreteTree tree) {
+	private int segmentCount(Edge e) {
+		return (e.type == EdgeType.LINE) ? 1 : samplesPerCurveEdge;
+	}
 
-		for (OriginalNode originalChild : originalParent.children) {
-			Edge e = originalChild.parentHalfEdge;
-			if (e == null) {
-				continue;
-			}
+	private static final class VertexFrame {
+		final Vertex vertex;
+		final DiscreteNode node;
 
-			int segments = (e.type == EdgeType.LINE) ? 1 : samplesPerCurveEdge;
-			DiscreteNode prev = discreteParent;
-
-			for (int i = 1; i < segments; i++) {
-				double u = i / (double) segments;
-				DiscreteNode sampleNode = createSampleNode(e, u, tree);
-				prev = connectOrMerge(prev, sampleNode, tree);
-			}
-
-			DiscreteNode childVertexNode = createVertexNode(originalChild.vertex, componentCanonicalSet, tree);
-			prev = connectOrMerge(prev, childVertexNode, tree);
-
-			buildDiscreteChildren(originalChild, childVertexNode, componentCanonicalSet, tree);
+		VertexFrame(Vertex vertex, DiscreteNode node) {
+			this.vertex = vertex;
+			this.node = node;
 		}
 	}
 
@@ -438,50 +419,57 @@ public class SpiralToolPath {
 			sortChildrenByEmbedding(e.child);
 		}
 	}
+	
+	private void computeHeightsAndStartTimes(DiscreteNode root) {
+		List<DiscreteNode> order = new ArrayList<>();
+		Deque<DiscreteNode> stack = new ArrayDeque<>();
+		stack.push(root);
 
-	private double computeHeights(DiscreteNode node) {
-		if (node.children.isEmpty()) {
-			node.height = node.boundaryLeaf ? 0.0 : node.clearance;
-			node.bestLeaf = node;
-			node.bestChild = null;
-			return node.height;
-		}
-
-		double best = -Double.MAX_VALUE;
-		DiscreteEdge bestEdge = null;
-		DiscreteNode bestLeaf = null;
-
-		for (DiscreteEdge e : node.children) {
-			double h = e.length + computeHeights(e.child);
-			if (h > best) {
-				best = h;
-				bestEdge = e;
-				bestLeaf = e.child.bestLeaf;
+		while (!stack.isEmpty()) {
+			DiscreteNode n = stack.pop();
+			order.add(n);
+			for (DiscreteEdge e : n.children) {
+				stack.push(e.child);
 			}
 		}
 
-		node.height = best;
-		node.bestChild = bestEdge;
-		node.bestLeaf = bestLeaf;
-		return node.height;
-	}
+		// postorder: heights
+		for (int i = order.size() - 1; i >= 0; i--) {
+			DiscreteNode node = order.get(i);
 
-	private void computeStartTimes(DiscreteNode root) {
+			if (node.children.isEmpty()) {
+				node.height = node.boundaryLeaf ? 0.0 : node.clearance;
+				node.bestLeaf = node;
+				node.bestChild = null;
+				continue;
+			}
+
+			double best = -Double.MAX_VALUE;
+			DiscreteEdge bestEdge = null;
+			DiscreteNode bestLeaf = null;
+
+			for (DiscreteEdge e : node.children) {
+				double h = e.length + e.child.height;
+				if (h > best) {
+					best = h;
+					bestEdge = e;
+					bestLeaf = e.child.bestLeaf;
+				}
+			}
+
+			node.height = best;
+			node.bestChild = bestEdge;
+			node.bestLeaf = bestLeaf;
+		}
+
+		// preorder: start times
 		root.startTime = 0.0;
-		assignStartTimes(root);
-	}
-
-	private void assignStartTimes(DiscreteNode parent) {
-		for (DiscreteEdge e : parent.children) {
-			double denom = 1.0 - parent.startTime;
-			if (denom <= EPS) {
-				e.velocity = Double.POSITIVE_INFINITY;
-				e.child.startTime = 1.0;
-			} else {
-				e.velocity = (e.child.height + e.length) / denom;
-				e.child.startTime = parent.startTime + e.length / e.velocity;
+		for (DiscreteNode parent : order) {
+			for (DiscreteEdge e : parent.children) {
+				double L = e.length;
+				double hq = e.child.height;
+				e.child.startTime = (parent.startTime * hq + L) / (hq + L);
 			}
-			assignStartTimes(e.child);
 		}
 	}
 
@@ -499,67 +487,51 @@ public class SpiralToolPath {
 	// Branches / wavefronts / laps
 	// -------------------------------------------------------------------------
 
-	private List<Branch> buildBranches(List<DiscreteNode> leafOrder, Map<DiscreteNode, Branch> branchByLeaf) {
-		List<Branch> out = new ArrayList<>(leafOrder.size());
+	private List<List<TreePosition>> buildLaps(List<Branch> branches, int m, double dt) {
+		List<List<TreePosition>> out = new ArrayList<>(m + 1);
 
-		for (int i = 0; i < leafOrder.size(); i++) {
-			DiscreteNode leaf = leafOrder.get(i);
-
-			List<DiscreteNode> revNodes = new ArrayList<>();
-			DiscreteNode n = leaf;
-			while (n != null) {
-				revNodes.add(n);
-				n = n.parent;
-			}
-			Collections.reverse(revNodes);
-
-			Branch b = new Branch();
-			b.index = i;
-			b.leaf = leaf;
-			b.nodes.addAll(revNodes);
-
-			for (int k = 1; k < revNodes.size(); k++) {
-				b.edges.add(revNodes.get(k).parentEdge);
-			}
-
-			out.add(b);
-			branchByLeaf.put(leaf, b);
-		}
-
-		return out;
-	}
-
-	private List<List<TreePosition>> buildLaps(List<Branch> branches, Map<DiscreteNode, Branch> branchByLeaf, int m, double dt) {
-		List<List<TreePosition>> out = new ArrayList<>();
-
+		// First lap R0 from w(t0), w(t1)
 		List<TreePosition> firstLap = buildEndpointLap(branches, 0.0, dt);
-		List<TreePosition> lastLap = adjustLastLap(firstLap, buildEndpointLap(branches, 1.0 - dt, 1.0), m, dt);
+
+		// Last lap Rm from w(t_{m-1}), w(tm), then clipped as in section 3.11
+		List<TreePosition> rawLastLap = buildEndpointLap(branches, 1.0 - dt, 1.0);
+		List<TreePosition> lastLap = adjustLastLap(firstLap, rawLastLap, m, dt);
 
 		out.add(firstLap);
 
-		Map<Branch, TreePosition> lastByBranch = new HashMap<>();
+		// Direct branch-indexed lookup instead of HashMap<Branch, TreePosition>
+		TreePosition[] lastByBranch = new TreePosition[branches.size()];
 		for (TreePosition p : lastLap) {
-			lastByBranch.put(p.branch, p);
+			lastByBranch[p.branch.index] = p;
 		}
 
 		List<TreePosition> currentLap = firstLap;
 
+		// Build R1 ... R_{m-1}
 		for (int i = 0; i <= m - 2; i++) {
 			List<TreePosition> nextLap = new ArrayList<>(currentLap.size());
 			int remaining = m - i;
 
 			for (TreePosition pi : currentLap) {
-				Branch longest = longestDescendantBranch(pi, branchByLeaf);
-				TreePosition pm = lastByBranch.get(longest);
+				// Longest descendant branch starting at pi
+				Branch longest = longestDescendantBranch(pi);
+
+				// Corresponding point on the last lap
+				TreePosition pm = (longest != null) ? lastByBranch[longest.index] : null;
 				if (pm == null) {
-					pm = lastByBranch.get(pi.branch);
+					pm = lastByBranch[pi.branch.index];
 				}
 				if (pm == null) {
 					pm = pi;
 				}
 
-				double nu = Math.max(0, (pi.height - pm.height) / remaining);
-				TreePosition q = advanceAlongLongestBranch(pi, nu, branchByLeaf);
+				// ν_i(pi) = (h(pi) - h(pm)) / (m - i)
+				double nu = Math.max(0.0, (pi.height - pm.height) / remaining);
+
+				// Move outwards along the longest branch by ν_i(pi)
+				TreePosition q = advanceAlongLongestBranch(pi, nu);
+
+				// Then evaluate the same branch as pi at time t_q
 				nextLap.add(pointOnBranchAtTime(pi.branch, q.time));
 			}
 
@@ -571,19 +543,66 @@ public class SpiralToolPath {
 		return out;
 	}
 
+	private List<Branch> buildBranches(List<DiscreteNode> leafOrder) {
+		List<Branch> out = new ArrayList<>(leafOrder.size());
+
+		for (int i = 0; i < leafOrder.size(); i++) {
+			DiscreteNode leaf = leafOrder.get(i);
+
+			List<DiscreteEdge> revEdges = new ArrayList<>();
+			DiscreteNode root = leaf;
+
+			while (root.parent != null) {
+				revEdges.add(root.parentEdge);
+				root = root.parent;
+			}
+			Collections.reverse(revEdges);
+
+			Branch b = new Branch();
+			b.index = i;
+			b.root = root;
+			b.leaf = leaf;
+			b.edges = revEdges.toArray(new DiscreteEdge[0]);
+			b.childStartTimes = new double[b.edges.length];
+
+			for (int k = 0; k < b.edges.length; k++) {
+				b.childStartTimes[k] = b.edges[k].child.startTime;
+			}
+
+			leaf.branch = b;
+			out.add(b);
+		}
+
+		return out;
+	}
+
 	private List<TreePosition> buildEndpointLap(List<Branch> branches, double t0, double t1) {
 		List<TreePosition> wf = evaluateWavefront(branches, t1);
+		int n = wf.size();
+
+		double[] cum = new double[n];
+		for (int i = 1; i < n; i++) {
+			cum[i] = cum[i - 1] + distance(wf.get(i - 1).point, wf.get(i).point);
+		}
+
+		double perimeter = 0.0;
+		if (n > 1) {
+			perimeter = cum[n - 1] + distance(wf.get(n - 1).point, wf.get(0).point);
+		}
+
 		double span = t1 - t0;
-		double openLen = openLength(wf);
+		List<TreePosition> lap = new ArrayList<>(n);
 
-		List<TreePosition> lap = new ArrayList<>(branches.size());
-		double tau = t0;
-
-		for (int j = 0; j < branches.size(); j++) {
-			if (j > 0 && openLen > EPS) {
-				tau += (distance(wf.get(j - 1).point, wf.get(j).point) / openLen) * span;
+		if (perimeter <= EPS) {
+			for (Branch branch : branches) {
+				lap.add(pointOnBranchAtTime(branch, t0));
 			}
-			lap.add(pointOnBranchAtTime(branches.get(j), tau));
+			return lap;
+		}
+
+		for (int i = 0; i < n; i++) {
+			double tau = t0 + span * (cum[i] / perimeter);
+			lap.add(pointOnBranchAtTime(branches.get(i), tau));
 		}
 		return lap;
 	}
@@ -609,33 +628,22 @@ public class SpiralToolPath {
 		return wf;
 	}
 
-	private double openLength(List<TreePosition> polyline) {
-		double len = 0;
-		for (int i = 1; i < polyline.size(); i++) {
-			len += distance(polyline.get(i - 1).point, polyline.get(i).point);
-		}
-		if (polyline.size() > 1) {
-			len += distance(polyline.get(polyline.size() - 1).point, polyline.get(0).point);
-		}
-		return len;
-	}
-
-	private Branch longestDescendantBranch(TreePosition p, Map<DiscreteNode, Branch> branchByLeaf) {
+	private Branch longestDescendantBranch(TreePosition p) {
 		DiscreteNode bestLeaf = (p.node != null) ? p.node.bestLeaf : (p.edge != null) ? p.edge.child.bestLeaf : null;
 
-		Branch b = bestLeaf != null ? branchByLeaf.get(bestLeaf) : null;
-		return b != null ? b : p.branch;
+		Branch b = (bestLeaf != null) ? bestLeaf.branch : null;
+		return (b != null) ? b : p.branch;
 	}
 
-	private TreePosition advanceAlongLongestBranch(TreePosition start, double dist, Map<DiscreteNode, Branch> branchByLeaf) {
-
-		dist = Math.max(0, dist);
-		Branch longest = longestDescendantBranch(start, branchByLeaf);
+	private TreePosition advanceAlongLongestBranch(TreePosition start, double dist) {
+		dist = Math.max(0.0, dist);
+		Branch longest = longestDescendantBranch(start);
 
 		if (start.node != null) {
 			if (dist <= EPS) {
 				return positionAtNode(longest, start.node);
 			}
+
 			DiscreteNode current = start.node;
 			while (true) {
 				DiscreteEdge next = current.bestChild;
@@ -643,59 +651,81 @@ public class SpiralToolPath {
 					return positionAtNode(longest, current);
 				}
 				if (dist <= next.length + EPS) {
-					return positionOnEdge(longest, next, Math.min(next.length, dist));
+					return positionOnEdge(longest, next, Math.min(next.length, dist),
+							current.startTime + (next.child.startTime - current.startTime) * (Math.min(next.length, dist) / next.length));
 				}
 				dist -= next.length;
 				current = next.child;
 			}
-		} else {
-			DiscreteEdge e = start.edge;
-			double remain = e.length - start.offset;
+		}
 
-			if (dist <= remain + EPS) {
-				return positionOnEdge(longest, e, Math.min(e.length, start.offset + dist));
-			}
+		DiscreteEdge e = start.edge;
+		double remain = e.length - start.offset;
 
-			dist -= remain;
-			DiscreteNode current = e.child;
-			while (true) {
-				DiscreteEdge next = current.bestChild;
-				if (next == null) {
-					return positionAtNode(longest, current);
-				}
-				if (dist <= next.length + EPS) {
-					return positionOnEdge(longest, next, Math.min(next.length, dist));
-				}
-				dist -= next.length;
-				current = next.child;
+		if (dist <= remain + EPS) {
+			double offset = Math.min(e.length, start.offset + dist);
+			double alpha = (e.length <= EPS) ? 1.0 : offset / e.length;
+			double time = e.parent.startTime + alpha * (e.child.startTime - e.parent.startTime);
+			return positionOnEdge(longest, e, offset, time);
+		}
+
+		dist -= remain;
+		DiscreteNode current = e.child;
+
+		while (true) {
+			DiscreteEdge next = current.bestChild;
+			if (next == null) {
+				return positionAtNode(longest, current);
 			}
+			if (dist <= next.length + EPS) {
+				double offset = Math.min(next.length, dist);
+				double alpha = (next.length <= EPS) ? 1.0 : offset / next.length;
+				double time = next.parent.startTime + alpha * (next.child.startTime - next.parent.startTime);
+				return positionOnEdge(longest, next, offset, time);
+			}
+			dist -= next.length;
+			current = next.child;
 		}
 	}
 
 	private TreePosition pointOnBranchAtTime(Branch branch, double time) {
 		time = clamp(time, 0.0, 1.0);
 
-		if (branch.edges.isEmpty()) {
+		if (branch.edges.length == 0) {
 			return positionAtNode(branch, branch.leaf);
 		}
 
-		DiscreteNode current = branch.nodes.get(0);
-		if (time <= current.startTime + EPS) {
-			return positionAtNode(branch, current);
+		if (time <= branch.root.startTime + EPS) {
+			return positionAtNode(branch, branch.root);
+		}
+		if (time >= branch.leaf.startTime - EPS) {
+			return positionAtNode(branch, branch.leaf);
 		}
 
-		for (DiscreteEdge e : branch.edges) {
-			DiscreteNode child = e.child;
-			if (time >= child.startTime - EPS) {
-				current = child;
-				continue;
+		int idx = firstEdgeEndingAfter(branch.childStartTimes, time);
+		if (idx >= branch.edges.length) {
+			return positionAtNode(branch, branch.leaf);
+		}
+
+		DiscreteEdge e = branch.edges[idx];
+		double t0 = e.parent.startTime;
+		double t1 = e.child.startTime;
+		double alpha = (t1 - t0 <= EPS) ? 1.0 : clamp((time - t0) / (t1 - t0), 0.0, 1.0);
+
+		return positionOnEdge(branch, e, alpha * e.length, time);
+	}
+
+	private int firstEdgeEndingAfter(double[] times, double time) {
+		int lo = 0, hi = times.length;
+		while (lo < hi) {
+			int mid = (lo + hi) >>> 1;
+			if (times[mid] <= time + EPS) {
+				lo = mid + 1;
+			} else {
+				hi = mid;
 			}
-
-			double offset = Double.isInfinite(e.velocity) ? e.length : (time - e.parent.startTime) * e.velocity;
-			return positionOnEdge(branch, e, clamp(offset, 0.0, e.length));
 		}
-
-		return positionAtNode(branch, branch.leaf);
+		return lo;
 	}
 
 	private TreePosition positionAtNode(Branch branch, DiscreteNode node) {
@@ -708,7 +738,7 @@ public class SpiralToolPath {
 		return p;
 	}
 
-	private TreePosition positionOnEdge(Branch branch, DiscreteEdge edge, double offset) {
+	private TreePosition positionOnEdge(Branch branch, DiscreteEdge edge, double offset, double time) {
 		offset = clamp(offset, 0.0, edge.length);
 
 		TreePosition p = new TreePosition();
@@ -716,7 +746,7 @@ public class SpiralToolPath {
 		p.edge = edge;
 		p.offset = offset;
 		p.point = interpolate(edge.parent.point, edge.child.point, edge.length <= EPS ? 0.0 : offset / edge.length);
-		p.time = Double.isInfinite(edge.velocity) ? edge.child.startTime : edge.parent.startTime + offset / edge.velocity;
+		p.time = time;
 		p.height = edge.child.height + (edge.length - offset);
 		return p;
 	}
@@ -901,13 +931,6 @@ public class SpiralToolPath {
 	// Internal data
 	// -------------------------------------------------------------------------
 
-	private static class OriginalNode {
-		Vertex vertex;
-		OriginalNode parent;
-		Edge parentHalfEdge;
-		final List<OriginalNode> children = new ArrayList<>();
-	}
-
 	private static class DiscreteTree {
 		int nextId = 0;
 		DiscreteNode root;
@@ -932,20 +955,22 @@ public class SpiralToolPath {
 
 		DiscreteEdge bestChild;
 		DiscreteNode bestLeaf;
+
+		Branch branch; // only used on leaves
 	}
 
 	private static class DiscreteEdge {
 		DiscreteNode parent;
 		DiscreteNode child;
 		double length;
-		double velocity;
 	}
 
 	private static class Branch {
 		int index;
+		DiscreteNode root;
 		DiscreteNode leaf;
-		final List<DiscreteNode> nodes = new ArrayList<>();
-		final List<DiscreteEdge> edges = new ArrayList<>();
+		DiscreteEdge[] edges;
+		double[] childStartTimes;
 	}
 
 	private static class TreePosition {
