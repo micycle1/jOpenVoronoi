@@ -1,9 +1,12 @@
 package org.rogach.jopenvoronoi;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.rogach.jopenvoronoi.geometry.Face;
 import org.rogach.jopenvoronoi.geometry.Point;
+import org.rogach.jopenvoronoi.util.Pair;
 import org.rogach.jopenvoronoi.vertex.Vertex;
 
 public class VoronoiDiagramApiTest {
@@ -40,6 +43,37 @@ public class VoronoiDiagramApiTest {
 				() -> diagram.insertPointSite(new Point(0.0, 0.3)));
 
 		Assertions.assertTrue(error.getMessage().contains("before inserting any line sites"));
+	}
+
+	@Test
+	public void insertPointSitesReturnsHandlesInIterationOrder() {
+		VoronoiDiagram diagram = new VoronoiDiagram();
+		List<Point> points = List.of(new Point(-0.4, -0.4), new Point(-0.4, 0.4), new Point(0.4, 0.4));
+
+		List<Vertex> handles = diagram.insertPointSites(points);
+
+		Assertions.assertEquals(points.size(), handles.size());
+		for (int i = 0; i < points.size(); i++) {
+			Assertions.assertEquals(points.get(i), handles.get(i).position);
+		}
+		Assertions.assertEquals(points.size(), diagram.numPointSites());
+	}
+
+	@Test
+	public void insertLineSegmentsReusesExistingAndSharedEndpoints() {
+		VoronoiDiagram diagram = new VoronoiDiagram();
+		Point first = new Point(-0.4, -0.4);
+		Point second = new Point(-0.4, 0.4);
+		Point third = new Point(0.4, 0.4);
+		Point fourth = new Point(0.4, -0.4);
+		diagram.insertPointSite(first);
+
+		diagram.insertLineSegments(List.of(new Pair<>(first, second), new Pair<>(second, third), new Pair<>(third, fourth),
+				new Pair<>(fourth, first)));
+
+		Assertions.assertEquals(4, diagram.numPointSites());
+		Assertions.assertEquals(4, diagram.numLineSites());
+		Assertions.assertTrue(diagram.check(), "VoronoiDiagram.check() should return true after bulk segment insertion");
 	}
 
 	@Test
