@@ -52,6 +52,8 @@ public class Edge {
 	/** true if ::LINESITE-edge inserted in this direction */
 	public boolean insertedDirection;
 	public int diagramIndex = -1;
+	public int sourceOutIndex = -1;
+	public int targetInIndex = -1;
 
 	public Edge(Vertex source, Vertex target) {
 		hasNullFace = false;

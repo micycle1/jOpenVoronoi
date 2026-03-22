@@ -84,8 +84,8 @@ public class HalfEdgeDiagram {
 	// add an edge between vertices v1-v2
 	Edge add_edge(Vertex v1, Vertex v2) {
 	    var e = new Edge(v1, v2);
-	    v1.outEdges.add(e);
-	    v2.inEdges.add(e);
+	    addOutEdge(v1, e);
+	    addInEdge(v2, e);
 	    registerEdge(e);
 	    return e;
 	}
@@ -130,8 +130,8 @@ public class HalfEdgeDiagram {
 	    if (e.diagramIndex < 0) {
 	        throw new IllegalStateException("removeEdge on unregistered edge: " + e);
 	    }
-	    e.source.outEdges.remove(e);
-	    e.target.inEdges.remove(e);
+	    removeOutEdge(e);
+	    removeInEdge(e);
 	    unregisterEdgeFromStore(e);
 	}
 
@@ -179,19 +179,19 @@ public class HalfEdgeDiagram {
 		registerEdge(e2);
 		registerEdge(te2);
 
-		v.outEdges.add(e2);
-		v.outEdges.add(te2);
+		addOutEdge(v, e2);
+		addOutEdge(v, te2);
 
-		etarget.inEdges.add(e2);
-		esource.inEdges.add(te2);
+		addInEdge(etarget, e2);
+		addInEdge(esource, te2);
 
-		etarget.inEdges.remove(e);
+		removeInEdge(e);
 		e.target = v;
-		v.inEdges.add(e);
+		addInEdge(v, e);
 
-		esource.inEdges.remove(eTwin);
+		removeInEdge(eTwin);
 		eTwin.target = v;
-		v.inEdges.add(eTwin);
+		addInEdge(v, eTwin);
 
 		setNext(e, e2);
 		setNext(e2, eNext);
@@ -395,13 +395,13 @@ public class HalfEdgeDiagram {
 		final Edge v1Prev = previousEdge(t0);
 		final Edge v2Prev = previousEdge(t1);
 
-		v.inEdges.remove(t0);
+		removeInEdge(t0);
 		t0.target = v2;
-		v2.inEdges.add(t0);
+		addInEdge(v2, t0);
 
-		v.inEdges.remove(t1);
+		removeInEdge(t1);
 		t1.target = v1;
-		v1.inEdges.add(t1);
+		addInEdge(v1, t1);
 
 		setNext(v1Prev, t0);
 		setNext(t0, v2Next);
@@ -421,13 +421,13 @@ public class HalfEdgeDiagram {
 		face1.setEdge(t0);
 		face2.setEdge(t1);
 
-		v.outEdges.remove(e0);
-		v.outEdges.remove(e1);
+		removeOutEdge(e0);
+		removeOutEdge(e1);
 
-		v1.inEdges.remove(e0);
+		removeInEdge(e0);
 		unregisterEdgeFromStore(e0);
 
-		v2.inEdges.remove(e1);
+		removeInEdge(e1);
 		unregisterEdgeFromStore(e1);
 
 		assert v.outEdges.isEmpty() : "v.outEdges empty";
@@ -510,6 +510,44 @@ public class HalfEdgeDiagram {
 	    assert e.diagramIndex == -1 : "edge already registered";
 	    e.diagramIndex = edges.size();
 	    edges.add(e);
+	}
+
+	private static void addOutEdge(Vertex v, Edge e) {
+		e.source = v;
+		e.sourceOutIndex = v.outEdges.size();
+		v.outEdges.add(e);
+	}
+
+	private static void addInEdge(Vertex v, Edge e) {
+		e.target = v;
+		e.targetInIndex = v.inEdges.size();
+		v.inEdges.add(e);
+	}
+
+	private static void removeOutEdge(Edge e) {
+		Vertex v = e.source;
+		int idx = e.sourceOutIndex;
+		int lastIdx = v.outEdges.size() - 1;
+		Edge last = v.outEdges.get(lastIdx);
+		if (idx != lastIdx) {
+			v.outEdges.set(idx, last);
+			last.sourceOutIndex = idx;
+		}
+		v.outEdges.remove(lastIdx);
+		e.sourceOutIndex = -1;
+	}
+
+	private static void removeInEdge(Edge e) {
+		Vertex v = e.target;
+		int idx = e.targetInIndex;
+		int lastIdx = v.inEdges.size() - 1;
+		Edge last = v.inEdges.get(lastIdx);
+		if (idx != lastIdx) {
+			v.inEdges.set(idx, last);
+			last.targetInIndex = idx;
+		}
+		v.inEdges.remove(lastIdx);
+		e.targetInIndex = -1;
 	}
 
 	private void unregisterEdgeFromStore(Edge e) {

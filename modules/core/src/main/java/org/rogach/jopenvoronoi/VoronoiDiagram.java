@@ -7,10 +7,8 @@ import static org.rogach.jopenvoronoi.util.VoronoiDiagramChecker.verticesAllIN;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.Set;
 
 import org.apache.commons.math3.analysis.solvers.AllowedSolution;
 import org.apache.commons.math3.analysis.solvers.BracketingNthOrderBrentSolver;
@@ -72,7 +70,7 @@ public class VoronoiDiagram {
 	 * in_circle-predicate, so that the vertices whose IN/OUT status we are 'most
 	 * certain' about are processed first queue of vertices to be processed
 	 */
-	protected PriorityQueue<Pair<Vertex, Double>> vertexQueue = new PriorityQueue<>(1, new AbsComparison());
+	protected PriorityQueue<Vertex> vertexQueue = new PriorityQueue<>(1, new AbsComparison());
 
 	/**
 	 * the half-edge diagram of the vd
@@ -103,12 +101,16 @@ public class VoronoiDiagram {
 	 * temporary variable for in-vertices, out-vertices that need to be reset after
 	 * a site has been inserted
 	 */
-	protected Set<Vertex> modifiedVertices = new HashSet<>();
+	protected List<Vertex> modifiedVertices = new ArrayList<>();
+	protected int currentEpoch = 0;
 	/**
 	 * IN-vertices of the delete-tree, i.e. vertices to be deleted during the
 	 * current incremental site insertion.
 	 */
 	protected List<Vertex> inVertices = new ArrayList<>();
+	protected List<EdgeData> edgeDataBuffer = new ArrayList<>();
+	protected List<Edge> inOutEdgeBuffer = new ArrayList<>();
+	protected List<Edge> splitEdgeBuffer = new ArrayList<>();
 
 	/**
 	 * Creates an empty Voronoi diagram with a default far radius of {@code 5000}.
@@ -174,6 +176,7 @@ public class VoronoiDiagram {
 	 *         lines/arcs with {@link #insertLineSite(Vertex, Vertex)}
 	 */
 	public Vertex insertPointSite(Point p) {
+		beginInsertion();
 		if (p == null) {
 			throw new IllegalArgumentException("Point site cannot be null.");
 		}
@@ -252,6 +255,7 @@ public class VoronoiDiagram {
 	 * @return {@code true} when the line site is inserted successfully
 	 */
 	public boolean insertLineSite(Vertex start, Vertex end) {
+		beginInsertion();
 		if (start.equals(end)) {
 			return false;
 		}
@@ -701,10 +705,10 @@ public class VoronoiDiagram {
 	 * {@code fabs(in_circle())} first, since we believe their predicate to be more
 	 * reliable.
 	 */
-	class AbsComparison implements Comparator<Pair<Vertex, Double>> {
+	class AbsComparison implements Comparator<Vertex> {
 		@Override
-		public int compare(Pair<Vertex, Double> lhs, Pair<Vertex, Double> rhs) {
-			return -Double.compare(Math.abs(lhs.getSecond()), Math.abs(rhs.getSecond()));
+		public int compare(Vertex lhs, Vertex rhs) {
+			return -Double.compare(Math.abs(lhs.queueScore), Math.abs(rhs.queueScore));
 		}
 	}
 
@@ -879,17 +883,17 @@ public class VoronoiDiagram {
 	 */
 	private List<Edge> findInOutEdges() {
 		assert (!inVertices.isEmpty()) : "inVertices must not be empty when searching for IN-OUT edges";
-		List<Edge> output = new ArrayList<>(); // new vertices generated on these edges
+		inOutEdgeBuffer.clear();
 		for (Vertex v : inVertices) {
 			assert (v.status == VertexStatus.IN) : "v.status == VertexStatus.IN";
 			for (Edge e : v.outEdges) {
 				if (e.target.status == VertexStatus.OUT) {
-					output.add(e); // this is an IN-OUT edge
+					inOutEdgeBuffer.add(e); // this is an IN-OUT edge
 				}
 			}
 		}
-		assert (!output.isEmpty()) : "no IN-OUT edges found despite non-empty inVertices";
-		return output;
+		assert (!inOutEdgeBuffer.isEmpty()) : "no IN-OUT edges found despite non-empty inVertices";
+		return inOutEdgeBuffer;
 	}
 
 	// find EdgeData for a new edge
@@ -974,7 +978,7 @@ public class VoronoiDiagram {
 	 */
 	private List<Edge> findSplitEdges(Face f, Point pt1, Point pt2) {
 		assert (checkFace(f)) : "face check failed";
-		List<Edge> out = new ArrayList<>();
+		splitEdgeBuffer.clear();
 		var current_edge = f.getEdge();
 		var start_edge = current_edge;
 		// int count=0;
@@ -988,24 +992,28 @@ public class VoronoiDiagram {
 																												// edge-type
 																												// instead?
 				if (src_is_right != trg_is_right) {
-					out.add(current_edge);
+					splitEdgeBuffer.add(current_edge);
 					assert (checkEdge(current_edge)) : "edge check failed during split-edge search";
 				}
 			}
 			current_edge = current_edge.next;
 		} while (!current_edge.equals(start_edge));
 
-		return out;
+		return splitEdgeBuffer;
 	}
 
 	// find a SPLIT vertex on the Face f
 	// return true, and set v, if found.
 	private Vertex findSplitVertex(Face f) {
-		for (Vertex q : g.faceVertices(f)) {
+		var current = f.getEdge();
+		var start = current;
+		do {
+			var q = current.target;
 			if (q.type == VertexType.SPLIT) {
 				return q;
 			}
-		}
+			current = current.next;
+		} while (current != start);
 		return null;
 	}
 
@@ -1042,10 +1050,9 @@ public class VoronoiDiagram {
 	 */
 	private void augmentVertexSet(Site site) {
 		while (!vertexQueue.isEmpty()) {
-			var nextVertexDet = vertexQueue.poll();
-			var v = nextVertexDet.getFirst();
-			double h = nextVertexDet.getSecond();
-		assert (v.status == VertexStatus.UNDECIDED) : "v.status == VertexStatus.UNDECIDED";
+			var v = vertexQueue.poll();
+			double h = v.queueScore;
+			assert (v.status == VertexStatus.UNDECIDED) : "v.status == VertexStatus.UNDECIDED";
 			if (h < 0.0) { // try to mark IN if h<0 and passes (C4) and (C5) tests and in_region().
 							// otherwise mark OUT
 				if (predicateC4(v) || !predicateC5(v) || !site.inRegion(v.position)) {
@@ -1056,7 +1063,7 @@ public class VoronoiDiagram {
 			} else {
 				v.status = VertexStatus.OUT; // detH was positive (or zero), so mark OUT
 			}
-			modifiedVertices.add(v);
+			markModified(v);
 		}
 
 		assert (vertexQueue.isEmpty()) : "vertex queue should be empty after augmentation";
@@ -1194,13 +1201,21 @@ public class VoronoiDiagram {
 	// so use the slower adjacent_faces() instead.
 	private void markAdjacentFaces(Vertex v, Site site) {
 		assert (v.status == VertexStatus.IN) : "vertex must have IN status";
-		var new_adjacent_faces = g.adjacentFaces(v);
-
-		assert ((v.type == VertexType.APEX && new_adjacent_faces.size() == 2)
-				|| (v.type == VertexType.SPLIT && new_adjacent_faces.size() == 2)
-				|| new_adjacent_faces.size() == 3) : "unexpected adjacent face count for vertex type";
-
-		for (Face adj_face : new_adjacent_faces) {
+		Face f0 = null, f1 = null, f2 = null;
+		int count = 0;
+		for (Edge e : v.outEdges) {
+			Face adj_face = e.face;
+			if (adj_face == f0 || adj_face == f1 || adj_face == f2) {
+				continue;
+			}
+			if (count == 0) {
+				f0 = adj_face;
+			} else if (count == 1) {
+				f1 = adj_face;
+			} else {
+				f2 = adj_face;
+			}
+			count++;
 			if (adj_face.getStatus() != FaceStatus.INCIDENT) {
 				if (site.isLine()) {
 					addSplitVertex(adj_face, site);
@@ -1210,6 +1225,10 @@ public class VoronoiDiagram {
 				incidentFaces.add(adj_face);
 			}
 		}
+
+		assert ((v.type == VertexType.APEX && count == 2)
+				|| (v.type == VertexType.SPLIT && count == 2)
+				|| count == 3) : "unexpected adjacent face count for vertex type";
 	}
 
 	// mark adjacent faces INCIDENT
@@ -1234,7 +1253,7 @@ public class VoronoiDiagram {
 	private void markVertex(Vertex v, Site site) {
 		v.status = VertexStatus.IN;
 		inVertices.add(v);
-		modifiedVertices.add(v);
+		markModified(v);
 
 		if (site.isPoint()) {
 			markAdjacentFacesP(v);
@@ -1245,11 +1264,12 @@ public class VoronoiDiagram {
 		// push the v-adjacent vertices onto the queue
 		for (Edge e : v.outEdges) {
 			var w = e.target;
-			if ((w.status == VertexStatus.UNDECIDED) && (!w.inQueue)) {
+			if ((w.status == VertexStatus.UNDECIDED) && (w.queueEpoch != currentEpoch)) {
 				// when pushing onto queue we also evaluate in_circle predicate so that we
 				// process vertices in the correct order
-				vertexQueue.add(new Pair<Vertex, Double>(w, w.inCircle(site.apexPoint(w.position))));
-				w.inQueue = true;
+				w.queueScore = w.inCircle(site.apexPoint(w.position));
+				w.queueEpoch = currentEpoch;
+				vertexQueue.add(w);
 			}
 		}
 	}
@@ -1268,7 +1288,7 @@ public class VoronoiDiagram {
 		for (Edge e : q_edges) {
 			var sl = vpos.position(e, new_site); // vertex_positioner.cpp
 			var q = g.addVertex(new Vertex(sl.p, VertexStatus.NEW, VertexType.NORMAL, new_site.apexPoint(sl.p), sl.k3));
-			modifiedVertices.add(q);
+			markModified(q);
 			g.addVertexInEdge(q, e);
 			q.maxError = vpos.distError(e, sl, new_site);
 		}
@@ -1306,8 +1326,8 @@ public class VoronoiDiagram {
 		var new_count = numNewVertices(f);
 		assert (new_count > 0) : "new_count > 0";
 		assert ((new_count % 2) == 0) : "(new_count % 2) == 0";
-		var new_pairs = new_count / 2; // we add one NEW-NEW edge for each pair found
-		List<Vertex> startverts = new ArrayList<>(); // this holds ed.v1 vertices for edges already added
+		var new_pairs = new_count / 2;
+		List<Vertex> startverts = new ArrayList<>();
 		for (var m = 0; m < new_pairs; m++) {
 			var ed = findEdgeData(f, startverts, segment);
 			addEdge(ed, newface, newface2);
@@ -1513,7 +1533,7 @@ public class VoronoiDiagram {
 		var min_t = e1.minimumT(f_site, new_site);
 		apex.position = e1.point(min_t);
 		apex.initDist(f_site.apexPoint(apex.position));
-		modifiedVertices.add(apex);
+		markModified(apex);
 	}
 
 	class SeparatorTarget {
@@ -1959,7 +1979,7 @@ public class VoronoiDiagram {
 			var new_v = g.addVertex(new Vertex(src.position, VertexStatus.NEW, VertexType.NORMAL, src.position));
 			var mid = Numeric.diangleMid(src.alfa, trg.alfa);
 			new_v.alfa = mid;
-			modifiedVertices.add(new_v);
+			markModified(new_v);
 			g.addVertexInEdge(new_v, next_edge);
 			new_v.k3 = new_k3;
 
@@ -2033,7 +2053,7 @@ public class VoronoiDiagram {
 				Vertex sep_target = sep_edge.target;
 				sep_target.status = VertexStatus.NEW;
 				sep_target.k3 = new_k3;
-				modifiedVertices.add(sep_target);
+				markModified(sep_target);
 
 				return new Pair<Vertex, Face>(null, pointsite_edge.face); // Returns the resolved face!
 			}
@@ -2061,7 +2081,7 @@ public class VoronoiDiagram {
 					adj.status = VertexStatus.NEW;
 				}
 				adj.k3 = new_k3;
-				modifiedVertices.add(adj);
+				markModified(adj);
 				return new Pair<Vertex, Face>(sep_point, null);
 			}
 		}
@@ -2077,7 +2097,7 @@ public class VoronoiDiagram {
 		var sep = g.addVertex(new Vertex(endp.position, VertexStatus.OUT, VertexType.SEPPOINT));
 		sep.setAlfa(sep_dir);
 		g.addVertexInEdge(sep, edge);
-		modifiedVertices.add(sep);
+		markModified(sep);
 		return sep;
 	}
 
@@ -2189,7 +2209,6 @@ public class VoronoiDiagram {
 			// it should now be safe to delete all IN vertices
 			assert (v.status == VertexStatus.IN) : "v.status == VertexStatus.IN";
 			g.deleteVertex(v); // this also removes edges connecting to v
-			modifiedVertices.remove(v);
 		}
 	}
 
@@ -2202,7 +2221,6 @@ public class VoronoiDiagram {
 			assert (v.type == VertexType.SPLIT) : "vertex must be SPLIT type for removal";
 
 			g.removeDeg2Vertex(v);
-			modifiedVertices.remove(v);
 
 			assert (checkFace(f)) : "face check failed";
 		}
@@ -2228,7 +2246,24 @@ public class VoronoiDiagram {
 		inVertices.clear();
 	}
 
-	// count number of NEW vertices on the given face \a f
+	private void beginInsertion() {
+		currentEpoch++;
+		vertexQueue.clear();
+		modifiedVertices.clear();
+		incidentFaces.clear();
+		inVertices.clear();
+		edgeDataBuffer.clear();
+		inOutEdgeBuffer.clear();
+		splitEdgeBuffer.clear();
+	}
+
+	private void markModified(Vertex v) {
+		if (v.modifiedEpoch != currentEpoch) {
+			v.modifiedEpoch = currentEpoch;
+			modifiedVertices.add(v);
+		}
+	}
+
 	private int numNewVertices(Face f) {
 		var current = f.getEdge();
 		var start = current;

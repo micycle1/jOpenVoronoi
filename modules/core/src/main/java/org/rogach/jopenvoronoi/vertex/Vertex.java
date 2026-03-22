@@ -47,8 +47,6 @@ public class Vertex {
 	public VertexType type;
 	/** TODO what is this? remove? */
 	public double maxError;
-	/** flag for indicating whether vertex is in the vertexQueue */
-	public boolean inQueue;
 	/** the position of the vertex. */
 	public Point position;
 	/** the offset-direction {-1,+1} of this vertex to the newly inserted site. */
@@ -62,6 +60,9 @@ public class Vertex {
 	/** clearance-disk radius, i.e. the closest Site is at this distance */
 	public double r;
 	public int diagramIndex = -1;
+	public int modifiedEpoch = -1;
+	public int queueEpoch = -1;
+	public double queueScore;
 
 	public Vertex() {
 	}
@@ -94,7 +95,6 @@ public class Vertex {
 	// set index, increase count, initialize in_queue to false.
 	private void init() {
 		count++;
-		inQueue = false;
 		alfa = -1; // invalid/non-initialized alfa value
 		nullFace = null;
 		type = VertexType.NORMAL;
@@ -129,7 +129,6 @@ public class Vertex {
 
 	// set in_queue false, and status to ::UNDECIDED
 	public void resetStatus() {
-		inQueue = false;
 		status = VertexStatus.UNDECIDED;
 	}
 
