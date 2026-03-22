@@ -25,8 +25,8 @@ import org.rogach.jopenvoronoi.vertex.Vertex;
  *
  * <p>
  * The same formula is used for the y-coordinate. Depending on the adjacent
- * sites, this parametrization describes linear bisectors (line/line),
- * parabolas (point/line), or conics such as hyperbolas/ellipses (point/arc).
+ * sites, this parametrization describes linear bisectors (line/line), parabolas
+ * (point/line), or conics such as hyperbolas/ellipses (point/arc).
  */
 public class Edge {
 
@@ -93,6 +93,7 @@ public class Edge {
 	 * Return the point on this edge at the given offset-distance {@code t}.
 	 * <p>
 	 * The eight-parameter formula for a point on the edge is:
+	 * 
 	 * <pre>{@code
 	 * x = x1 - x2 - x3*t +/- x4 * sqrt(square(x5+x6*t) - square(x7+x8*t))
 	 * }</pre>
@@ -468,7 +469,7 @@ public class Edge {
 		assert (p1p2 >= 0) : " p1p2 >=0 ";
 		return p1p2 / 2; // this splits point-point edges at APEX
 	}
-	
+
 	/**
 	 * Sample a MIC candidate point and its exact clearance radius at normalized
 	 * parameter {@code u} along this edge.
@@ -497,7 +498,7 @@ public class Edge {
 			double srcT = source.dist();
 			double trgT = target.dist();
 			double uT = srcT + u * (trgT - srcT);
-			
+
 			// Recover the position using the existing point(t) parametrization.
 			p = point(uT);
 			r = uT;
@@ -507,14 +508,14 @@ public class Edge {
 
 		return new SimpleEntry<>(p, r);
 	}
-	
+
 	/**
 	 * Returns the two boundary touchpoints of the MIC sampled at normalized
 	 * parameter {@code u} along this edge.
 	 * <p>
-	 * For a Voronoi / medial-axis edge, the sampled MIC center is equidistant
-	 * from the two generator sites adjacent to the edge. The MIC touchpoints are
-	 * the closest / support points on those two sites.
+	 * For a Voronoi / medial-axis edge, the sampled MIC center is equidistant from
+	 * the two generator sites adjacent to the edge. The MIC touchpoints are the
+	 * closest / support points on those two sites.
 	 *
 	 * @param u normalized edge parameter from {@code 0.0} at {@link #source} to
 	 *          {@code 1.0} at {@link #target}
@@ -565,9 +566,9 @@ public class Edge {
 	}
 
 	/**
-	 * Computes the arc length of this edge analytically where possible. 
-	 * Returns the exact length for line segments and parabolas, and falls back to 
-	 * numerical approximation for higher-order conics like ellipses or hyperbolas.
+	 * Computes the arc length of this edge analytically where possible. Returns the
+	 * exact length for line segments and parabolas, and falls back to numerical
+	 * approximation for higher-order conics like ellipses or hyperbolas.
 	 * 
 	 * @return the total arc length from the source to the target vertex
 	 */
@@ -578,36 +579,38 @@ public class Edge {
 		} else if (type == EdgeType.NULLEDGE) {
 			return 0.0;
 		} else if (type == EdgeType.PARABOLA) {
-			// Extract focal length p algebraically using the stored 8-parameter edge parametrization
+			// Extract focal length p algebraically using the stored 8-parameter edge
+			// parametrization
 			// $p$ natively equals $|x_4 x_5 - x_6 x_7| / 2$.
 			double p = Math.abs(x[4] * x[5] - x[6] * x[7]) / 2.0;
-			
+
 			if (p > 1e-9) {
 				// The parameter t is naturally the clearance radius (dist) at the vertex
 				double t1 = source.dist();
 				double t2 = target.dist();
-				
+
 				// Calculate the lateral offsets squared (X^2)
 				double discr1 = sq(x[4] + x[5] * t1) - sq(x[6] + x[7] * t1);
 				double discr2 = sq(x[4] + x[5] * t2) - sq(x[6] + x[7] * t2);
-				
+
 				// Use the lengths from the apex directly without branching
 				double X1 = Math.sqrt(Math.max(0.0, discr1));
 				double X2 = Math.sqrt(Math.max(0.0, discr2));
-				
+
 				return Math.abs(parabolaArcLength(X1, p) - parabolaArcLength(X2, p));
 			} else {
 				return source.position.distance(target.position);
 			}
 		}
 
-		// Fallback for HYPERBOLA, ELLIPSE, or unhandled cases: Evaluate length via adaptive recursive subdivision
+		// Fallback for HYPERBOLA, ELLIPSE, or unhandled cases: Evaluate length via
+		// adaptive recursive subdivision
 		return lengthAdaptive(1e-5);
 	}
 
-	/** 
+	/**
 	 * Fallback numerical arc length evaluating via adaptive recursive subdivision
-	 * bounded by a deviation error, providing exceptionally accurate length where 
+	 * bounded by a deviation error, providing exceptionally accurate length where
 	 * analytical forms are unavailable (like ellipses/hyperbolas).
 	 */
 	private double lengthAdaptive(double maxDev) {
@@ -646,19 +649,20 @@ public class Edge {
 	}
 
 	/**
-	 * Returns adaptively sampled points along this edge, guaranteed to not deviate 
+	 * Returns adaptively sampled points along this edge, guaranteed to not deviate
 	 * from the true piecewise curve by more than {@code maxDeviation}.
 	 * 
 	 * @param maxDeviation maximum allowed distance between the chord and true curve
-	 * @return list of adaptively sampled points dynamically concentrated in highly curved parts
+	 * @return list of adaptively sampled points dynamically concentrated in highly
+	 *         curved parts
 	 */
 	public List<Point> samplePoints(double maxDeviation) {
 		if (maxDeviation <= 0) {
 			throw new IllegalArgumentException("maxDeviation must be > 0");
 		}
-		
-		if (type == EdgeType.LINE || type == EdgeType.LINELINE || type == EdgeType.PARA_LINELINE 
-				|| type == EdgeType.SEPARATOR || type == EdgeType.OUTEDGE || type == EdgeType.LINESITE || type == EdgeType.NULLEDGE) {
+
+		if (type == EdgeType.LINE || type == EdgeType.LINELINE || type == EdgeType.PARA_LINELINE || type == EdgeType.SEPARATOR || type == EdgeType.OUTEDGE
+				|| type == EdgeType.LINESITE || type == EdgeType.NULLEDGE) {
 			List<Point> points = new ArrayList<>(2);
 			points.add(source.position);
 			if (type != EdgeType.NULLEDGE) {
@@ -677,11 +681,11 @@ public class Edge {
 	private void samplePointsRecursive(double t1, double t2, Point p1, Point p2, double maxDevSq, List<Point> points) {
 		double tMid = 0.5 * (t1 + t2);
 		Point pMid = point(tMid);
-		
+
 		double dx = p2.x - p1.x;
 		double dy = p2.y - p1.y;
 		double chordLenSq = dx * dx + dy * dy;
-		
+
 		double deviationSq;
 		if (chordLenSq < 1e-18) {
 			double d = pMid.distance(p1);
@@ -712,6 +716,41 @@ public class Edge {
 			return nullFace.getSite();
 		}
 		return null;
+	}
+
+	/**
+	 * Returns true for non-null, non-null-face faces that have an attached site.
+	 */
+	private boolean isUsableFace(Face f) {
+		return f != null && !f.isNullFace() && f.getSite() != null;
+	}
+
+	/** Returns true if the face is a usable point-site face. */
+	private boolean isVertexFace(Face f) {
+		return isUsableFace(f) && f.getSite().isPoint();
+	}
+
+	/** Returns true if the face is a usable line-segment-site face. */
+	private boolean isSegmentFace(Face f) {
+		return isUsableFace(f) && f.getSite().isLine();
+	}
+
+	/** Returns true if this edge separates two line-segment-site faces. */
+	public boolean isLineLineBisector() {
+		return twin != null && isSegmentFace(face) && isSegmentFace(twin.face);
+	}
+
+	/**
+	 * Returns true if this edge separates a line-segment-site face and a point-site
+	 * face.
+	 */
+	public boolean isLinePointBisector() {
+		return twin != null && ((isSegmentFace(face) && isVertexFace(twin.face)) || (isVertexFace(face) && isSegmentFace(twin.face)));
+	}
+
+	/** Returns true if this edge separates two point-site faces. */
+	public boolean isPointPointBisector() {
+		return twin != null && isVertexFace(face) && isVertexFace(twin.face);
 	}
 
 	@Override

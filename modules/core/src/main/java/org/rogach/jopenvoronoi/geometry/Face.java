@@ -1,6 +1,7 @@
 package org.rogach.jopenvoronoi.geometry;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -68,6 +69,37 @@ public class Face {
 			}
 		}
 		return new ArrayList<>(adjacentFaces);
+	}
+	
+	/**
+	 * Returns true if this face is a point-site cell that corresponds to a polygon
+	 * vertex, i.e. it is adjacent to at least two distinct line-site faces whose
+	 * segments share this point as an endpoint.
+	 */
+	public boolean isPolygonVertexCell() {
+		if (is_null_face || site == null || !site.isPoint())
+			return false;
+
+		Point v = site.position();
+		Set<Long> segments = new HashSet<>();
+
+		for (Face adj : getAdjacentFaces()) {
+			if (adj == null || adj.is_null_face || adj.site == null || !adj.site.isLine()) continue;
+
+			Point a = adj.site.start();
+			Point b = adj.site.end();
+
+			if (a == v || b == v) {
+				int ha = System.identityHashCode(a);
+				int hb = System.identityHashCode(b);
+				long key = (ha < hb)
+					? (((long) ha) << 32) ^ (hb & 0xffffffffL)
+					: (((long) hb) << 32) ^ (ha & 0xffffffffL);
+				segments.add(key);
+			}
+		}
+
+		return segments.size() >= 2;
 	}
 
 	/** Returns the site that generates this face, if any. */
