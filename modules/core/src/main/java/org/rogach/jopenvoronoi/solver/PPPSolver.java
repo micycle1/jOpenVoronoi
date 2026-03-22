@@ -20,12 +20,12 @@ public class PPPSolver extends Solver {
 		var pj = s2.position();
 		var pk = s3.position();
 
-		if (pi.is_right(pj, pk)) {
+		if (pi.isRight(pj, pk)) {
 			var tmp = pi;
 			pi = pj;
 			pj = tmp;
 		}
-		assert (!pi.is_right(pj, pk)) : " !pi.is_right(pj,pk) ";
+		assert (!pi.isRight(pj, pk)) : " !pi.is_right(pj,pk) ";
 		// 2) point pk should have the largest angle. largest angle is opposite longest
 		// side.
 		var longest_side = pi.sub(pj).norm();
@@ -37,7 +37,7 @@ public class PPPSolver extends Solver {
 			pi = tmp;
 			longest_side = pi.sub(pj).norm();
 		}
-		assert (!pi.is_right(pj, pk)) : " !pi.is_right(pj,pk) ";
+		assert (!pi.isRight(pj, pk)) : " !pi.is_right(pj,pk) ";
 		assert (pi.sub(pj).norm() >= pj.sub(pk).norm()) : " pi.sub(pj).norm() >=  pj.sub(pk).norm() ";
 		assert (pi.sub(pj).norm() >= pk.sub(pi).norm()) : " pi.sub(pj).norm() >=  pk.sub(pi).norm() ";
 

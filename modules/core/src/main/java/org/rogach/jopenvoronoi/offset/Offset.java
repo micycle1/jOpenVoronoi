@@ -128,7 +128,7 @@ public class Offset {
 
 	// figure out cw or ccw for an arc
 	private boolean findCw(Point start, Point center, Point end) {
-		return center.is_right(start, end); // NOTE: this only works for arcs smaller than a half-circle !
+		return center.isRight(start, end); // NOTE: this only works for arcs smaller than a half-circle !
 	}
 
 	/**

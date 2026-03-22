@@ -58,7 +58,7 @@ public class Point {
 	}
 
 	// is this Point right of line through points \a p1 and \a p2 ?
-	public boolean is_right(Point p1, Point p2) {
+	public boolean isRight(Point p1, Point p2) {
 		// this is an ugly way of doing a determinant
 		// should be prettyfied sometime...
 		// \todo FIXME: what if p1==p2 ? (in the XY plane)

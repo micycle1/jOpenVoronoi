@@ -125,7 +125,7 @@ public class VertexPositioner {
 				var src_se = s3.start();
 				var trg_se = s3.end();
 				double k;
-				if (edge.target.position.is_right(src_se, trg_se)) {
+				if (edge.target.position.isRight(src_se, trg_se)) {
 					k = (s3.k() == 1) ? -1 : 1;
 				} else {
 					k = (s3.k() == 1) ? 1 : -1;
@@ -142,7 +142,7 @@ public class VertexPositioner {
 				var src_se = s3.start();
 				var trg_se = s3.end();
 				double k;
-				if (edge.source.position.is_right(src_se, trg_se)) {
+				if (edge.source.position.isRight(src_se, trg_se)) {
 					k = (s3.k() == 1) ? -1 : 1;
 				} else {
 					k = (s3.k() == 1) ? 1 : -1;
@@ -252,7 +252,7 @@ public class VertexPositioner {
 			} else if (s3.isLine()) {
 				var src_se = s3.start();
 				var trg_se = s3.end();
-				if (p_sln.is_right(src_se, trg_se)) {
+				if (p_sln.isRight(src_se, trg_se)) {
 					desp_k3 = (s3.k() == 1) ? -1 : 1;
 				} else {
 					desp_k3 = (s3.k() == 1) ? 1 : -1;
@@ -287,7 +287,7 @@ public class VertexPositioner {
 			// find out on which side the desperate solution lies
 			var src_se = s3.start();
 			var trg_se = s3.end();
-			if (p_sln.is_right(src_se, trg_se)) {
+			if (p_sln.isRight(src_se, trg_se)) {
 				desp_k3 = (s3.k() == 1) ? -1 : 1;
 			} else {
 				desp_k3 = (s3.k() == 1) ? 1 : -1;

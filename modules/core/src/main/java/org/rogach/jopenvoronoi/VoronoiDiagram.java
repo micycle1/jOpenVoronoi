@@ -53,7 +53,7 @@ public class VoronoiDiagram {
 	/**
 	 * Helper class used for sanity-checking the diagram.
 	 */
-	protected VoronoiDiagramChecker vd_checker;
+	protected VoronoiDiagramChecker checker;
 	/**
 	 * kd-tree for nearest neighbour search during point Site insertion
 	 */
@@ -127,7 +127,7 @@ public class VoronoiDiagram {
 	 */
 	public VoronoiDiagram(double farRadius) {
 		kdTree = new KdTree<PointSite>(2);
-		vd_checker = new VoronoiDiagramChecker(g); // helper-class that checks topology/geometry
+		checker = new VoronoiDiagramChecker(g); // helper-class that checks topology/geometry
 		vpos = new VertexPositioner(g); // helper-class that positions vertices
 		this.farRadius = farRadius;
 		initialize();
@@ -217,7 +217,7 @@ public class VoronoiDiagram {
 		resetStatus(); // reset all vertices to UNDECIDED
 
 		assert (checkFace(newface)) : "face check failed for newly added face";
-		assert (vd_checker.isValid()) : "diagram validity check failed";
+		assert (checker.isValid()) : "diagram validity check failed";
 
 		return new_vert;
 	}
@@ -398,7 +398,7 @@ public class VoronoiDiagram {
 		assert (checkFace(end_null_face)) : "face check failed for end null-face";
 		assert (checkFace(pos_face)) : "face check failed for positive-side face";
 		assert (checkFace(neg_face)) : "face check failed for negative-side face";
-		assert (vd_checker.isValid()) : "diagram validity check failed";
+		assert (checker.isValid()) : "diagram validity check failed";
 
 		return true;
 	}
@@ -667,7 +667,7 @@ public class VoronoiDiagram {
 	 * @return {@code true} if the current diagram passes the checker
 	 */
 	public boolean check() {
-		return vd_checker.isValid();
+		return checker.isValid();
 	}
 
 	/**
@@ -844,7 +844,7 @@ public class VoronoiDiagram {
 		g.twinEdges(e6_1, e7_2);
 		g.twinEdges(e6_2, e7_1);
 
-		assert (vd_checker.isValid()) : "diagram validity check failed";
+		assert (checker.isValid()) : "diagram validity check failed";
 
 	}
 
@@ -985,8 +985,8 @@ public class VoronoiDiagram {
 		do { // FIND ALL! not just one.
 			var trg = current_edge.target;
 			var src = current_edge.source;
-			var src_is_right = src.position.is_right(pt1, pt2);
-			var trg_is_right = trg.position.is_right(pt1, pt2);
+			var src_is_right = src.position.isRight(pt1, pt2);
+			var trg_is_right = trg.position.isRight(pt1, pt2);
 			if (src.type == VertexType.NORMAL || src.type == VertexType.APEX || src.type == VertexType.SPLIT) { // ?
 																												// check
 																												// edge-type
@@ -1391,26 +1391,26 @@ public class VoronoiDiagram {
 		if (f_site.isPoint() && new_site.isLine()) { // PL
 			var pt2 = f_site.position();
 			var pt1 = new_site.apexPoint(pt2); // projection of pt2 onto LineSite
-			src_sign = new_source.position.is_right(pt1, pt2);
-			trg_sign = new_target.position.is_right(pt1, pt2);
+			src_sign = new_source.position.isRight(pt1, pt2);
+			trg_sign = new_target.position.isRight(pt1, pt2);
 		} else if (f_site.isPoint() && new_site.isArc()) { // PA
 			var pt2 = f_site.position();
 			var cen = new Point(new_site.x(), new_site.y());
 			var cen_pt2 = pt2.sub(cen);
 			var pt1 = cen.add(cen_pt2.mult(new_site.r() / cen_pt2.norm()));
-			src_sign = new_source.position.is_right(pt1, pt2);
-			trg_sign = new_target.position.is_right(pt1, pt2);
+			src_sign = new_source.position.isRight(pt1, pt2);
+			trg_sign = new_target.position.isRight(pt1, pt2);
 		} else if (f_site.isPoint() && new_site.isPoint()) { // PP
-			src_sign = new_source.position.is_right(f_site.position(), new_site.position());
-			trg_sign = new_target.position.is_right(f_site.position(), new_site.position());
+			src_sign = new_source.position.isRight(f_site.position(), new_site.position());
+			trg_sign = new_target.position.isRight(f_site.position(), new_site.position());
 		} else if (f_site.isLine() && new_site.isLine()) { // LL
 			// a line-line bisector, sign should not matter because there is no sqrt()
 			assertLineLineInRegion(new_source, new_target, f_site, new_site);
 		} else if (f_site.isLine() && new_site.isArc()) { // LA
 			var pt2 = new Point(new_site.x(), new_site.y());
 			var pt1 = f_site.apexPoint(pt2);
-			src_sign = new_source.position.is_right(pt1, pt2);
-			trg_sign = new_target.position.is_right(pt1, pt2);
+			src_sign = new_source.position.isRight(pt1, pt2);
+			trg_sign = new_target.position.isRight(pt1, pt2);
 			// if one vertex is on a null-face, we cannot trust the sign
 			if (new_source.dist() == 0 || new_target.dist() == 0) {
 				if (new_source.dist() > new_target.dist()) {
@@ -1439,10 +1439,10 @@ public class VoronoiDiagram {
 				&& (new_target.position != f_site.end())
 				&& (new_source.position.sub(f_site.apexPoint(new_source.position)).norm() > Numeric.DISTANCE_EPSILON)
 				&& (new_target.position.sub(f_site.apexPoint(new_target.position)).norm() > Numeric.DISTANCE_EPSILON)) {
-			assert (!new_source.position.is_right(f_site.start(), f_site.end())) : "!new_source.position.is_right(f_site)";
-			assert (!new_target.position.is_right(f_site.start(), f_site.end())) : "!new_target.position.is_right(f_site)";
-			assert (!new_source.position.is_right(new_site.start(), new_site.end())) : "!new_source.position.is_right(new_site)";
-			assert (!new_target.position.is_right(new_site.start(), new_site.end())) : "!new_target.position.is_right(new_site)";
+			assert (!new_source.position.isRight(f_site.start(), f_site.end())) : "!new_source.position.is_right(f_site)";
+			assert (!new_target.position.isRight(f_site.start(), f_site.end())) : "!new_target.position.is_right(f_site)";
+			assert (!new_source.position.isRight(new_site.start(), new_site.end())) : "!new_source.position.is_right(new_site)";
+			assert (!new_target.position.isRight(new_site.start(), new_site.end())) : "!new_target.position.is_right(new_site)";
 		}
 	}
 
@@ -1788,9 +1788,9 @@ public class VoronoiDiagram {
 		// this works for LineSite
 		var k3_sign = true;
 		if (new_site.isLine()) {
-			k3_sign = left.is_right(start.position, other.position);
+			k3_sign = left.isRight(start.position, other.position);
 		} else if (new_site.isArc()) {
-			k3_sign = new Point(new_site.x(), new_site.y()).is_right(start.position, other.position);
+			k3_sign = new Point(new_site.x(), new_site.y()).isRight(start.position, other.position);
 		} else {
 			throw new RuntimeException();
 		}

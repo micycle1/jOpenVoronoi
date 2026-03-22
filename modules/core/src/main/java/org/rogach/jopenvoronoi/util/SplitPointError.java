@@ -50,7 +50,7 @@ public class SplitPointError implements UnivariateFunction {
 		var proj = p1.add(p2.sub(p1).mult(u));
 		var dist = (proj.sub(p)).norm();
 		double sign;
-		if (p.is_right(p1, p2)) {
+		if (p.isRight(p1, p2)) {
 			sign = +1;
 		} else {
 			sign = -1;
