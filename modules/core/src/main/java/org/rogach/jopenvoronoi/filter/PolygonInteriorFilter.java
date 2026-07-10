@@ -50,8 +50,12 @@ public class PolygonInteriorFilter extends Filter {
 	/**
 	 * Returns whether the given face lies on the polygon-interior side under the
 	 * configured winding convention.
+	 * <p>
+	 * This classification is purely topological and does not require (or mutate)
+	 * any {@code valid} flags, so it can be used standalone to classify faces
+	 * without running a filtering pass.
 	 */
-	private boolean isInterior(Face f) {
+	public boolean isInterior(Face f) {
 		return cache.computeIfAbsent(f, this::computeInterior);
 	}
 

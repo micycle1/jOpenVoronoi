@@ -21,6 +21,10 @@ import org.rogach.jopenvoronoi.vertex.Vertex;
 
 /**
  * Bridges JTS geometries and jOpenVoronoi's native geometry types.
+ * <p>
+ * These are low-level conversion primitives. For the common derived products of
+ * a polygon's Voronoi diagram — cells, interior cells, the dissolved medial
+ * axis, and the medial-axis coverage — use {@link JtsVoronoi}.
  */
 public final class JtsGeometryIO {
 
