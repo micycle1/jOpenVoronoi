@@ -26,9 +26,9 @@ public class PlanarGraph {
 		public Point2D stt;
 		public Point2D end;
 
-		public Segment(Point2D end, Point2D stt) {
-			this.end = end;
+		public Segment(Point2D stt, Point2D end) {
 			this.stt = stt;
+			this.end = end;
 		}
 
 		@Override

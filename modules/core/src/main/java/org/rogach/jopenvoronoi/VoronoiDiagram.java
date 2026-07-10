@@ -6,6 +6,7 @@ import static org.rogach.jopenvoronoi.util.VoronoiDiagramChecker.verticesAllIN;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -256,6 +257,15 @@ public class VoronoiDiagram {
 	 */
 	public boolean insertLineSite(Vertex start, Vertex end) {
 		beginInsertion();
+		if (start == null || end == null) {
+			throw new IllegalArgumentException("start and end vertices must not be null");
+		}
+		if (start.type != VertexType.POINTSITE || start.face == null) {
+			throw new IllegalArgumentException("start is not a valid point-site vertex handle: " + start);
+		}
+		if (end.type != VertexType.POINTSITE || end.face == null) {
+			throw new IllegalArgumentException("end is not a valid point-site vertex handle: " + end);
+		}
 		if (start.equals(end)) {
 			return false;
 		}
@@ -554,13 +564,17 @@ public class VoronoiDiagram {
 	 * @return the nearest faces in ascending distance order
 	 */
 	public List<Face> nearestFaces(double x, double y, int n) {
+		if (n <= 0) {
+			throw new IllegalArgumentException("n must be positive, got " + n);
+		}
 		var heap = kdTree.findNearestNeighbors(new double[] { x, y }, n, DISTANCE_FUNCTION);
 		var faces = new ArrayList<Face>(heap.size());
 
 		while (heap.size() > 0) {
-			faces.add(heap.getMax().face);
+			faces.add(heap.getMax().face); // heap is drained farthest-first
 			heap.removeMax();
 		}
+		Collections.reverse(faces); // ...so reverse to get ascending distance order, as documented
 		return faces;
 	}
 
@@ -856,22 +870,27 @@ public class VoronoiDiagram {
 	private Vertex findSeedVertex(Face f, Site site) {
 		var minPred = 0.0;
 		Vertex minimalVertex = null;
-		var first = true;
 		var current = f.getEdge();
 		var start = current;
 		do {
 			var q = current.target;
 			if ((q.status != VertexStatus.OUT) && (q.type == VertexType.NORMAL)) {
 				var h = q.inCircle(site.apexPoint(q.position));
-				if (first || ((h < minPred) && (site.inRegion(q.position)))) {
+				// every candidate, including the first, must have a negative in-circle
+				// value and lie in the site's region; accepting an unconditional first
+				// candidate could otherwise return a geometrically invalid seed.
+				if ((h < 0.0) && (minimalVertex == null || h < minPred) && site.inRegion(q.position)) {
 					minPred = h;
 					minimalVertex = q;
-					first = false;
 				}
 			}
 			current = current.next;
 		} while (!current.equals(start));
-		assert (minPred < 0) : "minPred < 0";
+		if (minimalVertex == null) {
+			throw new IllegalStateException(
+					"No valid seed vertex found on face " + f + " for site " + site
+							+ "; the site may be invalid (e.g. an intersecting or duplicate line segment)");
+		}
 		return minimalVertex;
 	}
 
@@ -1159,23 +1178,7 @@ public class VoronoiDiagram {
 	    Vertex next = out.target;
 	    Vertex prev = out.prev.source;
 
-	    if (isAllowedC5Neighbor(prev, v) || isAllowedC5Neighbor(next, v)) {
-	        return true;
-	    }
-
-	    // Conservative fallback to preserve legacy behavior for special vertices
-	    Edge current = out.next;
-	    while (current != out) {
-	        Vertex w = current.target;
-	        if (w != v && (w.type == VertexType.ENDPOINT
-	                || w.type == VertexType.APEX
-	                || w.type == VertexType.SPLIT)) {
-	            return true;
-	        }
-	        current = current.next;
-	    }
-
-	    return false;
+	    return isAllowedC5Neighbor(prev, v) || isAllowedC5Neighbor(next, v);
 	}
 
 	private boolean isAllowedC5Neighbor(Vertex w, Vertex v) {
@@ -1829,7 +1832,13 @@ public class VoronoiDiagram {
 			face_to_null = neg_null_edge.getSecond();
 			var pos_null_edge = processNullEdge(dir, prev_edge, k3_sign, false);
 			pos_sep_start = pos_null_edge.getFirst();
-			face_to_null = pos_null_edge.getSecond();
+			// only the neg- or pos-side call (never both) should resolve a face
+			// collapsing to null; don't let a null result from one side erase a
+			// non-null result already found by the other side.
+			if (pos_null_edge.getSecond() != null) {
+				assert (face_to_null == null) : "at most one side should resolve a face to null";
+				face_to_null = pos_null_edge.getSecond();
+			}
 			return new NullFaceResult(seg_start, start_null_face, pos_sep_start, neg_sep_start, face_to_null);
 		} else { // no existing null-face
 			// create a new null face at start. the face has three vertices/edges:

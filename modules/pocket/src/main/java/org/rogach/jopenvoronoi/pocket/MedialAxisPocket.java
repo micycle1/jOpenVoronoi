@@ -128,8 +128,12 @@ public class MedialAxisPocket {
 	 * produces small MICs where the medial axis tapers into convex corners.
 	 *
 	 * @param w maximum cut width in diagram units (must be positive)
+	 * @throws IllegalArgumentException if {@code w} is not a positive, finite number
 	 */
 	public void setWidth(double w) {
+		if (!(w > 0) || Double.isInfinite(w)) {
+			throw new IllegalArgumentException("width must be positive and finite, got " + w);
+		}
 		maxWidth = w;
 	}
 
@@ -443,15 +447,18 @@ public class MedialAxisPocket {
 		mic.rPrev = previousBranchRadius;
 		micList.add(mic);
 
-		currentRadius = r2;
-		currentCenter = c2;
-		currentU = nextU;
-		
+		// touch points on the current (about to become previous) circle must be
+		// sampled at the pre-update u; sampling after advancing currentU would make
+		// tp1a/tp1b identical to tp2a/tp2b.
 		Point[] fp1 = edgeFootPoints(currentEdge, currentU);
 		if (fp1 != null && fp1.length == 2) {
 			mic.tp1a = fp1[0];
 			mic.tp1b = fp1[1];
 		}
+
+		currentRadius = r2;
+		currentCenter = c2;
+		currentU = nextU;
 
 		Point[] fp2 = edgeFootPoints(currentEdge, nextU);
 		if (fp2 != null && fp2.length == 2) {

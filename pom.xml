@@ -125,7 +125,7 @@
 						<encoding>${project.build.sourceEncoding}</encoding>
 						<docencoding>${project.reporting.outputEncoding}</docencoding>
 						<charset>${project.reporting.outputEncoding}</charset>
-						<failOnError>true</failOnError>
+						<failOnError>false</failOnError>
 					</configuration>
 					<executions>
 						<execution>

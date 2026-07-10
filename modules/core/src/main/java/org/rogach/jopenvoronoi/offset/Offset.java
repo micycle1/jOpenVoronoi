@@ -28,6 +28,8 @@ import org.rogach.jopenvoronoi.geometry.Point;
  * faces with one or more invalid edges.
  */
 public class Offset {
+	/** upper bound on steps within a single offset loop, to detect a walk that never closes */
+	private static final int MAX_LOOP_WALK_STEPS = 30000;
 	/** vd-graph */
 	HalfEdgeDiagram g;
 	Set<Face> remainingFaces = new HashSet<>();
@@ -49,8 +51,8 @@ public class Offset {
 		var c = 0;
 		while ((start = findStartFace()) != null) { // while there are faces that still require offsets
 			offsetLoopWalk(start, t); // start on the face, and do an offset loop
-			if (c > 30000) {
-				throw new AssertionError("c > 30000, hang in offset walk");
+			if (c > MAX_LOOP_WALK_STEPS) {
+				throw new IllegalStateException("Offset walk did not terminate after " + MAX_LOOP_WALK_STEPS + " loops for t=" + t);
 			}
 			c++;
 		}
@@ -79,6 +81,7 @@ public class Offset {
 		var loop = new OffsetLoop(); // store the output in this loop
 		loop.offsetDistance = t;
 		loop.add(new OffsetVertex(current_edge.point(t), current_edge));
+		var steps = 0;
 		do {
 			out_in_mode = edgeMode(current_edge, t);
 			// find the next edge
@@ -91,6 +94,11 @@ public class Offset {
 			remainingFaces.remove(current_face); // although we may revisit current_face (if it is non-convex), it
 													// seems safe to mark it "done" here.
 			current_edge = next_edge.twin;
+			if (++steps > MAX_LOOP_WALK_STEPS) {
+				throw new IllegalStateException(
+						"Offset loop walk did not close after " + MAX_LOOP_WALK_STEPS + " steps for t=" + t
+								+ "; the diagram or filter state is likely inconsistent");
+			}
 		} while (current_edge != start_edge);
 		offsetList.add(loop); // append the created loop to the output
 	}

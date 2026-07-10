@@ -35,9 +35,9 @@ public class MIC {
 	public Point t3;
 	/** fourth bi-tangent point */
 	public Point t4;
-	/** touch points 1 and 2 of the circle */
+	/** touch points 1 and 2 of the previously cut circle ({@link #c1}) */
 	public Point tp1a, tp1b;
-	/** touch points 1 and 2 of the previous circle */
+	/** touch points 1 and 2 of the new circle ({@link #c2}) */
 	public Point tp2a, tp2b;
 	/** is this a new branch? */
 	public boolean newBranch;

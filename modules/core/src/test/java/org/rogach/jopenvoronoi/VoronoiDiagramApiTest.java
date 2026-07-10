@@ -62,4 +62,41 @@ public class VoronoiDiagramApiTest {
 		Assertions.assertTrue(diagram.getAllFaces().stream().anyMatch(Face::isNullFace));
 		Assertions.assertTrue(diagram.check());
 	}
+
+	@Test
+	public void insertLineSiteRejectsNullVertices() {
+		VoronoiDiagram diagram = new VoronoiDiagram();
+		Vertex a = diagram.insertPointSite(new Point(-0.2, 0.0));
+
+		Assertions.assertThrows(IllegalArgumentException.class, () -> diagram.insertLineSite(null, a));
+		Assertions.assertThrows(IllegalArgumentException.class, () -> diagram.insertLineSite(a, null));
+	}
+
+	@Test
+	public void insertLineSiteRejectsNonPointSiteVertexHandle() {
+		VoronoiDiagram diagram = new VoronoiDiagram();
+		Vertex a = diagram.insertPointSite(new Point(-0.2, 0.0));
+		Vertex foreign = new Vertex();
+
+		IllegalArgumentException error = Assertions.assertThrows(IllegalArgumentException.class,
+				() -> diagram.insertLineSite(a, foreign));
+		Assertions.assertTrue(error.getMessage().contains("not a valid point-site vertex handle"));
+	}
+
+	@Test
+	public void insertLineSiteThrowsOnIntersectingSegment() {
+		VoronoiDiagram diagram = new VoronoiDiagram();
+		Vertex left = diagram.insertPointSite(new Point(-0.3, 0.0));
+		Vertex right = diagram.insertPointSite(new Point(0.3, 0.0));
+		Vertex bottom = diagram.insertPointSite(new Point(0.0, -0.3));
+		Vertex top = diagram.insertPointSite(new Point(0.0, 0.3));
+
+		Assertions.assertTrue(diagram.insertLineSite(left, right));
+
+		// this segment crosses the already-inserted left-right segment at the
+		// origin, which is documented as "an error"; findSeedVertex now throws a
+		// clear IllegalStateException instead of returning null (which previously
+		// caused a downstream NullPointerException).
+		Assertions.assertThrows(IllegalStateException.class, () -> diagram.insertLineSite(bottom, top));
+	}
 }
