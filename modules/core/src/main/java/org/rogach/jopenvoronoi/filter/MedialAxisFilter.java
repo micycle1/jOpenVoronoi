@@ -37,13 +37,13 @@ public class MedialAxisFilter extends Filter {
 	/**
 	 * Dot-product threshold in [0,1] for treating two line-site segments as nearly
 	 * parallel. Comparison uses abs(dot), so opposite directions still count as
-	 * parallel.
+	 * parallel. Derived from the aggressiveness knob.
 	 */
 	private final double dotProductThreshold;
 
 	/**
 	 * Fraction of branch edges that must look near-parallel before the branch is
-	 * considered "parallel-dominated".
+	 * considered "parallel-dominated". Derived from the aggressiveness knob.
 	 */
 	private final double parallelFractionThreshold;
 
@@ -51,6 +51,8 @@ public class MedialAxisFilter extends Filter {
 	 * A branch is considered length-salient if
 	 *
 	 * branchLength >= minLengthFactor * maxRadius
+	 *
+	 * Derived from the aggressiveness knob.
 	 */
 	private final double minLengthFactor;
 
@@ -59,7 +61,8 @@ public class MedialAxisFilter extends Filter {
 	 *
 	 * radiusGain >= minRadiusGainFactor * maxRadius
 	 *
-	 * where radiusGain = maxRadiusAlongBranch - attachmentRadius.
+	 * where radiusGain = maxRadiusAlongBranch - attachmentRadius. Derived from the
+	 * aggressiveness knob.
 	 */
 	private final double minRadiusGainFactor;
 
@@ -71,75 +74,42 @@ public class MedialAxisFilter extends Filter {
 	 */
 	private Map<Edge, Boolean> decisions = Collections.emptyMap();
 
+	/**
+	 * Creates a medial-axis filter with the default pruning aggressiveness of
+	 * {@code 0.5}.
+	 */
 	public MedialAxisFilter() {
-		this(0.8, 0.5, 2.0, 0.25);
+		this(0.5);
 	}
 
 	/**
-	 * Creates a medial-axis filter with a custom near-parallel threshold and
-	 * default branch-pruning parameters.
+	 * Creates a medial-axis filter with a single pruning-aggressiveness knob.
 	 * <p>
-	 * The threshold is applied to the absolute dot product of the two adjacent
-	 * line-site directions. Values closer to {@code 1} treat only more strongly
-	 * aligned segments as parallel, while lower values classify a wider range of
-	 * segment pairs as parallel.
-	 * <p>
-	 * This constructor uses the following defaults:
+	 * A medial branch is pruned only when it is both dominated by near-parallel
+	 * generating segments and insignificant according to branch salience tests.
+	 * The aggressiveness value linearly interpolates all internal thresholds
+	 * between the two extremes:
 	 * <ul>
-	 * <li>{@code parallelFractionThreshold = 0.5}</li>
-	 * <li>{@code minLengthFactor = 2.0}</li>
-	 * <li>{@code minRadiusGainFactor = 0.25}</li>
+	 * <li>{@code 0.0} — prune nothing; the full medial axis is kept</li>
+	 * <li>{@code 0.5} — balanced default; prunes the spurious spikes that grow
+	 * opposite sharp reflex corners while keeping genuine features</li>
+	 * <li>{@code 1.0} — prune maximally; every non-cyclic branch must justify
+	 * itself through strong length or radius salience to survive</li>
 	 * </ul>
 	 *
-	 * @param dotProductThreshold threshold in {@code [0,1]} for treating two
-	 *                            adjacent line-site segments as nearly parallel,
-	 *                            based on {@code abs(dot)}
+	 * @param aggressiveness pruning aggressiveness in {@code [0,1]}; larger values
+	 *                       prune more branches
 	 */
-	public MedialAxisFilter(double dotProductThreshold) {
-		this(dotProductThreshold, 0.5, 2.0, 0.25);
-	}
-
-	/**
-	 * Creates a medial-axis filter with fully configurable branch-pruning
-	 * parameters.
-	 * <p>
-	 * A medial branch is pruned only when it is both:
-	 * <ul>
-	 * <li>dominated by near-parallel generating segments, and</li>
-	 * <li>insignificant according to branch salience tests</li>
-	 * </ul>
-	 * <p>
-	 * The parameters are interpreted as follows:
-	 * <ul>
-	 * <li>{@code dotProductThreshold}: threshold in {@code [0,1]} applied to
-	 * {@code abs(dot)} of the two line-site directions; larger values prune less
-	 * aggressively</li>
-	 * <li>{@code parallelFractionThreshold}: minimum fraction of tested edges in a
-	 * branch that must be classified as near-parallel before the whole branch is
-	 * considered parallel-dominated</li>
-	 * <li>{@code minLengthFactor}: a branch is considered salient by length when
-	 * {@code branchLength >= minLengthFactor * maxRadius}</li>
-	 * <li>{@code minRadiusGainFactor}: a branch is considered salient by radius
-	 * when {@code radiusGain >= minRadiusGainFactor * maxRadius}, where
-	 * {@code radiusGain = maxRadiusAlongBranch - attachmentRadius}</li>
-	 * </ul>
-	 *
-	 * @param dotProductThreshold       threshold in {@code [0,1]} for classifying
-	 *                                  two adjacent line-site segments as nearly
-	 *                                  parallel
-	 * @param parallelFractionThreshold minimum fraction in {@code [0,1]} of branch
-	 *                                  edges that must test as near-parallel before
-	 *                                  the branch is treated as parallel-dominated
-	 * @param minLengthFactor           minimum normalized branch-length factor
-	 *                                  required for length-based salience
-	 * @param minRadiusGainFactor       minimum normalized radius-gain factor
-	 *                                  required for radius-based salience
-	 */
-	public MedialAxisFilter(double dotProductThreshold, double parallelFractionThreshold, double minLengthFactor, double minRadiusGainFactor) {
-		this.dotProductThreshold = dotProductThreshold;
-		this.parallelFractionThreshold = parallelFractionThreshold;
-		this.minLengthFactor = minLengthFactor;
-		this.minRadiusGainFactor = minRadiusGainFactor;
+	public MedialAxisFilter(double aggressiveness) {
+		if (!(aggressiveness >= 0.0 && aggressiveness <= 1.0)) {
+			throw new IllegalArgumentException("aggressiveness must be in [0,1], got " + aggressiveness);
+		}
+		// Interpolated so that 0.5 matches the historical defaults
+		// (0.8, 0.5, 2.0, 0.25) and 0.0 disables pruning entirely.
+		this.dotProductThreshold = 1.0 - 0.4 * aggressiveness;
+		this.parallelFractionThreshold = 1.0 - aggressiveness;
+		this.minLengthFactor = 4.0 * aggressiveness;
+		this.minRadiusGainFactor = 0.5 * aggressiveness;
 	}
 
 	/**
