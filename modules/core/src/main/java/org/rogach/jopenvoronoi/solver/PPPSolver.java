@@ -28,14 +28,14 @@ public class PPPSolver extends Solver {
 		assert (!pi.isRight(pj, pk)) : " !pi.is_right(pj,pk) ";
 		// 2) point pk should have the largest angle. largest angle is opposite longest
 		// side.
-		var longest_side = pi.sub(pj).norm();
-		while ((pj.sub(pk).norm() > longest_side) || ((pi.sub(pk).norm() > longest_side))) {
+		var longest_side = pi.distance(pj);
+		while ((pj.distance(pk) > longest_side) || ((pi.distance(pk) > longest_side))) {
 			// cyclic rotation of points until pk is opposite the longest side pi-pj
 			var tmp = pk;
 			pk = pj;
 			pj = pi;
 			pi = tmp;
-			longest_side = pi.sub(pj).norm();
+			longest_side = pi.distance(pj);
 		}
 		assert (!pi.isRight(pj, pk)) : " !pi.is_right(pj,pk) ";
 		assert (pi.sub(pj).norm() >= pj.sub(pk).norm()) : " pi.sub(pj).norm() >=  pj.sub(pk).norm() ";
@@ -51,7 +51,7 @@ public class PPPSolver extends Solver {
 			throw new RuntimeException(" PPPSolver: Warning divide-by-zero!!");
 		}
 		var sln_pt = new Point(-J2 / J4 + pk.x, J3 / J4 + pk.y);
-		var dist = sln_pt.sub(pi).norm();
+		var dist = sln_pt.distance(pi);
 		slns.add(new Solution(sln_pt, dist, +1));
 		return 1;
 	}

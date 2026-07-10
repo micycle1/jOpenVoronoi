@@ -43,10 +43,10 @@ public class Edge {
 	public double k;
 	public EdgeType type;
 	public boolean valid;
-	/** 8-parameter parametrization */
-	private double[] x = new double[8];
-	/** 8-parameter parametrization */
-	private double[] y = new double[8];
+	/** 8-parameter parametrization, x-coordinate (see class javadoc) */
+	private double px0, px1, px2, px3, px4, px5, px6, px7;
+	/** 8-parameter parametrization, y-coordinate (see class javadoc) */
+	private double py0, py1, py2, py3, py4, py5, py6, py7;
 	/** flag to choose either +/- in front of sqrt() */
 	private boolean sign;
 	/** true if ::LINESITE-edge inserted in this direction */
@@ -73,22 +73,22 @@ public class Edge {
 		this.type = other.type;
 		this.valid = other.valid;
 		this.insertedDirection = other.insertedDirection;
-		x[0] = other.x[0];
-		x[1] = other.x[1];
-		x[2] = other.x[2];
-		x[3] = other.x[3];
-		x[4] = other.x[4];
-		x[5] = other.x[5];
-		x[6] = other.x[6];
-		x[7] = other.x[7];
-		y[0] = other.y[0];
-		y[1] = other.y[1];
-		y[2] = other.y[2];
-		y[3] = other.y[3];
-		y[4] = other.y[4];
-		y[5] = other.y[5];
-		y[6] = other.y[6];
-		y[7] = other.y[7];
+		px0 = other.px0;
+		px1 = other.px1;
+		px2 = other.px2;
+		px3 = other.px3;
+		px4 = other.px4;
+		px5 = other.px5;
+		px6 = other.px6;
+		px7 = other.px7;
+		py0 = other.py0;
+		py1 = other.py1;
+		py2 = other.py2;
+		py3 = other.py3;
+		py4 = other.py4;
+		py5 = other.py5;
+		py6 = other.py6;
+		py7 = other.py7;
 	}
 
 	/**
@@ -104,19 +104,19 @@ public class Edge {
 	 * @return point on the edge at offset distance {@code t}
 	 */
 	public Point point(double t) {
-		var discr1 = chop(sq(x[4] + x[5] * t) - sq(x[6] + x[7] * t), Numeric.STRICT_ZERO_EPSILON);
-		var discr2 = chop(sq(y[4] + y[5] * t) - sq(y[6] + y[7] * t), Numeric.STRICT_ZERO_EPSILON);
+		var discr1 = chop(sq(px4 + px5 * t) - sq(px6 + px7 * t), Numeric.STRICT_ZERO_EPSILON);
+		var discr2 = chop(sq(py4 + py5 * t) - sq(py6 + py7 * t), Numeric.STRICT_ZERO_EPSILON);
 		if ((discr1 >= 0) && (discr2 >= 0)) {
 			double psig = sign ? +1 : -1;
 			double nsig = sign ? -1 : +1;
-			var xc = x[0] - x[1] - x[2] * t + psig * x[3] * Math.sqrt(discr1);
-			var yc = y[0] - y[1] - y[2] * t + nsig * y[3] * Math.sqrt(discr2);
+			var xc = px0 - px1 - px2 * t + psig * px3 * Math.sqrt(discr1);
+			var yc = py0 - py1 - py2 * t + nsig * py3 * Math.sqrt(discr2);
 			if (xc != xc) { // test for NaN!
 				throw new RuntimeException();
 			}
 			return new Point(xc, yc);
 		} else {
-			return new Point(x[0] - x[1] - x[2] * t, y[0] - y[1] - y[2] * t); // coordinates without sqrt()
+			return new Point(px0 - px1 - px2 * t, py0 - py1 - py2 * t); // coordinates without sqrt()
 		}
 	}
 
@@ -172,22 +172,22 @@ public class Edge {
 		var alfa3 = -d / 2;
 
 		type = EdgeType.LINE;
-		x[0] = s1.x();
-		x[1] = alfa1 * alfa3; //
-		x[2] = 0;
-		x[3] = -alfa2;
-		x[4] = 0;
-		x[5] = +1;
-		x[6] = alfa3;
-		x[7] = 0;
-		y[0] = s1.y();
-		y[1] = alfa2 * alfa3;
-		y[2] = 0;
-		y[3] = -alfa1;
-		y[4] = 0;
-		y[5] = +1;
-		y[6] = alfa3;
-		y[7] = 0;
+		px0 = s1.x();
+		px1 = alfa1 * alfa3; //
+		px2 = 0;
+		px3 = -alfa2;
+		px4 = 0;
+		px5 = +1;
+		px6 = alfa3;
+		px7 = 0;
+		py0 = s1.y();
+		py1 = alfa2 * alfa3;
+		py2 = 0;
+		py3 = -alfa1;
+		py4 = 0;
+		py5 = +1;
+		py6 = alfa3;
+		py7 = 0;
 	}
 
 	// Set parameters for a point/line parabola bisector.
@@ -198,23 +198,23 @@ public class Edge {
 		var alfa3 = s2.a() * s1.x() + s2.b() * s1.y() + s2.c(); // signed distance to line
 
 		// figure out kk, i.e. offset-direction for LineSite
-		x[0] = s1.x(); // xc1
-		x[1] = s2.a() * alfa3; // alfa1*alfa3
-		x[2] = s2.a(); // *kk; // -alfa1 = - a2 * k2?
-		x[3] = s2.b(); // alfa2 = b2
-		x[4] = 0; // alfa4 = r1 (PointSite has zero radius)
-		x[5] = +1; // lambda1 (allways positive offset from PointSite)
-		x[6] = alfa3; // alfa3= a2*xc1+b2*yc1+d2?
-		x[7] = +1; // kk; // -1 = k2 side of line??
+		px0 = s1.x(); // xc1
+		px1 = s2.a() * alfa3; // alfa1*alfa3
+		px2 = s2.a(); // *kk; // -alfa1 = - a2 * k2?
+		px3 = s2.b(); // alfa2 = b2
+		px4 = 0; // alfa4 = r1 (PointSite has zero radius)
+		px5 = +1; // lambda1 (allways positive offset from PointSite)
+		px6 = alfa3; // alfa3= a2*xc1+b2*yc1+d2?
+		px7 = +1; // kk; // -1 = k2 side of line??
 
-		y[0] = s1.y(); // yc1
-		y[1] = s2.b() * alfa3; // alfa2*alfa3
-		y[2] = s2.b(); // *kk; // -alfa2 = -b2
-		y[3] = s2.a(); // alfa1 = a2
-		y[4] = 0; // alfa4 = r1 (PointSite has zero radius)
-		y[5] = +1; // lambda1 (allways positive offset from PointSite)
-		y[6] = alfa3; // alfa3
-		y[7] = +1; // kk; // -1 = k2 side of line??
+		py0 = s1.y(); // yc1
+		py1 = s2.b() * alfa3; // alfa2*alfa3
+		py2 = s2.b(); // *kk; // -alfa2 = -b2
+		py3 = s2.a(); // alfa1 = a2
+		py4 = 0; // alfa4 = r1 (PointSite has zero radius)
+		py5 = +1; // lambda1 (allways positive offset from PointSite)
+		py6 = alfa3; // alfa3
+		py7 = +1; // kk; // -1 = k2 side of line??
 	}
 
 	/** Set parameters for a separator edge. */
@@ -223,23 +223,23 @@ public class Edge {
 		var dx = p.x - endp.x;
 		var dy = p.y - endp.y;
 		var d = p.sub(endp).norm();
-		x[0] = endp.x;
-		x[2] = -dx / d; // negative of normalized direction from endp to p
-		y[0] = endp.y;
-		y[2] = -dy / d;
+		px0 = endp.x;
+		px2 = -dx / d; // negative of normalized direction from endp to p
+		py0 = endp.y;
+		py2 = -dy / d;
 
-		x[1] = 0;
-		x[3] = 0;
-		x[4] = 0;
-		x[5] = 0;
-		x[6] = 0;
-		x[7] = 0;
-		y[1] = 0;
-		y[3] = 0;
-		y[4] = 0;
-		y[5] = 0;
-		y[6] = 0;
-		y[7] = 0;
+		px1 = 0;
+		px3 = 0;
+		px4 = 0;
+		px5 = 0;
+		px6 = 0;
+		px7 = 0;
+		py1 = 0;
+		py3 = 0;
+		py4 = 0;
+		py5 = 0;
+		py6 = 0;
+		py7 = 0;
 	}
 
 	// Set parameters for a parallel line/line bisector.
@@ -290,23 +290,23 @@ public class Edge {
 		// the tangent of the bisector (as well as the two line-sites) is a vector
 		// (-b , a)
 
-		x[0] = x1;
-		x[1] = -s1.b();
-		y[0] = y1;
-		y[1] = s1.a();
+		px0 = x1;
+		px1 = -s1.b();
+		py0 = y1;
+		py1 = s1.a();
 
-		x[2] = 0;
-		x[3] = 0;
-		x[4] = 0;
-		x[5] = 0;
-		x[6] = 0;
-		x[7] = 0;
-		y[2] = 0;
-		y[3] = 0;
-		y[4] = 0;
-		y[5] = 0;
-		y[6] = 0;
-		y[7] = 0;
+		px2 = 0;
+		px3 = 0;
+		px4 = 0;
+		px5 = 0;
+		px6 = 0;
+		px7 = 0;
+		py2 = 0;
+		py3 = 0;
+		py4 = 0;
+		py5 = 0;
+		py6 = 0;
+		py7 = 0;
 	}
 
 	// Set parameters for a non-parallel line/line bisector.
@@ -330,23 +330,23 @@ public class Edge {
 
 		// point (alfa1,alfa2) is the intersection point between the line-segments
 		// vector (-alfa3,-alfa4) is the direction/tangent of the bisector
-		x[0] = alfa1;
-		x[2] = -alfa3;
-		y[0] = alfa2;
-		y[2] = -alfa4;
+		px0 = alfa1;
+		px2 = -alfa3;
+		py0 = alfa2;
+		py2 = -alfa4;
 
-		x[1] = 0;
-		x[3] = 0;
-		x[4] = 0;
-		x[5] = 0;
-		x[6] = 0;
-		x[7] = 0;
-		y[1] = 0;
-		y[3] = 0;
-		y[4] = 0;
-		y[5] = 0;
-		y[6] = 0;
-		y[7] = 0;
+		px1 = 0;
+		px3 = 0;
+		px4 = 0;
+		px5 = 0;
+		px6 = 0;
+		px7 = 0;
+		py1 = 0;
+		py3 = 0;
+		py4 = 0;
+		py5 = 0;
+		py6 = 0;
+		py7 = 0;
 	}
 
 	// Set parameters for a point/arc bisector.
@@ -367,23 +367,23 @@ public class Edge {
 		var alfa2 = (s2.y() - s1.y()) / d;
 		var alfa3 = (s2.r() * s2.r() - d * d) / (2 * d);
 		var alfa4 = (lamb2 * s2.r()) / d;
-		x[0] = s1.x();
-		x[1] = alfa1 * alfa3;
-		x[2] = alfa1 * alfa4;
-		x[3] = alfa2;
-		x[4] = 0; // r1; PointSite has zero radius
-		x[5] = +1; // lamb1; allways outward offset from PointSite
-		x[6] = alfa3;
-		x[7] = alfa4;
+		px0 = s1.x();
+		px1 = alfa1 * alfa3;
+		px2 = alfa1 * alfa4;
+		px3 = alfa2;
+		px4 = 0; // r1; PointSite has zero radius
+		px5 = +1; // lamb1; allways outward offset from PointSite
+		px6 = alfa3;
+		px7 = alfa4;
 
-		y[0] = s1.y();
-		y[1] = alfa2 * alfa3;
-		y[2] = alfa2 * alfa4;
-		y[3] = alfa1;
-		y[4] = 0; // r1; PointSite has zero radius
-		y[5] = +1; // lamb1; allways outward offset from PointSite
-		y[6] = alfa3;
-		y[7] = alfa4;
+		py0 = s1.y();
+		py1 = alfa2 * alfa3;
+		py2 = alfa2 * alfa4;
+		py3 = alfa1;
+		py4 = 0; // r1; PointSite has zero radius
+		py5 = +1; // lamb1; allways outward offset from PointSite
+		py6 = alfa3;
+		py7 = alfa4;
 	}
 
 	// Set parameters for a line/arc bisector.
@@ -402,23 +402,23 @@ public class Edge {
 		var alfa4 = s2.r();
 		double kk = +1;
 
-		x[0] = s2.x();
-		x[1] = alfa1 * alfa3;
-		x[2] = alfa1 * kk;
-		x[3] = alfa2;
-		x[4] = alfa4;
-		x[5] = lamb2;
-		x[6] = alfa3;
-		x[7] = kk;
+		px0 = s2.x();
+		px1 = alfa1 * alfa3;
+		px2 = alfa1 * kk;
+		px3 = alfa2;
+		px4 = alfa4;
+		px5 = lamb2;
+		px6 = alfa3;
+		px7 = kk;
 
-		y[0] = s2.y();
-		y[1] = alfa2 * alfa3;
-		y[2] = alfa2 * kk;
-		y[3] = alfa1;
-		y[4] = alfa4;
-		y[5] = lamb2;
-		y[6] = alfa3;
-		y[7] = kk;
+		py0 = s2.y();
+		py1 = alfa2 * alfa3;
+		py2 = alfa2 * kk;
+		py3 = alfa1;
+		py4 = alfa4;
+		py5 = lamb2;
+		py6 = alfa3;
+		py7 = kk;
 	}
 
 	/**
@@ -459,7 +459,7 @@ public class Edge {
 
 	// Minimum t-value for a point/line parabola.
 	private double minimumPlT(Site s1, Site s2) {
-		var mint = -x[6] / (2.0 * x[7]);
+		var mint = -px6 / (2.0 * px7);
 		assert (mint >= 0) : " mint >=0 ";
 		return mint;
 	}
@@ -584,7 +584,7 @@ public class Edge {
 			// Extract focal length p algebraically using the stored 8-parameter edge
 			// parametrization
 			// $p$ natively equals $|x_4 x_5 - x_6 x_7| / 2$.
-			double p = Math.abs(x[4] * x[5] - x[6] * x[7]) / 2.0;
+			double p = Math.abs(px4 * px5 - px6 * px7) / 2.0;
 
 			if (p > 1e-9) {
 				// The parameter t is naturally the clearance radius (dist) at the vertex
@@ -592,8 +592,8 @@ public class Edge {
 				double t2 = target.dist();
 
 				// Calculate the lateral offsets squared (X^2)
-				double discr1 = sq(x[4] + x[5] * t1) - sq(x[6] + x[7] * t1);
-				double discr2 = sq(x[4] + x[5] * t2) - sq(x[6] + x[7] * t2);
+				double discr1 = sq(px4 + px5 * t1) - sq(px6 + px7 * t1);
+				double discr2 = sq(px4 + px5 * t2) - sq(px6 + px7 * t2);
 
 				// Use the lengths from the apex directly without branching
 				double X1 = Math.sqrt(Math.max(0.0, discr1));

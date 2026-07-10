@@ -34,8 +34,10 @@ public class Vertex {
 		expectedDegree.put(VertexType.APEX, 4); // apex point on quadratic bisector
 	}
 
-	public List<Edge> outEdges = new ArrayList<>();
-	public List<Edge> inEdges = new ArrayList<>();
+	// max vertex degree is 6 (3 out + 3 in), so a small initial capacity avoids
+	// over-allocating the default 10-slot backing array per list
+	public List<Edge> outEdges = new ArrayList<>(4);
+	public List<Edge> inEdges = new ArrayList<>(4);
 
 	/**
 	 * vertex status. updated/changed during an incremental graph update
@@ -143,7 +145,7 @@ public class Vertex {
 
 	// return distance to a point from this vertex
 	public double dist(Point p) {
-		return position.sub(p).norm();
+		return position.distance(p);
 	}
 
 	// set clearance-disk to zero

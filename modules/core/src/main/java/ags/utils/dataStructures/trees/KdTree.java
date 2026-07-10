@@ -19,6 +19,68 @@ public class KdTree<T> extends KdNode<T> {
 		return new NearestNeighborIterator<T>(this, searchPoint, maxPointsReturned, distanceFunction);
 	}
 
+	/**
+	 * Finds the single nearest neighbor to the search point.
+	 * <p>
+	 * Specialized 1-NN search: unlike {@link #findNearestNeighbors} it needs no
+	 * heap bookkeeping, using a depth-first descent with bounding-box pruning.
+	 *
+	 * @return the value of the nearest point, or {@code null} if the tree is empty
+	 */
+	public T findNearestNeighbor(double[] searchPoint, DistanceFunction distanceFunction) {
+		if (size() == 0) {
+			return null;
+		}
+		var search = new NearestSearch<T>(searchPoint, distanceFunction);
+		search.search(this);
+		return search.bestValue();
+	}
+
+	private static final class NearestSearch<T> {
+		private final double[] searchPoint;
+		private final DistanceFunction distanceFunction;
+		private double bestDist = Double.POSITIVE_INFINITY;
+		private Object bestValue;
+
+		NearestSearch(double[] searchPoint, DistanceFunction distanceFunction) {
+			this.searchPoint = searchPoint;
+			this.distanceFunction = distanceFunction;
+		}
+
+		@SuppressWarnings("unchecked")
+		T bestValue() {
+			return (T) bestValue;
+		}
+
+		void search(KdNode<T> node) {
+			if (node.isLeaf()) {
+				for (var i = 0; i < node.size; i++) {
+					var d = distanceFunction.distance(node.points[i], searchPoint);
+					if (d < bestDist) {
+						bestDist = d;
+						bestValue = node.data[i];
+					}
+				}
+				return;
+			}
+			KdNode<T> near, far;
+			if (searchPoint[node.splitDimension] > node.splitValue) {
+				near = node.right;
+				far = node.left;
+			} else {
+				near = node.left;
+				far = node.right;
+			}
+			if (near.size > 0) {
+				search(near); // descend the nearer child first so bestDist tightens early
+			}
+			if (far.size > 0
+					&& distanceFunction.distanceToRect(searchPoint, far.minBound, far.maxBound) < bestDist) {
+				search(far);
+			}
+		}
+	}
+
 	public MaxHeap<T> findNearestNeighbors(double[] searchPoint, int maxPointsReturned,
 			DistanceFunction distanceFunction) {
 		var pendingPaths = new BinaryHeap.Min<KdNode<T>>();

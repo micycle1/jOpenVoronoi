@@ -109,9 +109,15 @@ public class VoronoiDiagram {
 	 * current incremental site insertion.
 	 */
 	protected List<Vertex> inVertices = new ArrayList<>();
-	protected List<EdgeData> edgeDataBuffer = new ArrayList<>();
 	protected List<Edge> inOutEdgeBuffer = new ArrayList<>();
 	protected List<Edge> splitEdgeBuffer = new ArrayList<>();
+	/**
+	 * reusable buffer for {@link #addEdges(Face, Face, Face, Pair)}: edges whose
+	 * target is a NEW (non-SEPPOINT) vertex, in face order
+	 */
+	private final List<Edge> newVertexEdgeBuffer = new ArrayList<>();
+	/** reusable buffer for kd-tree nearest-neighbour queries */
+	private final double[] kdQueryBuffer = new double[2];
 
 	/**
 	 * Creates an empty Voronoi diagram with a default far radius of {@code 5000}.
@@ -188,7 +194,9 @@ public class VoronoiDiagram {
 		}
 		assert (p.norm() < farRadius) : "p.norm() < farRadius";
 
-		var nearest = kdTree.findNearestNeighbors(new double[] { p.x, p.y }, 1, DISTANCE_FUNCTION).getMax();
+		kdQueryBuffer[0] = p.x;
+		kdQueryBuffer[1] = p.y;
+		var nearest = kdTree.findNearestNeighbor(kdQueryBuffer, DISTANCE_FUNCTION);
 
 		if (nearest.position().equals(p)) {
 			return nearest.vertex();
@@ -552,7 +560,7 @@ public class VoronoiDiagram {
 	 * @return the nearest face
 	 */
 	public Face nearestFace(double x, double y) {
-		return nearestFaces(x, y, 1).get(0);
+		return kdTree.findNearestNeighbor(new double[] { x, y }, DISTANCE_FUNCTION).face;
 	}
 
 	/**
@@ -1178,7 +1186,31 @@ public class VoronoiDiagram {
 	    Vertex next = out.target;
 	    Vertex prev = out.prev.source;
 
-	    return isAllowedC5Neighbor(prev, v) || isAllowedC5Neighbor(next, v);
+	    // fast path: the face-cycle neighbours of v are graph-adjacent to v, so an
+	    // allowed neighbour here satisfies the full predicate below
+	    if (isAllowedC5Neighbor(prev, v) || isAllowedC5Neighbor(next, v)) {
+	        return true;
+	    }
+
+	    // full face walk (the original C5 predicate): the face is ok if it has an
+	    // ENDPOINT/APEX/SPLIT vertex anywhere on it, or an IN (or SEPPOINT) vertex
+	    // that is adjacent to v via any graph edge, not just a face-cycle edge.
+	    // The walk skips `out` itself; its target (next) was checked above.
+	    Edge current = out.next;
+	    while (current != out) {
+	        Vertex w = current.target;
+	        if (w != v) {
+	            if (w.type == VertexType.ENDPOINT || w.type == VertexType.APEX || w.type == VertexType.SPLIT) {
+	                return true;
+	            }
+	            if ((w.status == VertexStatus.IN || w.type == VertexType.SEPPOINT) && g.has_edge(w, v)) {
+	                return true;
+	            }
+	        }
+	        current = current.next;
+	    }
+
+	    return false;
 	}
 
 	private boolean isAllowedC5Neighbor(Vertex w, Vertex v) {
@@ -1326,16 +1358,67 @@ public class VoronoiDiagram {
 	 * endpoints are passed to {@link #findEdgeData}.
 	 */
 	private void addEdges(Face newface, Face f, Face newface2, Pair<Vertex, Vertex> segment) {
-		var new_count = numNewVertices(f);
+		// Single walk around the face: collect the edges whose target is a NEW
+		// (non-SEPPOINT) vertex, in face order. This both counts the NEW vertices
+		// and provides the data needed for the first v1/v2 pair, replacing a
+		// separate counting walk plus search walk.
+		newVertexEdgeBuffer.clear();
+		var current = f.getEdge();
+		var start = current;
+		do {
+			var v = current.target;
+			if ((v.status == VertexStatus.NEW) && (v.type != VertexType.SEPPOINT)) {
+				newVertexEdgeBuffer.add(current);
+			}
+			current = current.next;
+		} while (!current.equals(start));
+
+		var new_count = newVertexEdgeBuffer.size();
 		assert (new_count > 0) : "new_count > 0";
 		assert ((new_count % 2) == 0) : "(new_count % 2) == 0";
 		var new_pairs = new_count / 2;
-		List<Vertex> startverts = new ArrayList<>();
-		for (var m = 0; m < new_pairs; m++) {
-			var ed = findEdgeData(f, startverts, segment);
-			addEdge(ed, newface, newface2);
+
+		var ed = firstEdgeData(f, segment);
+		addEdge(ed, newface, newface2);
+
+		if (new_pairs > 1) {
+			// addEdge() rewires the face cycle, so later pairs must re-walk the face
+			List<Vertex> startverts = new ArrayList<>();
 			startverts.add(ed.v1);
+			for (var m = 1; m < new_pairs; m++) {
+				var ed2 = findEdgeData(f, startverts, segment);
+				addEdge(ed2, newface, newface2);
+				startverts.add(ed2.v1);
+			}
 		}
+	}
+
+	/**
+	 * Builds the {@link EdgeData} for the first v1/v2 pair from the NEW-vertex
+	 * edges collected by {@link #addEdges(Face, Face, Face, Pair)}. Equivalent to
+	 * {@code findEdgeData(f, emptyList, segment)} but without re-walking the face:
+	 * v1 is the first collected NEW vertex satisfying the v1-candidate predicate,
+	 * and v2 is the cyclically-next collected NEW vertex.
+	 */
+	private EdgeData firstEdgeData(Face f, Pair<Vertex, Vertex> segment) {
+		var n = newVertexEdgeBuffer.size();
+		for (var i = 0; i < n; i++) {
+			var e1 = newVertexEdgeBuffer.get(i);
+			if (isV1Candidate(e1.target, e1.source, e1.next.target, segment)) {
+				var ed = new EdgeData();
+				ed.f = f;
+				ed.v1 = e1.target;
+				ed.v1_prv = e1;
+				ed.v1_nxt = e1.next;
+				var e2 = newVertexEdgeBuffer.get((i + 1) % n);
+				assert (!e2.target.equals(ed.v1)) : "v2 must differ from v1";
+				ed.v2 = e2.target;
+				ed.v2_prv = e2;
+				ed.v2_nxt = e2.next;
+				return ed;
+			}
+		}
+		throw new AssertionError("v1 (OUT-NEW-IN) not found");
 	}
 
 	// add a new edge to the diagram
@@ -1937,7 +2020,10 @@ public class VoronoiDiagram {
 			}
 			current_edge = current_edge.next;
 		} while (!current_edge.equals(start_edge) && !found);
-		assert (found) : "separator target not found";
+		if (!found) {
+			throw new IllegalStateException("Separator target not found on face " + f
+					+ " for endpoint " + endp + "; the diagram may have reached a numerical robustness limit.");
+		}
 
 		return new SeparatorTarget(vPrevious, v_target, vNext, outNewIn);
 	}
@@ -2261,7 +2347,6 @@ public class VoronoiDiagram {
 		modifiedVertices.clear();
 		incidentFaces.clear();
 		inVertices.clear();
-		edgeDataBuffer.clear();
 		inOutEdgeBuffer.clear();
 		splitEdgeBuffer.clear();
 	}
@@ -2273,17 +2358,4 @@ public class VoronoiDiagram {
 		}
 	}
 
-	private int numNewVertices(Face f) {
-		var current = f.getEdge();
-		var start = current;
-		var count = 0;
-		do {
-			var v = current.target;
-			if ((v.status == VertexStatus.NEW) && (v.type != VertexType.SEPPOINT)) {
-				count++;
-			}
-			current = current.next;
-		} while (!current.equals(start));
-		return count;
-	}
 }

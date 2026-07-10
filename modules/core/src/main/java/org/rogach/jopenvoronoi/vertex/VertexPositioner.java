@@ -51,6 +51,8 @@ public class VertexPositioner {
 	double tMax;
 	/** the edge on which we position a new vertex */
 	Edge edge;
+	/** reusable buffer for solver solutions (positioner is single-threaded) */
+	private final List<Solution> solutionsBuffer = new ArrayList<>();
 
 	// create positioner, set graph.
 	public VertexPositioner(HalfEdgeDiagram gi) {
@@ -151,7 +153,8 @@ public class VertexPositioner {
 			}
 		}
 
-		List<Solution> solutions = new ArrayList<>();
+		solutionsBuffer.clear();
+		List<Solution> solutions = solutionsBuffer;
 
 		if (s3.isLine() && ((s1.isPoint() && s2.isLine()
 				&& (s3.start().equals(s1.position()) || s3.end().equals(s1.position())))
@@ -507,9 +510,9 @@ public class VertexPositioner {
 		var s1 = face.getSite();
 		var s2 = twin_face.getSite();
 
-		var d1 = sl.p.sub(s1.apexPoint(sl.p)).norm();
-		var d2 = sl.p.sub(s2.apexPoint(sl.p)).norm();
-		var d3 = sl.p.sub(s3.apexPoint(sl.p)).norm();
+		var d1 = sl.p.distance(s1.apexPoint(sl.p));
+		var d2 = sl.p.distance(s2.apexPoint(sl.p));
+		var d3 = sl.p.distance(s3.apexPoint(sl.p));
 
 		return Math.max(Math.max(Math.abs(sl.t - d1), Math.abs(sl.t - d2)), Math.abs(sl.t - d3));
 
