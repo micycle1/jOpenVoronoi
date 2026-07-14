@@ -5,7 +5,7 @@
 
 	<groupId>org.rogach</groupId>
 	<artifactId>jopenvoronoi</artifactId>
-	<version>1.0-SNAPSHOT</version>
+	<version>${revision}</version>
 	<packaging>pom</packaging>
 
 	<name>jOpenVoronoi Parent</name>
@@ -13,6 +13,7 @@
 	<url>https://github.com/micycle1/jOpenVoronoi</url>
 
 	<properties>
+		<revision>0.1</revision>
 		<sonar.projectKey>micycle1_jOpenVoronoi</sonar.projectKey>
 		<sonar.organization>micycle</sonar.organization>
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
