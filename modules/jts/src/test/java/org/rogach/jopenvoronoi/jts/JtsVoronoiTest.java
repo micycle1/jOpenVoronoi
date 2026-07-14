@@ -10,7 +10,9 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.MultiLineString;
+import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.Polygon;
 
 public class JtsVoronoiTest {
@@ -29,10 +31,56 @@ public class JtsVoronoiTest {
 	}
 
 	@Test
-	public void rejectsNonPolygonalInput() {
-		assertThrows(IllegalArgumentException.class, () -> new JtsVoronoi(GEOMETRY_FACTORY.createPoint(new Coordinate(0, 0))));
-		assertThrows(IllegalArgumentException.class, () -> new JtsVoronoi(GEOMETRY_FACTORY.createPolygon()));
+	public void rejectsNullOrEmptyInput() {
 		assertThrows(IllegalArgumentException.class, () -> new JtsVoronoi(null));
+		assertThrows(IllegalArgumentException.class, () -> new JtsVoronoi(GEOMETRY_FACTORY.createPolygon()));
+		assertThrows(IllegalArgumentException.class, () -> new JtsVoronoi(GEOMETRY_FACTORY.createMultiPoint()));
+	}
+
+	@Test
+	public void buildsCellsForAMultiPoint() {
+		// Four corner points of a 2x2 square plus the centre point. Every cell has
+		// positive area, and the centre point's cell is the bounded square whose
+		// corners are the square's edge midpoints, i.e. area 2.
+		MultiPoint points = GEOMETRY_FACTORY.createMultiPointFromCoords(new Coordinate[] { new Coordinate(0, 0),
+				new Coordinate(2, 0), new Coordinate(2, 2), new Coordinate(0, 2), new Coordinate(1, 1) });
+
+		JtsVoronoi voronoi = new JtsVoronoi(points);
+
+		List<Polygon> cells = voronoi.getCells();
+		assertFalse(cells.isEmpty(), "a point set must yield Voronoi cells");
+		for (Polygon cell : cells) {
+			assertTrue(cell.getArea() > 0, "each Voronoi cell must have positive area");
+		}
+		long bounded = cells.stream().filter(cell -> Math.abs(cell.getArea() - 2.0) < 1e-6).count();
+		assertEquals(1, bounded, "the interior point must own the bounded central cell of area 2");
+	}
+
+	@Test
+	public void buildsCellsForAMultiLineString() {
+		LineString a = GEOMETRY_FACTORY.createLineString(
+				new Coordinate[] { new Coordinate(0, 0), new Coordinate(4, 0) });
+		LineString b = GEOMETRY_FACTORY.createLineString(
+				new Coordinate[] { new Coordinate(0, 3), new Coordinate(4, 3) });
+		MultiLineString mls = GEOMETRY_FACTORY.createMultiLineString(new LineString[] { a, b });
+
+		// Regression: a multi-linestring used to throw because each component's
+		// segments were inserted before the next component's point sites.
+		JtsVoronoi voronoi = new JtsVoronoi(mls);
+
+		assertFalse(voronoi.getCells().isEmpty(), "a multi-linestring must yield Voronoi cells");
+	}
+
+	@Test
+	public void polygonSpecificQueriesAreEmptyForPointalInput() {
+		MultiPoint points = GEOMETRY_FACTORY.createMultiPointFromCoords(new Coordinate[] { new Coordinate(0, 0),
+				new Coordinate(2, 0), new Coordinate(2, 2), new Coordinate(0, 2), new Coordinate(1, 1) });
+
+		JtsVoronoi voronoi = new JtsVoronoi(points);
+
+		assertTrue(voronoi.getInteriorCells().isEmpty(), "a point set has no polygon interior");
+		assertTrue(voronoi.getMedialAxis().isEmpty(), "a point set has no medial axis");
+		assertTrue(voronoi.getMedialAxisCoverage().isEmpty(), "a point set has no medial-axis coverage");
 	}
 
 	@Test

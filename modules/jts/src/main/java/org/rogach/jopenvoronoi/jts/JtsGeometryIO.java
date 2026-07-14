@@ -49,15 +49,72 @@ public final class JtsGeometryIO {
 			throw new IllegalArgumentException("Geometry cannot be null.");
 		}
 
-		List<Vertex> vertices = new ArrayList<>();
-		addPointalGeometry(diagram, geometry, vertices);
-		addLinearGeometry(diagram, geometry, vertices);
+		// The diagram requires every point site to be inserted before any line
+		// site, so insertion is split into two global phases across the whole
+		// geometry rather than done per element: first all point sites (standalone
+		// points plus every linestring/ring vertex), then all line-site segments.
+		// Doing this per element would fail for any input with more than one lineal
+		// component (a MultiLineString, or a Polygon with holes).
+		List<Vertex> pointSites = new ArrayList<>();
+		addPointalGeometry(diagram, geometry, pointSites);
+
+		List<LineString> lineals = new ArrayList<>();
+		collectLinealComponents(geometry, lineals);
+
+		List<List<Vertex>> linealVertices = new ArrayList<>(lineals.size());
+		for (LineString lineal : lineals) {
+			linealVertices.add(insertLineStringPoints(diagram, lineal));
+		}
+		for (int i = 0; i < lineals.size(); i++) {
+			insertLineStringSegments(diagram, linealVertices.get(i), lineals.get(i).isClosed());
+		}
 	}
 
 	public static List<Vertex> addLineStringSites(VoronoiDiagram diagram, LineString lineString) {
 		if (diagram == null) {
 			throw new IllegalArgumentException("Voronoi diagram cannot be null.");
 		}
+		List<Vertex> vertices = insertLineStringPoints(diagram, lineString);
+		insertLineStringSegments(diagram, vertices, lineString.isClosed());
+		return vertices;
+	}
+
+	public static List<Vertex> addPolygonSites(VoronoiDiagram diagram, Polygon polygon) {
+		if (diagram == null) {
+			throw new IllegalArgumentException("Voronoi diagram cannot be null.");
+		}
+		if (polygon == null) {
+			throw new IllegalArgumentException("Polygon cannot be null.");
+		}
+
+		// Point sites for every ring must precede any line site, so insert all ring
+		// vertices first and only then the segments (see addGeometry).
+		List<LineString> rings = new ArrayList<>();
+		rings.add(polygon.getExteriorRing());
+		for (int i = 0; i < polygon.getNumInteriorRing(); i++) {
+			rings.add(polygon.getInteriorRingN(i));
+		}
+
+		List<Vertex> vertices = new ArrayList<>();
+		List<List<Vertex>> ringVertices = new ArrayList<>(rings.size());
+		for (LineString ring : rings) {
+			List<Vertex> inserted = insertLineStringPoints(diagram, ring);
+			ringVertices.add(inserted);
+			vertices.addAll(inserted);
+		}
+		for (int i = 0; i < rings.size(); i++) {
+			insertLineStringSegments(diagram, ringVertices.get(i), rings.get(i).isClosed());
+		}
+		return vertices;
+	}
+
+	/**
+	 * Inserts a point site for each distinct vertex of the linestring (dropping the
+	 * duplicate closing coordinate of a closed ring) and returns them in order. No
+	 * line sites are inserted, so this is safe to call for several linestrings
+	 * before any segment is added.
+	 */
+	private static List<Vertex> insertLineStringPoints(VoronoiDiagram diagram, LineString lineString) {
 		if (lineString == null) {
 			throw new IllegalArgumentException("LineString cannot be null.");
 		}
@@ -75,31 +132,23 @@ public final class JtsGeometryIO {
 
 		List<Vertex> vertices = new ArrayList<>(limit);
 		for (int i = 0; i < limit; i++) {
-			Coordinate coordinate = coordinates[i];
-			vertices.add(diagram.insertPointSite(toPoint(coordinate)));
+			vertices.add(diagram.insertPointSite(toPoint(coordinates[i])));
 		}
+		return vertices;
+	}
 
+	/**
+	 * Connects consecutive vertices with line sites, closing the loop when the
+	 * originating linestring was closed. Assumes every vertex has already been
+	 * inserted as a point site.
+	 */
+	private static void insertLineStringSegments(VoronoiDiagram diagram, List<Vertex> vertices, boolean closed) {
 		for (int i = 0; i < vertices.size() - 1; i++) {
 			diagram.insertLineSite(vertices.get(i), vertices.get(i + 1));
 		}
 		if (closed) {
 			diagram.insertLineSite(vertices.get(vertices.size() - 1), vertices.get(0));
 		}
-
-		return vertices;
-	}
-
-	public static List<Vertex> addPolygonSites(VoronoiDiagram diagram, Polygon polygon) {
-		if (polygon == null) {
-			throw new IllegalArgumentException("Polygon cannot be null.");
-		}
-
-		List<Vertex> vertices = new ArrayList<>();
-		vertices.addAll(addLinearRingSites(diagram, polygon.getExteriorRing()));
-		for (int i = 0; i < polygon.getNumInteriorRing(); i++) {
-			vertices.addAll(addLinearRingSites(diagram, polygon.getInteriorRingN(i)));
-		}
-		return vertices;
 	}
 
 	public static List<Vertex> addLinearRingSites(VoronoiDiagram diagram, LinearRing ring) {
@@ -183,22 +232,33 @@ public final class JtsGeometryIO {
 		}
 	}
 
-	private static void addLinearGeometry(VoronoiDiagram diagram, Geometry geometry, List<Vertex> vertices) {
+	/**
+	 * Collects the lineal components of a geometry — open/closed linestrings and
+	 * polygon rings — as normalized linestrings, in insertion order, so that
+	 * {@link #addGeometry} can insert all of their point sites before any line
+	 * site. Standalone points are ignored (they are handled by
+	 * {@link #addPointalGeometry}).
+	 */
+	private static void collectLinealComponents(Geometry geometry, List<LineString> out) {
 		if (geometry instanceof Point) {
 			return;
 		}
-		if (geometry instanceof LineString) {
-			vertices.addAll(addLineStringSites(diagram, normalizeClosedLineal((LineString) geometry)));
+		if (geometry instanceof Polygon) {
+			Polygon polygon = normalizePolygon((Polygon) geometry);
+			out.add(polygon.getExteriorRing());
+			for (int i = 0; i < polygon.getNumInteriorRing(); i++) {
+				out.add(polygon.getInteriorRingN(i));
+			}
 			return;
 		}
-		if (geometry instanceof Polygon) {
-			vertices.addAll(addPolygonSites(diagram, normalizePolygon((Polygon) geometry)));
+		if (geometry instanceof LineString) {
+			out.add(normalizeClosedLineal((LineString) geometry));
 			return;
 		}
 		if (geometry instanceof GeometryCollection) {
 			GeometryCollection collection = (GeometryCollection) geometry;
 			for (int i = 0; i < collection.getNumGeometries(); i++) {
-				addLinearGeometry(diagram, collection.getGeometryN(i), vertices);
+				collectLinealComponents(collection.getGeometryN(i), out);
 			}
 			return;
 		}

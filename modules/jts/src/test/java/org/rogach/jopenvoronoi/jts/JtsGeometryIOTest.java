@@ -103,6 +103,39 @@ public class JtsGeometryIOTest {
 		assertEquals(point.getY(), vertices.get(0).position.y, 1e-12);
 	}
 
+	@Test
+	public void addGeometryHandlesMultiLineStringWithSeveralComponents() {
+		LineString a = GEOMETRY_FACTORY.createLineString(
+				new Coordinate[] { new Coordinate(-1, 0), new Coordinate(-0.5, 0.2), new Coordinate(0, 0) });
+		LineString b = GEOMETRY_FACTORY.createLineString(
+				new Coordinate[] { new Coordinate(0.4, 0.4), new Coordinate(0.9, 0.6) });
+		MultiLineString mls = GEOMETRY_FACTORY.createMultiLineString(new LineString[] { a, b });
+
+		// Must not throw "Cannot insert point sites after line sites": every point
+		// site of every component is inserted before any line site.
+		VoronoiDiagram diagram = JtsGeometryIO.toVoronoiDiagram(mls);
+		List<Vertex> vertices = collectInsertedVertices(diagram, 5);
+
+		assertEquals(5, vertices.size());
+	}
+
+	@Test
+	public void addGeometryHandlesPolygonWithHole() {
+		Coordinate[] shell = { new Coordinate(0, 0), new Coordinate(10, 0), new Coordinate(10, 10),
+				new Coordinate(0, 10), new Coordinate(0, 0) };
+		Coordinate[] hole = { new Coordinate(3, 3), new Coordinate(3, 7), new Coordinate(7, 7),
+				new Coordinate(7, 3), new Coordinate(3, 3) };
+		Polygon withHole = GEOMETRY_FACTORY.createPolygon(GEOMETRY_FACTORY.createLinearRing(shell),
+				new org.locationtech.jts.geom.LinearRing[] { GEOMETRY_FACTORY.createLinearRing(hole) });
+
+		// A hole's point sites must precede the shell's line sites; per-ring
+		// insertion would have failed here.
+		VoronoiDiagram diagram = JtsGeometryIO.toVoronoiDiagram(withHole);
+		List<Vertex> vertices = collectInsertedVertices(diagram, 8);
+
+		assertEquals(8, vertices.size());
+	}
+
 	private static List<Vertex> collectInsertedVertices(VoronoiDiagram diagram, int expectedCount) {
 		List<Vertex> inserted = new java.util.ArrayList<>();
 		for (Vertex vertex : diagram.getDiagram().vertices) {
