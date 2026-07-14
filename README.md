@@ -4,13 +4,25 @@
 
 A fork of *Rogach*'s [port](https://github.com/Rogach/jopenvoronoi) of the original C++ library [openvoronoi](https://github.com/aewallin/openvoronoi).
 
-# Features
-
-- Incremental Voronoi Point & Line Site Diagrams
-- Voronoi Diagram Generators: Labryinth, L-Systems
-- Diagram Medial Axis
-- Nearest N cells to point
-- JTS integration: build a Voronoi diagram straight from a `Polygon`/`MultiPolygon` and get cells, interior cells, dissolved medial axis, and medial-axis polygon coverage (`jopenvoronoi-jts` module)
+- Incremental Voronoi diagrams supporting point and line-segment sites
+- Linear, parabolic, and conic Voronoi bisectors, with adaptive curve sampling and arc-length calculation
+- Voronoi diagram generators: labyrinths and L-systems
+- Nearest-face and nearest-*N* face queries via a KD-tree
+- Diagram filtering:
+  - polygon-interior filtering for oriented polygon boundaries
+  - configurable medial-axis branch pruning
+- Medial-axis extraction for polygons and line-site arrangements
+- Voronoi-based offset generation, producing closed offset loops composed of line and arc elements
+- Pocket-machining utilities (`jopenvoronoi-pocket` module):
+  - medial-axis pocket decomposition and traversal
+  - maximum-inscribed-circle (MIC) sampling along medial-axis edges
+  - continuous spiral toolpath generation for clearing polygonal pockets
+- JTS integration (`jopenvoronoi-jts` module):
+  - build a Voronoi diagram directly from a JTS `Polygon` or `MultiPolygon`
+  - export Voronoi cells and interior cells as JTS geometries
+  - extract, dissolve, and optionally prune medial-axis branches
+  - generate medial-axis polygon coverage
+- Convenience aggregate artifact (`jopenvoronoi-all`) that brings in the core, generator, pocket, and JTS modules
 
 # Fork Changes
 
