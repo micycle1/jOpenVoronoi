@@ -20,6 +20,7 @@ import org.locationtech.jts.geom.MultiLineString;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.operation.linemerge.LineMerger;
+import org.locationtech.jts.operation.overlayng.RingClipper;
 import org.locationtech.jts.operation.polygonize.Polygonizer;
 import org.rogach.jopenvoronoi.VoronoiDiagram;
 import org.rogach.jopenvoronoi.filter.MedialAxisFilter;
@@ -33,11 +34,12 @@ import org.rogach.jopenvoronoi.geometry.Face;
  * <p>
  * Wraps a {@link VoronoiDiagram} built from any geometry whose elements are
  * points, linestrings, or polygons — including {@link Point},
- * {@link org.locationtech.jts.geom.MultiPoint}, {@link LineString},
+ * {@link org.locationtech.jts.geom.MultiPoint MultiPoint}, {@link LineString},
  * {@link MultiLineString}, {@link Polygon},
- * {@link org.locationtech.jts.geom.MultiPolygon}, and heterogeneous
- * {@link org.locationtech.jts.geom.GeometryCollection}s — and exposes the
- * common derived products directly as JTS geometries:
+ * {@link org.locationtech.jts.geom.MultiPolygon MultiPolygon}, and
+ * heterogeneous {@link org.locationtech.jts.geom.GeometryCollection
+ * GeometryCollection}s — and exposes the common derived products directly as
+ * JTS geometries:
  * <ul>
  * <li>{@link #getVoronoiEdges()} / {@link #getVoronoiCells()} — the Voronoi
  * diagram as most callers expect it, with each input element treated as a
@@ -52,13 +54,19 @@ import org.rogach.jopenvoronoi.geometry.Face;
  * cutting the input polygon along its medial axis</li>
  * </ul>
  * The interior and medial-axis products are polygon-specific: for input with no
- * polygonal interior (e.g. a {@link org.locationtech.jts.geom.MultiPoint} or an
- * open {@link LineString}) they return empty results, since no interior or
- * medial axis exists. {@link #getCells()} remains meaningful for every input.
+ * polygonal interior (e.g. a {@link org.locationtech.jts.geom.MultiPoint
+ * MultiPoint} or an open {@link LineString}) they return empty results, since
+ * no interior or medial axis exists. {@link #getCells()} remains meaningful for
+ * every input.
  * <p>
  * Curved (parabolic) Voronoi edges are approximated by adaptively sampled
  * chords whose deviation from the true curve never exceeds the configured
  * tolerance.
+ * <p>
+ * The Voronoi cells and edges of point and open-lineal input are unbounded and
+ * reach the diagram's far boundary. Call {@link #setBoundary(Envelope)} to crop
+ * every product to a rectangle; only geometry straddling the rectangle is
+ * actually clipped.
  * <p>
  * This object owns the filter state ({@code valid} flags) of its underlying
  * diagram: medial-axis queries reset and re-apply edge filters on each call. If
@@ -86,6 +94,13 @@ public final class JtsVoronoi {
 	private final double maxDeviation;
 	private final VoronoiDiagram diagram;
 	private final PolygonInteriorFilter interiorClassifier;
+
+	/**
+	 * Optional rectangular crop applied to every returned product, or {@code null}
+	 * to return the full (far-boundary-reaching) diagram; see
+	 * {@link #setBoundary(Envelope)}.
+	 */
+	private Envelope boundary;
 
 	/**
 	 * Builds the Voronoi diagram of the given geometry with a default geometry
@@ -156,6 +171,45 @@ public final class JtsVoronoi {
 	}
 
 	// -------------------------------------------------------------------------
+	// Boundary crop
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Sets a rectangular boundary that every product of this object is cropped to,
+	 * or clears it.
+	 * <p>
+	 * When a boundary is set, all cell and line products ({@link #getCells()},
+	 * {@link #getInteriorCells()}, {@link #getVoronoiCells()},
+	 * {@link #getVoronoiEdges()}, {@link #getMedialAxis()}, and the medial-axis
+	 * coverage) are cropped to it: geometry wholly inside is returned unchanged,
+	 * geometry wholly outside is dropped, and only geometry straddling the boundary
+	 * is actually clipped. This is the intended way to bound the otherwise
+	 * unbounded Voronoi cells and edges, which reach the diagram's far boundary.
+	 * <p>
+	 * Cells are clipped with {@link RingClipper}, a fast Cohen–Sutherland rectangle
+	 * clip. For a rectangular crop this is far cheaper than a general overlay, but
+	 * it clips each ring independently and does not re-node, so a non-convex cell
+	 * that leaves and re-enters the rectangle may yield coincident segments along a
+	 * rectangle side; the result is still a usable polygon but not guaranteed
+	 * OGC-valid. Point-site cells (always convex) clip exactly.
+	 *
+	 * @param envelope the crop rectangle; a copy is stored. Passing {@code null} or
+	 *                 an empty envelope disables cropping and restores the full
+	 *                 diagram.
+	 */
+	public void setBoundary(Envelope envelope) {
+		this.boundary = (envelope == null || envelope.isNull()) ? null : new Envelope(envelope);
+	}
+
+	/**
+	 * Returns a copy of the current crop boundary, or {@code null} if cropping is
+	 * disabled; see {@link #setBoundary(Envelope)}.
+	 */
+	public Envelope getBoundary() {
+		return boundary == null ? null : new Envelope(boundary);
+	}
+
+	// -------------------------------------------------------------------------
 	// Cells
 	// -------------------------------------------------------------------------
 
@@ -165,7 +219,7 @@ public final class JtsVoronoi {
 	 * Degenerate faces that do not span a ring are skipped.
 	 */
 	public List<Polygon> getCells() {
-		return facesToPolygons(diagram.getFaces());
+		return cropPolygons(facesToPolygons(diagram.getFaces()));
 	}
 
 	/**
@@ -186,7 +240,7 @@ public final class JtsVoronoi {
 				interior.add(face);
 			}
 		}
-		return facesToPolygons(interior);
+		return cropPolygons(facesToPolygons(interior));
 	}
 
 	// -------------------------------------------------------------------------
@@ -235,7 +289,7 @@ public final class JtsVoronoi {
 				lines.add(line);
 			}
 		}
-		return dissolve(lines);
+		return cropLines(dissolve(lines));
 	}
 
 	/**
@@ -255,13 +309,13 @@ public final class JtsVoronoi {
 	 * <p>
 	 * The three far-field generator cells are dropped. Genuinely unbounded cells
 	 * still reach the diagram's far boundary (and so have very large coordinates);
-	 * intersect them with a clip envelope if you need them bounded. A cell may
-	 * carry holes when it entirely encloses another site's cell (e.g. the cell of
-	 * a ring around the cell of a point inside it).
+	 * set a {@link #setBoundary(Envelope) boundary} to crop them to a rectangle. A
+	 * cell may carry holes when it entirely encloses another site's cell (e.g. the
+	 * cell of a ring around the cell of a point inside it).
 	 * <p>
 	 * Each merged cell is assembled by tracing the boundary of its face group
-	 * directly in the half-edge structure rather than by geometrically unioning
-	 * the sub-face polygons: sampled twin half-edges of curved bisectors are not
+	 * directly in the half-edge structure rather than by geometrically unioning the
+	 * sub-face polygons: sampled twin half-edges of curved bisectors are not
 	 * bit-identical (each twin evaluates the curve through its own
 	 * parametrization), so a coverage-style union over sampled sub-faces would
 	 * leave slivers along internal curved edges. The topological trace samples
@@ -285,17 +339,17 @@ public final class JtsVoronoi {
 				cells.add(cell);
 			}
 		}
-		return cells;
+		return cropPolygons(cells);
 	}
 
 	/**
 	 * Assembles the polygon of one merged cell by tracing the boundary of its face
-	 * group in the half-edge structure. A boundary edge is one whose twin face
-	 * lies outside the group; boundary edges are stitched into closed rings by
-	 * following {@code next} links and hopping across the twins of internal
-	 * edges. The ring enclosing the largest area is the shell and any remaining
-	 * rings are holes. The zero-area rings traced around the endpoint null-faces
-	 * collapse under coordinate deduplication and are dropped.
+	 * group in the half-edge structure. A boundary edge is one whose twin face lies
+	 * outside the group; boundary edges are stitched into closed rings by following
+	 * {@code next} links and hopping across the twins of internal edges. The ring
+	 * enclosing the largest area is the shell and any remaining rings are holes.
+	 * The zero-area rings traced around the endpoint null-faces collapse under
+	 * coordinate deduplication and are dropped.
 	 */
 	private Polygon traceCell(Map<Face, Face> parent, Face root, List<Face> members) {
 		Set<Edge> visited = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -337,9 +391,9 @@ public final class JtsVoronoi {
 
 	/**
 	 * Traces one closed boundary ring starting from the given boundary edge,
-	 * marking every traversed edge as visited. Returns {@code null} for
-	 * degenerate rings (fewer than three distinct points, e.g. the zero-length
-	 * null-edge loops at segment endpoints) or if the walk fails to close.
+	 * marking every traversed edge as visited. Returns {@code null} for degenerate
+	 * rings (fewer than three distinct points, e.g. the zero-length null-edge loops
+	 * at segment endpoints) or if the walk fails to close.
 	 */
 	private LinearRing traceRing(Map<Face, Face> parent, Face root, Edge start, Set<Edge> visited) {
 		CoordinateList ring = new CoordinateList();
@@ -374,8 +428,8 @@ public final class JtsVoronoi {
 
 	/**
 	 * Returns whether the edge lies in the interior of the given face group: its
-	 * twin's face belongs to the same group, so the edge separates two sub-faces
-	 * of one merged cell. Null helper faces and far-field faces are never group
+	 * twin's face belongs to the same group, so the edge separates two sub-faces of
+	 * one merged cell. Null helper faces and far-field faces are never group
 	 * members, so edges against them read as boundary.
 	 */
 	private boolean isInternalEdge(Map<Face, Face> parent, Face root, Edge edge) {
@@ -466,6 +520,107 @@ public final class JtsVoronoi {
 		return p != null && Math.hypot(p.x, p.y) >= diagram.getFarRadius();
 	}
 
+	/**
+	 * Crops a list of cell polygons to the {@link #boundary}, or returns it
+	 * unchanged when no boundary is set. Polygons wholly inside are passed through,
+	 * wholly outside are dropped, and only straddling polygons are clipped.
+	 */
+	private List<Polygon> cropPolygons(List<Polygon> polygons) {
+		if (boundary == null) {
+			return polygons;
+		}
+		RingClipper clipper = new RingClipper(boundary);
+		List<Polygon> cropped = new ArrayList<>(polygons.size());
+		for (Polygon polygon : polygons) {
+			Polygon clipped = clipPolygon(clipper, polygon);
+			if (clipped != null && !clipped.isEmpty()) {
+				cropped.add(clipped);
+			}
+		}
+		return cropped;
+	}
+
+	/**
+	 * Clips a single polygon to the boundary rectangle with {@link RingClipper},
+	 * short-circuiting on the envelope test so only straddling polygons pay the
+	 * clip cost. Each ring is clipped independently; returns {@code null} when the
+	 * polygon falls entirely outside the boundary or its shell collapses.
+	 */
+	private Polygon clipPolygon(RingClipper clipper, Polygon polygon) {
+		Envelope pe = polygon.getEnvelopeInternal();
+		if (!boundary.intersects(pe)) {
+			return null;
+		}
+		if (boundary.covers(pe)) {
+			return polygon;
+		}
+		LinearRing shell = clipRing(clipper, polygon.getExteriorRing());
+		if (shell == null) {
+			return null;
+		}
+		List<LinearRing> holes = new ArrayList<>(polygon.getNumInteriorRing());
+		for (int i = 0; i < polygon.getNumInteriorRing(); i++) {
+			LinearRing hole = clipRing(clipper, polygon.getInteriorRingN(i));
+			if (hole != null) {
+				holes.add(hole);
+			}
+		}
+		return factory.createPolygon(shell, holes.toArray(new LinearRing[0]));
+	}
+
+	/** Clips one ring; returns {@code null} if it collapses below a valid ring. */
+	private LinearRing clipRing(RingClipper clipper, LineString ring) {
+		Coordinate[] clipped = clipper.clip(ring.getCoordinates());
+		if (clipped.length < 4) {
+			return null;
+		}
+		return factory.createLinearRing(clipped);
+	}
+
+	/**
+	 * Crops dissolved line products to the {@link #boundary}, or returns them
+	 * unchanged when no boundary is set. Lines wholly inside are passed through and
+	 * wholly outside are dropped by an envelope test; only straddling lines are
+	 * intersected with the rectangle (a general overlay, since {@link RingClipper}
+	 * is documented as unsuitable for open linestrings).
+	 */
+	private MultiLineString cropLines(MultiLineString lines) {
+		if (boundary == null) {
+			return lines;
+		}
+		Geometry rectangle = factory.toGeometry(boundary);
+		List<LineString> kept = new ArrayList<>(lines.getNumGeometries());
+		for (int i = 0; i < lines.getNumGeometries(); i++) {
+			LineString line = (LineString) lines.getGeometryN(i);
+			Envelope le = line.getEnvelopeInternal();
+			if (!boundary.intersects(le)) {
+				continue;
+			}
+			if (boundary.covers(le)) {
+				kept.add(line);
+				continue;
+			}
+			collectLines(line.intersection(rectangle), kept);
+		}
+		return factory.createMultiLineString(kept.toArray(new LineString[0]));
+	}
+
+	/** Appends every non-degenerate {@link LineString} component to {@code out}. */
+	private static void collectLines(Geometry geometry, List<LineString> out) {
+		if (geometry == null || geometry.isEmpty()) {
+			return;
+		}
+		if (geometry instanceof LineString) {
+			if (geometry.getLength() > 0) {
+				out.add((LineString) geometry);
+			}
+			return;
+		}
+		for (int i = 0; i < geometry.getNumGeometries(); i++) {
+			collectLines(geometry.getGeometryN(i), out);
+		}
+	}
+
 	private List<Polygon> facesToPolygons(List<Face> faces) {
 		List<Polygon> polygons = new ArrayList<>(faces.size());
 		for (Face face : faces) {
@@ -514,7 +669,7 @@ public final class JtsVoronoi {
 	 * interior (e.g. a pure point set or open linework).
 	 */
 	public MultiLineString getMedialAxis() {
-		return dissolve(medialAxisLines(Double.NaN));
+		return cropLines(dissolve(medialAxisLines(Double.NaN)));
 	}
 
 	/**
@@ -525,7 +680,7 @@ public final class JtsVoronoi {
 	 *                       keeps the full medial axis, {@code 1} prunes maximally
 	 */
 	public MultiLineString getMedialAxis(double aggressiveness) {
-		return dissolve(medialAxisLines(aggressiveness));
+		return cropLines(dissolve(medialAxisLines(aggressiveness)));
 	}
 
 	/**
@@ -534,7 +689,7 @@ public final class JtsVoronoi {
 	 * and medial-axis branches, and together they exactly tile the input.
 	 */
 	public List<Polygon> getMedialAxisCoverage() {
-		return polygonize(medialAxisLines(Double.NaN));
+		return cropPolygons(polygonize(medialAxisLines(Double.NaN)));
 	}
 
 	/**
@@ -546,7 +701,7 @@ public final class JtsVoronoi {
 	 *                       keeps the full medial axis, {@code 1} prunes maximally
 	 */
 	public List<Polygon> getMedialAxisCoverage(double aggressiveness) {
-		return polygonize(medialAxisLines(aggressiveness));
+		return cropPolygons(polygonize(medialAxisLines(aggressiveness)));
 	}
 
 	/**
