@@ -44,6 +44,9 @@ public class Perf {
 			runPoints(Integer.parseInt(args[1]), Long.parseLong(args[2]));
 		} else if (args[0].equals("polygon")) {
 			runPolygon(Integer.parseInt(args[1]), Long.parseLong(args[2]));
+		} else if (args[0].equals("bulk")) {
+			// bulk <uniform|clustered|xsorted> N seed : single-insert vs insertPointSites
+			runBulkCompare(args[1], Integer.parseInt(args[2]), Long.parseLong(args[3]));
 		} else if (args[0].equals("polygonloop")) {
 			// repeated builds for profiling: polygonloop N seed iterations
 			int n = Integer.parseInt(args[1]);
@@ -114,6 +117,73 @@ public class Perf {
 			double x = rnd.nextDouble() * range - (range / 2.0);
 			double y = rnd.nextDouble() * range - (range / 2.0);
 			pts.add(new Point(x, y));
+		}
+		return pts;
+	}
+
+	// ------------------------------------------------------------------
+	// Bulk insertion: single-insert loop vs insertPointSites
+	// ------------------------------------------------------------------
+
+	private static void runBulkCompare(String kind, int n, long seed) {
+		List<Point> pts;
+		switch (kind) {
+			case "uniform":
+				pts = generateRandomPoints(n, seed);
+				break;
+			case "clustered":
+				pts = generateClusteredPoints(n, seed);
+				break;
+			case "xsorted":
+				pts = generateRandomPoints(n, seed);
+				pts.sort((a, b) -> Double.compare(a.x, b.x));
+				break;
+			default:
+				throw new IllegalArgumentException("unknown bulk kind: " + kind);
+		}
+		for (int i = 0; i < WARMUP_RUNS; i++) {
+			buildPoints(pts);
+			buildBulk(pts);
+		}
+		double[] singleRates = new double[MEASURED_RUNS];
+		double[] bulkRates = new double[MEASURED_RUNS];
+		VoronoiDiagram lastSingle = null, lastBulk = null;
+		for (int i = 0; i < MEASURED_RUNS; i++) {
+			long t0 = System.nanoTime();
+			lastSingle = buildPoints(pts);
+			long t1 = System.nanoTime();
+			lastBulk = buildBulk(pts);
+			long t2 = System.nanoTime();
+			singleRates[i] = n / ((t1 - t0) / 1e9);
+			bulkRates[i] = n / ((t2 - t1) / 1e9);
+		}
+		System.out.printf("bulk %s n=%d seed=%d: single %.1f sites/s, bulk %.1f sites/s (%.2fx)%n", kind, n, seed,
+				median(singleRates), median(bulkRates), median(bulkRates) / median(singleRates));
+		System.out.println("  single " + fingerprint(lastSingle));
+		System.out.println("  bulk   " + fingerprint(lastBulk));
+	}
+
+	private static VoronoiDiagram buildBulk(List<Point> pts) {
+		VoronoiDiagram vd = new VoronoiDiagram();
+		vd.insertPointSites(pts);
+		return vd;
+	}
+
+	private static List<Point> generateClusteredPoints(int n, long seed) {
+		Random rnd = new Random(seed);
+		final int clusters = 100;
+		final double range = 1000.0;
+		final double sigma = 2.0;
+		double[] cx = new double[clusters];
+		double[] cy = new double[clusters];
+		for (int i = 0; i < clusters; i++) {
+			cx[i] = rnd.nextDouble() * range - (range / 2.0);
+			cy[i] = rnd.nextDouble() * range - (range / 2.0);
+		}
+		List<Point> pts = new ArrayList<>(n);
+		for (int i = 0; i < n; i++) {
+			int c = rnd.nextInt(clusters);
+			pts.add(new Point(cx[c] + sigma * rnd.nextGaussian(), cy[c] + sigma * rnd.nextGaussian()));
 		}
 		return pts;
 	}

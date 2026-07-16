@@ -20,6 +20,7 @@ import org.rogach.jopenvoronoi.geometry.Point;
 import org.rogach.jopenvoronoi.site.LineSite;
 import org.rogach.jopenvoronoi.site.PointSite;
 import org.rogach.jopenvoronoi.site.Site;
+import org.rogach.jopenvoronoi.util.HilbertCurve;
 import org.rogach.jopenvoronoi.util.Numeric;
 import org.rogach.jopenvoronoi.util.Pair;
 import org.rogach.jopenvoronoi.util.SplitPointError;
@@ -234,6 +235,112 @@ public class VoronoiDiagram {
 		assert (checker.isValid()) : "diagram validity check failed";
 
 		return new_vert;
+	}
+
+	/**
+	 * Bulk-inserts point sites, in an internally optimized order.
+	 * <p>
+	 * The points are inserted in Hilbert-curve order, which keeps consecutive
+	 * insertions spatially close: kd-tree point location and the modified diagram
+	 * region stay cache-warm, making this noticeably faster than inserting a large
+	 * number of points one by one in arbitrary order. The resulting diagram is
+	 * identical (up to floating-point noise in vertex positions) to inserting the
+	 * same points in any other order.
+	 * <p>
+	 * All input is validated up front: on any invalid point ({@code null}, outside
+	 * the far radius, or a new point while line sites already exist) this method
+	 * throws before mutating the diagram. Duplicate points resolve to the same
+	 * vertex handle, exactly as with {@link #insertPointSite(Point)}.
+	 *
+	 * @param points point sites to insert; must not be {@code null} or contain
+	 *               {@code null}; at most 2^24 points per call
+	 * @return vertex handles aligned to the input order: {@code result.get(i)} is
+	 *         the handle for {@code points.get(i)}
+	 */
+	public List<Vertex> insertPointSites(List<Point> points) {
+		if (points == null) {
+			throw new IllegalArgumentException("Point list cannot be null.");
+		}
+		var n = points.size();
+		if (n == 0) {
+			return new ArrayList<>();
+		}
+		if (n > (1 << 24)) {
+			throw new IllegalArgumentException("At most 2^24 points per insertPointSites call, got " + n);
+		}
+		// fail-fast validation before any mutation
+		for (var i = 0; i < n; i++) {
+			var p = points.get(i);
+			if (p == null) {
+				throw new IllegalArgumentException("Point site at index " + i + " is null.");
+			}
+			if (p.norm() >= farRadius) {
+				throw new IllegalArgumentException(String.format(
+						"Point site %s at index %d lies outside the configured far radius %.3f.", p, i, farRadius));
+			}
+		}
+		if (numLsites > 0) {
+			// mirror single-insert semantics: duplicates of existing sites are legal
+			// after line sites, new points are not — check before mutating anything
+			for (var i = 0; i < n; i++) {
+				var p = points.get(i);
+				kdQueryBuffer[0] = p.x;
+				kdQueryBuffer[1] = p.y;
+				if (!kdTree.findNearestNeighbor(kdQueryBuffer, DISTANCE_FUNCTION).position().equals(p)) {
+					throw new IllegalStateException(
+							"Cannot insert point sites after line sites. Insert all point sites before inserting any line sites.");
+				}
+			}
+		}
+
+		// sort by Hilbert index; the packed low 24 bits carry the original list
+		// index, which both breaks ties deterministically and lets us restore the
+		// input alignment of the result
+		var keys = new long[n];
+		for (var i = 0; i < n; i++) {
+			var p = points.get(i);
+			keys[i] = (HilbertCurve.index(p.x, p.y, -farRadius, farRadius) << 24) | i;
+		}
+		Arrays.sort(keys);
+
+		var result = new Vertex[n];
+		for (var i = 0; i < n; i++) {
+			var originalIndex = (int) (keys[i] & 0xFFFFFF);
+			result[originalIndex] = insertPointSite(points.get(originalIndex));
+		}
+		return new ArrayList<>(Arrays.asList(result));
+	}
+
+	/**
+	 * Inserts a closed polygon: all vertices as point sites (via the bulk path of
+	 * {@link #insertPointSites(List)}), then the boundary segments as line sites
+	 * in chain order.
+	 * <p>
+	 * The polygon must be simple (non-self-intersecting); the closing segment from
+	 * the last point back to the first is added automatically. Consecutive
+	 * duplicate points are tolerated (their zero-length segments are skipped).
+	 *
+	 * @param polygon polygon vertices in boundary order, without a repeated
+	 *                closing point; at least 3 points
+	 * @return vertex handles aligned to the input order
+	 */
+	public List<Vertex> insertPolygon(List<Point> polygon) {
+		if (polygon == null) {
+			throw new IllegalArgumentException("Polygon cannot be null.");
+		}
+		if (polygon.size() < 3) {
+			throw new IllegalArgumentException("Polygon requires at least 3 points, got " + polygon.size());
+		}
+		var handles = insertPointSites(polygon);
+		var n = handles.size();
+		for (var i = 0; i < n; i++) {
+			var start = handles.get(i);
+			var end = handles.get((i + 1) % n);
+			if (!start.equals(end)) {
+				insertLineSite(start, end);
+			}
+		}
+		return handles;
 	}
 
 	/**
