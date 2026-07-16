@@ -47,6 +47,22 @@ public class Perf {
 		} else if (args[0].equals("bulk")) {
 			// bulk <uniform|clustered|xsorted> N seed : single-insert vs insertPointSites
 			runBulkCompare(args[1], Integer.parseInt(args[2]), Long.parseLong(args[3]));
+		} else if (args[0].equals("pointsloop")) {
+			// repeated builds for profiling/steady-state: pointsloop N seed iterations
+			int n = Integer.parseInt(args[1]);
+			long seed = Long.parseLong(args[2]);
+			int iterations = Integer.parseInt(args[3]);
+			List<Point> pts = generateRandomPoints(n, seed);
+			double best = 0;
+			VoronoiDiagram vd = null;
+			for (int i = 0; i < iterations; i++) {
+				long t0 = System.nanoTime();
+				vd = buildPoints(pts);
+				long t1 = System.nanoTime();
+				best = Math.max(best, n / ((t1 - t0) / 1e9));
+			}
+			System.out.printf("pointsloop n=%d seed=%d x%d: best %.1f sites/s%n", n, seed, iterations, best);
+			System.out.println("  " + fingerprint(vd));
 		} else if (args[0].equals("polygonloop")) {
 			// repeated builds for profiling: polygonloop N seed iterations
 			int n = Integer.parseInt(args[1]);
@@ -54,11 +70,14 @@ public class Perf {
 			int iterations = Integer.parseInt(args[3]);
 			List<Point> poly = generateJitteredCircle(n, seed);
 			PolygonResult r = null;
+			double bestPoints = 0, bestLines = 0;
 			for (int i = 0; i < iterations; i++) {
 				r = buildPolygon(poly);
+				bestPoints = Math.max(bestPoints, r.pointsPerSec);
+				bestLines = Math.max(bestLines, r.linesPerSec);
 			}
-			System.out.printf("polygonloop n=%d seed=%d x%d: last points %.1f, lines %.1f sites/s%n", n, seed,
-					iterations, r.pointsPerSec, r.linesPerSec);
+			System.out.printf("polygonloop n=%d seed=%d x%d: best points %.1f, lines %.1f sites/s%n", n, seed,
+					iterations, bestPoints, bestLines);
 			System.out.println("  " + fingerprint(r.vd));
 		} else if (args[0].equals("stress")) {
 			int n = Integer.parseInt(args[1]);
