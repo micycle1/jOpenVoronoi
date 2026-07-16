@@ -30,26 +30,42 @@ public final class Numeric {
 	// solve quadratic eqn: a*x*x + b*x + c = 0
 	// returns real roots (0, 1, or 2) as vector
 	public static List<Double> quadraticRoots(double a, double b, double c) {
-		List<Double> roots = new ArrayList<>();
+		var out = new double[2];
+		var n = quadraticRoots(a, b, c, out);
+		List<Double> roots = new ArrayList<>(n);
+		for (var i = 0; i < n; i++) {
+			roots.add(out[i]);
+		}
+		return roots;
+	}
+
+	/**
+	 * Allocation-free variant: solves {@code a*x*x + b*x + c = 0}, writing real
+	 * roots into {@code out} (length >= 2) in the same order as
+	 * {@link #quadraticRoots(double, double, double)}.
+	 *
+	 * @return the number of real roots (0, 1, or 2)
+	 */
+	public static int quadraticRoots(double a, double b, double c, double[] out) {
 		if ((a == 0) && (b == 0)) {
-			return roots;
+			return 0;
 		}
 		if (a == 0) {
-			roots.add(-c / b);
-			return roots;
+			out[0] = -c / b;
+			return 1;
 		}
 		if (b == 0) {
 			var sqr = -c / a;
 			if (sqr > 0) {
-				roots.add(Math.sqrt(sqr));
-				roots.add(-roots.get(0));
-				return roots;
+				out[0] = Math.sqrt(sqr);
+				out[1] = -out[0];
+				return 2;
 			} else if (sqr == 0) {
-				roots.add(0d);
-				return roots;
+				out[0] = 0d;
+				return 1;
 			} else {
 				// std::cout << " quadratic_roots() b == 0. no roots.\n";
-				return roots;
+				return 0;
 			}
 		}
 		var disc = chop(b * b - 4 * a * c); // discriminant, chop!
@@ -60,15 +76,15 @@ public final class Numeric {
 			} else {
 				q = (b - Math.sqrt(disc)) / -2;
 			}
-			roots.add(q / a);
-			roots.add(c / q);
-			return roots;
+			out[0] = q / a;
+			out[1] = c / q;
+			return 2;
 		} else if (disc == 0) {
-			roots.add(-b / (2 * a));
-			return roots;
+			out[0] = -b / (2 * a);
+			return 1;
 		}
 		// std::cout << " quadratic_roots() disc < 0. no roots. disc= " << disc << "\n";
-		return roots;
+		return 0;
 	}
 
 	public static double determinant(double a, double b, double c, double d, double e, double f, double g, double h,

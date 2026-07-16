@@ -19,6 +19,11 @@ public class QLLSolver extends Solver {
 	private final Eq[] eqScratch = { new Eq(), new Eq(), new Eq() };
 	private final Eq[] quads = new Eq[3];
 	private final Eq[] lins = new Eq[3];
+	// per-qllSolver-call scratch; every element is written before it is read
+	private final double[][] aargs = new double[3][2];
+	private final double[][] isolns = new double[2][3];
+	private final double[][] tsolns = new double[2][3];
+	private final double[] roots = new double[2];
 
 	@Override
 	public int solve(Site s1, double k1, Site s2, double k2, Site s3, double k3, List<Solution> slns) {
@@ -96,7 +101,6 @@ public class QLLSolver extends Solver {
 		var b0 = (bi * cj - bj * ci) / d;
 		var b1 = -(ai * cj - aj * ci) / d;
 		// based on the 'last' quadratic of (s1,s2,s3)
-		var aargs = new double[3][2];
 		aargs[0][0] = 1.0;
 		aargs[0][1] = quad.a;
 		aargs[1][0] = 1.0;
@@ -104,14 +108,12 @@ public class QLLSolver extends Solver {
 		aargs[2][0] = -1.0;
 		aargs[2][1] = quad.k;
 
-		var isolns = new double[2][3];
 		// this solves for w, and returns either 0, 1, or 2 triplets of (u,v,t) in
 		// isolns
 		// NOTE: indexes of aargs shuffled depending on (xi,yi,ti) !
 		var scount = qllSolve(aargs[xi][0], aargs[xi][1], aargs[yi][0], aargs[yi][1], aargs[ti][0], aargs[ti][1],
 				quad.c, // xk*xk + yk*yk - rk*rk,
 				a0, b0, a1, b1, isolns);
-		var tsolns = new double[2][3];
 		for (var i = 0; i < scount; i++) {
 			tsolns[i][xi] = isolns[i][0]; // u x
 			tsolns[i][yi] = isolns[i][1]; // v y
@@ -140,18 +142,14 @@ public class QLLSolver extends Solver {
 		var a = chop((a0 * (a1 * a1) + c0 * (a2 * a2) + e0));
 		var b = chop((2 * a0 * a1 * b1 + 2 * a2 * b2 * c0 + a1 * b0 + a2 * d0 + f0));
 		var c = a0 * (b1 * b1) + c0 * (b2 * b2) + b0 * b1 + b2 * d0 + g0;
-		var roots = quadraticRoots(a, b, c); // solves a*w^2 + b*w + c = 0
-		if (roots.isEmpty()) { // No roots, no solutions
-			return 0;
-		} else {
-			for (var i = 0; i < roots.size(); i++) {
-				double w = roots.get(i);
-				soln[i][0] = a1 * w + b1; // u
-				soln[i][1] = a2 * w + b2; // v
-				soln[i][2] = w; // t
-			}
-			return roots.size();
+		var nRoots = quadraticRoots(a, b, c, roots); // solves a*w^2 + b*w + c = 0
+		for (var i = 0; i < nRoots; i++) {
+			double w = roots[i];
+			soln[i][0] = a1 * w + b1; // u
+			soln[i][1] = a2 * w + b2; // v
+			soln[i][2] = w; // t
 		}
+		return nRoots;
 	}
 
 }
