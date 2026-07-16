@@ -65,6 +65,8 @@ public class Vertex {
 	public int modifiedEpoch = -1;
 	public int queueEpoch = -1;
 	public double queueScore;
+	/** Math.abs(queueScore), precomputed at queue-push time for the queue comparator */
+	public double queueAbs;
 
 	public Vertex() {
 	}

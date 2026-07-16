@@ -28,14 +28,16 @@ public class PPPSolver extends Solver {
 		assert (!pi.isRight(pj, pk)) : " !pi.is_right(pj,pk) ";
 		// 2) point pk should have the largest angle. largest angle is opposite longest
 		// side.
-		var longest_side = pi.distance(pj);
-		while ((pj.distance(pk) > longest_side) || ((pi.distance(pk) > longest_side))) {
+		// squared distances: sqrt is monotonic, so comparisons are identical to
+		// comparing distance(); no value from this loop flows into the output
+		var longest_side_sq = distanceSq(pi, pj);
+		while ((distanceSq(pj, pk) > longest_side_sq) || ((distanceSq(pi, pk) > longest_side_sq))) {
 			// cyclic rotation of points until pk is opposite the longest side pi-pj
 			var tmp = pk;
 			pk = pj;
 			pj = pi;
 			pi = tmp;
-			longest_side = pi.distance(pj);
+			longest_side_sq = distanceSq(pi, pj);
 		}
 		assert (!pi.isRight(pj, pk)) : " !pi.is_right(pj,pk) ";
 		assert (pi.sub(pj).norm() >= pj.sub(pk).norm()) : " pi.sub(pj).norm() >=  pj.sub(pk).norm() ";
@@ -54,6 +56,13 @@ public class PPPSolver extends Solver {
 		var dist = sln_pt.distance(pi);
 		slns.add(new Solution(sln_pt, dist, +1));
 		return 1;
+	}
+
+	/** squared distance; exactly the argument of the sqrt in {@link Point#distance(Point)} */
+	private static double distanceSq(Point a, Point b) {
+		var dx = a.x - b.x;
+		var dy = a.y - b.y;
+		return dx * dx + dy * dy;
 	}
 
 }

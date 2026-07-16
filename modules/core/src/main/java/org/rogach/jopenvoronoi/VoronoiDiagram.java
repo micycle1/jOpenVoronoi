@@ -7,9 +7,7 @@ import static org.rogach.jopenvoronoi.util.VoronoiDiagramChecker.verticesAllIN;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.PriorityQueue;
 
 import org.apache.commons.math3.analysis.solvers.AllowedSolution;
 import org.apache.commons.math3.analysis.solvers.BracketingNthOrderBrentSolver;
@@ -25,6 +23,7 @@ import org.rogach.jopenvoronoi.site.Site;
 import org.rogach.jopenvoronoi.util.Numeric;
 import org.rogach.jopenvoronoi.util.Pair;
 import org.rogach.jopenvoronoi.util.SplitPointError;
+import org.rogach.jopenvoronoi.util.VertexHeap;
 import org.rogach.jopenvoronoi.util.VoronoiDiagramChecker;
 import org.rogach.jopenvoronoi.vertex.Vertex;
 import org.rogach.jopenvoronoi.vertex.VertexPositioner;
@@ -71,7 +70,7 @@ public class VoronoiDiagram {
 	 * in_circle-predicate, so that the vertices whose IN/OUT status we are 'most
 	 * certain' about are processed first queue of vertices to be processed
 	 */
-	protected PriorityQueue<Vertex> vertexQueue = new PriorityQueue<>(1, new AbsComparison());
+	protected VertexHeap vertexQueue = new VertexHeap();
 
 	/**
 	 * the half-edge diagram of the vd
@@ -724,22 +723,6 @@ public class VoronoiDiagram {
 		}
 	}
 
-	// comparison-predicate for VertexQueue
-	/**
-	 * In {@code augmentVertexSet()} we grow the delete-tree by processing
-	 * vertices one by one from a priority queue.
-	 * <p>
-	 * This is the priority queue sort predicate. We handle vertices with a large
-	 * {@code fabs(in_circle())} first, since we believe their predicate to be more
-	 * reliable.
-	 */
-	class AbsComparison implements Comparator<Vertex> {
-		@Override
-		public int compare(Vertex lhs, Vertex rhs) {
-			return -Double.compare(Math.abs(lhs.queueScore), Math.abs(rhs.queueScore));
-		}
-	}
-
 	// data required for adding a new edge
 	/**
 	 * Stores information related to a new edge while it is being added.
@@ -1309,6 +1292,7 @@ public class VoronoiDiagram {
 				// when pushing onto queue we also evaluate in_circle predicate so that we
 				// process vertices in the correct order
 				w.queueScore = w.inCircle(site.apexPoint(w.position));
+				w.queueAbs = Math.abs(w.queueScore);
 				w.queueEpoch = currentEpoch;
 				vertexQueue.add(w);
 			}
