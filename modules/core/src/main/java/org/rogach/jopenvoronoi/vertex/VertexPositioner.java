@@ -53,6 +53,8 @@ public class VertexPositioner {
 	Edge edge;
 	/** reusable buffer for solver solutions (positioner is single-threaded) */
 	private final List<Solution> solutionsBuffer = new ArrayList<>();
+	/** reusable buffer for in-region filtered solutions */
+	private final List<Solution> acceptableSolutionsBuffer = new ArrayList<>();
 
 	// create positioner, set graph.
 	public VertexPositioner(HalfEdgeDiagram gi) {
@@ -192,7 +194,8 @@ public class VertexPositioner {
 		}
 
 		// choose only in_region() solutions
-		List<Solution> acceptable_solutions = new ArrayList<>();
+		acceptableSolutionsBuffer.clear();
+		List<Solution> acceptable_solutions = acceptableSolutionsBuffer;
 		for (Solution s : solutions) {
 			if (s3.inRegion(s.p) && s.t >= tMin && s.t <= tMax) {
 				acceptable_solutions.add(s);
@@ -205,13 +208,17 @@ public class VertexPositioner {
 			// two or more points remain so we must further filter here!
 			// filter further using edge_error
 			var min_error = 100D;
-			var min_solution = new Solution(new Point(0, 0), 0, 0);
+			Solution min_solution = null;
 			for (Solution s : acceptable_solutions) {
 				var err = edgeError(s);
 				if (err < min_error) {
 					min_solution = s;
 					min_error = err;
 				}
+			}
+			if (min_solution == null) {
+				// no candidate had err < 100; preserve the historical dummy result
+				min_solution = new Solution(new Point(0, 0), 0, 0);
 			}
 			return min_solution;
 		}

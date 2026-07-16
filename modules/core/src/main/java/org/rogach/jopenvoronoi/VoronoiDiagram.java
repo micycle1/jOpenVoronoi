@@ -118,6 +118,12 @@ public class VoronoiDiagram {
 	private final List<Edge> newVertexEdgeBuffer = new ArrayList<>();
 	/** reusable buffer for kd-tree nearest-neighbour queries */
 	private final double[] kdQueryBuffer = new double[2];
+	/**
+	 * reusable root solver for {@link #addSplitVertex(Face, Site)}; state is reset
+	 * on every solve() call
+	 */
+	private final BracketingNthOrderBrentSolver splitPointSolver = new BracketingNthOrderBrentSolver(
+			Numeric.BRENT_SOLVER_ABSOLUTE_EPSILON, 5);
 
 	/**
 	 * Creates an empty Voronoi diagram with a default far radius of {@code 5000}.
@@ -1806,9 +1812,8 @@ public class VoronoiDiagram {
 					return;
 				}
 
-				var solver = new BracketingNthOrderBrentSolver(Numeric.BRENT_SOLVER_ABSOLUTE_EPSILON, 5);
 				var max_iter = 500;
-				var result = solver.solve(max_iter, errFunctr, min_t, max_t, AllowedSolution.ANY_SIDE);
+				var result = splitPointSolver.solve(max_iter, errFunctr, min_t, max_t, AllowedSolution.ANY_SIDE);
 
 				split_pt_pos = split_edge.point(result);
 
