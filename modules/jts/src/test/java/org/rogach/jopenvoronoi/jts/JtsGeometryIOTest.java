@@ -56,37 +56,34 @@ public class JtsGeometryIOTest {
 	}
 
 	@Test
-	public void addGeometryNormalizesClosedLinealInputBeforeInsertion() {
+	public void addGeometryInsertsClosedLinealSitesExactlyOnce() {
+		// insertion order is an internal detail (bulk insertion reorders points
+		// spatially), so assert on the resulting site set rather than store order
 		LineString ring = GEOMETRY_FACTORY.createLineString(new Coordinate[] { new Coordinate(1, 1), new Coordinate(1, 0),
 				new Coordinate(0, 0), new Coordinate(0, 1), new Coordinate(1, 1) });
-		LineString normalized = (LineString) ring.copy();
-		normalized.normalize();
 
 		VoronoiDiagram diagram = JtsGeometryIO.toVoronoiDiagram(ring);
-		List<Vertex> vertices = collectInsertedVertices(diagram, normalized.getNumPoints() - 1);
 
-		assertEquals(normalized.getNumPoints() - 1, vertices.size());
-		for (int i = 0; i < vertices.size(); i++) {
-			Coordinate expected = normalized.getCoordinateN(i);
-			assertEquals(expected.getX(), vertices.get(i).position.x, 1e-12);
-			assertEquals(expected.getY(), vertices.get(i).position.y, 1e-12);
-		}
+		assertEquals(4, diagram.numPointSites());
+		assertEquals(4, diagram.numLineSites());
+		assertContainsSite(diagram, 1, 1);
+		assertContainsSite(diagram, 1, 0);
+		assertContainsSite(diagram, 0, 0);
+		assertContainsSite(diagram, 0, 1);
 	}
 
 	@Test
-	public void addGeometryLeavesOpenLinealInputOrderUntouched() {
+	public void addGeometryInsertsOpenLinealSites() {
 		LineString line = GEOMETRY_FACTORY
 				.createLineString(new Coordinate[] { new Coordinate(0.1, 0.2), new Coordinate(0.3, 0.4), new Coordinate(0.5, 0.1) });
 
 		VoronoiDiagram diagram = JtsGeometryIO.toVoronoiDiagram(line);
-		List<Vertex> vertices = collectInsertedVertices(diagram, 3);
 
-		assertEquals(3, vertices.size());
-		for (int i = 0; i < vertices.size(); i++) {
-			Coordinate expected = line.getCoordinateN(i);
-			assertEquals(expected.getX(), vertices.get(i).position.x, 1e-12);
-			assertEquals(expected.getY(), vertices.get(i).position.y, 1e-12);
-		}
+		assertEquals(3, diagram.numPointSites());
+		assertEquals(2, diagram.numLineSites());
+		assertContainsSite(diagram, 0.1, 0.2);
+		assertContainsSite(diagram, 0.3, 0.4);
+		assertContainsSite(diagram, 0.5, 0.1);
 	}
 
 	@Test
@@ -95,12 +92,23 @@ public class JtsGeometryIOTest {
 		LineString line = GEOMETRY_FACTORY.createLineString(new Coordinate[] { new Coordinate(-0.2, -0.1), new Coordinate(0.2, 0.1) });
 		Geometry mixed = GEOMETRY_FACTORY.createGeometryCollection(new Geometry[] { line, point });
 
+		// must not throw "Cannot insert point sites after line sites": the
+		// standalone point is part of the bulk point phase preceding all segments
 		VoronoiDiagram diagram = JtsGeometryIO.toVoronoiDiagram(mixed);
-		List<Vertex> vertices = collectInsertedVertices(diagram, 3);
 
-		assertEquals(3, vertices.size());
-		assertEquals(point.getX(), vertices.get(0).position.x, 1e-12);
-		assertEquals(point.getY(), vertices.get(0).position.y, 1e-12);
+		assertEquals(3, diagram.numPointSites());
+		assertEquals(1, diagram.numLineSites());
+		assertContainsSite(diagram, -0.7, -0.6);
+	}
+
+	private static void assertContainsSite(VoronoiDiagram diagram, double x, double y) {
+		for (Vertex vertex : diagram.getDiagram().vertices) {
+			if (vertex.type == org.rogach.jopenvoronoi.vertex.VertexType.POINTSITE
+					&& Math.abs(vertex.position.x - x) < 1e-12 && Math.abs(vertex.position.y - y) < 1e-12) {
+				return;
+			}
+		}
+		throw new AssertionError(String.format("no point site at (%s, %s)", x, y));
 	}
 
 	@Test

@@ -52,21 +52,27 @@ public final class JtsGeometryIO {
 		// The diagram requires every point site to be inserted before any line
 		// site, so insertion is split into two global phases across the whole
 		// geometry rather than done per element: first all point sites (standalone
-		// points plus every linestring/ring vertex), then all line-site segments.
-		// Doing this per element would fail for any input with more than one lineal
-		// component (a MultiLineString, or a Polygon with holes).
-		List<Vertex> pointSites = new ArrayList<>();
-		addPointalGeometry(diagram, geometry, pointSites);
+		// points plus every linestring/ring vertex) through the bulk
+		// insertPointSites path, then all line-site segments. Doing this per
+		// element would fail for any input with more than one lineal component
+		// (a MultiLineString, or a Polygon with holes).
+		List<org.rogach.jopenvoronoi.geometry.Point> sitePoints = new ArrayList<>();
+		collectPointalSites(geometry, sitePoints);
 
 		List<LineString> lineals = new ArrayList<>();
 		collectLinealComponents(geometry, lineals);
 
-		List<List<Vertex>> linealVertices = new ArrayList<>(lineals.size());
-		for (LineString lineal : lineals) {
-			linealVertices.add(insertLineStringPoints(diagram, lineal));
-		}
+		int[] offsets = new int[lineals.size() + 1];
+		offsets[0] = sitePoints.size();
 		for (int i = 0; i < lineals.size(); i++) {
-			insertLineStringSegments(diagram, linealVertices.get(i), lineals.get(i).isClosed());
+			sitePoints.addAll(collectLineStringPoints(lineals.get(i)));
+			offsets[i + 1] = sitePoints.size();
+		}
+
+		List<Vertex> handles = diagram.insertPointSites(sitePoints);
+		for (int i = 0; i < lineals.size(); i++) {
+			insertLineStringSegments(diagram, handles.subList(offsets[i], offsets[i + 1]),
+					lineals.get(i).isClosed());
 		}
 	}
 
@@ -88,22 +94,24 @@ public final class JtsGeometryIO {
 		}
 
 		// Point sites for every ring must precede any line site, so insert all ring
-		// vertices first and only then the segments (see addGeometry).
+		// vertices first (one bulk call) and only then the segments (see addGeometry).
 		List<LineString> rings = new ArrayList<>();
 		rings.add(polygon.getExteriorRing());
 		for (int i = 0; i < polygon.getNumInteriorRing(); i++) {
 			rings.add(polygon.getInteriorRingN(i));
 		}
 
-		List<Vertex> vertices = new ArrayList<>();
-		List<List<Vertex>> ringVertices = new ArrayList<>(rings.size());
-		for (LineString ring : rings) {
-			List<Vertex> inserted = insertLineStringPoints(diagram, ring);
-			ringVertices.add(inserted);
-			vertices.addAll(inserted);
-		}
+		List<org.rogach.jopenvoronoi.geometry.Point> sitePoints = new ArrayList<>();
+		int[] offsets = new int[rings.size() + 1];
 		for (int i = 0; i < rings.size(); i++) {
-			insertLineStringSegments(diagram, ringVertices.get(i), rings.get(i).isClosed());
+			sitePoints.addAll(collectLineStringPoints(rings.get(i)));
+			offsets[i + 1] = sitePoints.size();
+		}
+
+		List<Vertex> vertices = diagram.insertPointSites(sitePoints);
+		for (int i = 0; i < rings.size(); i++) {
+			insertLineStringSegments(diagram, vertices.subList(offsets[i], offsets[i + 1]),
+					rings.get(i).isClosed());
 		}
 		return vertices;
 	}
@@ -115,6 +123,14 @@ public final class JtsGeometryIO {
 	 * before any segment is added.
 	 */
 	private static List<Vertex> insertLineStringPoints(VoronoiDiagram diagram, LineString lineString) {
+		return diagram.insertPointSites(collectLineStringPoints(lineString));
+	}
+
+	/**
+	 * Collects the distinct vertices of the linestring (dropping the duplicate
+	 * closing coordinate of a closed ring), in order, without inserting anything.
+	 */
+	private static List<org.rogach.jopenvoronoi.geometry.Point> collectLineStringPoints(LineString lineString) {
 		if (lineString == null) {
 			throw new IllegalArgumentException("LineString cannot be null.");
 		}
@@ -130,11 +146,11 @@ public final class JtsGeometryIO {
 			throw new IllegalArgumentException("LineString must contain at least two distinct coordinates.");
 		}
 
-		List<Vertex> vertices = new ArrayList<>(limit);
+		List<org.rogach.jopenvoronoi.geometry.Point> points = new ArrayList<>(limit);
 		for (int i = 0; i < limit; i++) {
-			vertices.add(diagram.insertPointSite(toPoint(coordinates[i])));
+			points.add(toPoint(coordinates[i]));
 		}
-		return vertices;
+		return points;
 	}
 
 	/**
@@ -218,15 +234,19 @@ public final class JtsGeometryIO {
 		return new org.rogach.jopenvoronoi.geometry.Point(coordinate.getX(), coordinate.getY());
 	}
 
-	private static void addPointalGeometry(VoronoiDiagram diagram, Geometry geometry, List<Vertex> vertices) {
+	private static void collectPointalSites(Geometry geometry, List<org.rogach.jopenvoronoi.geometry.Point> out) {
 		if (geometry instanceof Point) {
-			addPointSite(diagram, (Point) geometry, vertices);
+			Coordinate coordinate = ((Point) geometry).getCoordinate();
+			if (coordinate == null) {
+				throw new IllegalArgumentException("Point geometry must contain a coordinate.");
+			}
+			out.add(toPoint(coordinate));
 			return;
 		}
 		if (geometry instanceof GeometryCollection) {
 			GeometryCollection collection = (GeometryCollection) geometry;
 			for (int i = 0; i < collection.getNumGeometries(); i++) {
-				addPointalGeometry(diagram, collection.getGeometryN(i), vertices);
+				collectPointalSites(collection.getGeometryN(i), out);
 			}
 			return;
 		}
@@ -263,14 +283,6 @@ public final class JtsGeometryIO {
 			return;
 		}
 		throw new IllegalArgumentException("Unsupported geometry type: " + geometry.getGeometryType());
-	}
-
-	private static void addPointSite(VoronoiDiagram diagram, Point point, List<Vertex> vertices) {
-		Coordinate coordinate = point.getCoordinate();
-		if (coordinate == null) {
-			throw new IllegalArgumentException("Point geometry must contain a coordinate.");
-		}
-		vertices.add(diagram.insertPointSite(toPoint(coordinate)));
 	}
 
 	private static LineString normalizeClosedLineal(LineString lineString) {

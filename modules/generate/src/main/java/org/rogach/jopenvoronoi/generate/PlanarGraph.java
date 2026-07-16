@@ -73,21 +73,22 @@ public class PlanarGraph {
 	}
 
 	public VoronoiDiagram buildVoronoiDiagram() {
-		Map<Point2D, Vertex> vertices = new HashMap<>();
 		var vd = new VoronoiDiagram();
-		for (Point2D p : points) {
-			vertices.put(p, vd.insertPointSite(new Point(p.getX(), p.getY())));
-		}
-		for (Segment s : segments) {
-			vd.insertLineSite(vertices.get(s.stt), vertices.get(s.end));
-		}
+		buildIntoVoronoiDiagram(vd);
 		return vd;
 	}
 
 	public void buildIntoVoronoiDiagram(VoronoiDiagram v) {
-		Map<Point2D, Vertex> vertices = new HashMap<>();
+		// bulk-insert all point sites (spatially ordered internally), then rebuild
+		// the Point2D -> Vertex map from the input-aligned result list
+		List<Point> sitePoints = new ArrayList<>(points.size());
 		for (Point2D p : points) {
-			vertices.put(p, v.insertPointSite(new Point(p.getX(), p.getY())));
+			sitePoints.add(new Point(p.getX(), p.getY()));
+		}
+		var handles = v.insertPointSites(sitePoints);
+		Map<Point2D, Vertex> vertices = new HashMap<>();
+		for (var i = 0; i < points.size(); i++) {
+			vertices.put(points.get(i), handles.get(i));
 		}
 		for (Segment s : segments) {
 			v.insertLineSite(vertices.get(s.stt), vertices.get(s.end));
