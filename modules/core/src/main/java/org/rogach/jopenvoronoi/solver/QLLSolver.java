@@ -3,7 +3,6 @@ package org.rogach.jopenvoronoi.solver;
 import static org.rogach.jopenvoronoi.util.Numeric.chop;
 import static org.rogach.jopenvoronoi.util.Numeric.quadraticRoots;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.rogach.jopenvoronoi.geometry.Point;
@@ -14,31 +13,39 @@ import org.rogach.jopenvoronoi.vertex.Solution;
  * Quadratic-linear-linear solver.
  */
 public class QLLSolver extends Solver {
+
+	// reusable per-solve scratch; solver instances are used single-threaded
+	// (see VertexPositioner.solutionsBuffer for the same reasoning)
+	private final Eq[] eqScratch = { new Eq(), new Eq(), new Eq() };
+	private final Eq[] quads = new Eq[3];
+	private final Eq[] lins = new Eq[3];
+
 	@Override
 	public int solve(Site s1, double k1, Site s2, double k2, Site s3, double k3, List<Solution> slns) {
 		// equation-parameters, in quad-precision
-		List<Eq> quads = new ArrayList<>();
-		List<Eq> lins = new ArrayList<>();
-		var sites = new Site[] { s1, s2, s3 };
-		var kvals = new double[] { k1, k2, k3 };
+		var nQuads = 0;
+		var nLins = 0;
 		for (var i = 0; i < 3; i++) {
-			var eqn = sites[i].eqp(kvals[i]);
-			if (sites[i].isLine()) {
-				lins.add(eqn);
+			var site = (i == 0) ? s1 : (i == 1) ? s2 : s3;
+			var kval = (i == 0) ? k1 : (i == 1) ? k2 : k3;
+			var eqn = eqScratch[i];
+			site.eqp(kval, eqn);
+			if (site.isLine()) {
+				lins[nLins++] = eqn;
 			} else {
-				quads.add(eqn);
+				quads[nQuads++] = eqn;
 			}
 		}
-		assert (!quads.isEmpty()) : " !quads.isEmpty() ";
+		assert (nQuads > 0) : " !quads.isEmpty() ";
 
-		if (lins.size() == 1 || lins.size() == 0) {
-			assert (quads.size() == 3 || quads.size() == 2) : " quads.size() == 3 || quads.size() == 2 ";
-			for (var i = 1; i < quads.size(); i++) {
-				quads.get(i).subEq(quads.get(0));
-				lins.add(quads.get(i));
+		if (nLins == 1 || nLins == 0) {
+			assert (nQuads == 3 || nQuads == 2) : " quads.size() == 3 || quads.size() == 2 ";
+			for (var i = 1; i < nQuads; i++) {
+				quads[i].subEq(quads[0]);
+				lins[nLins++] = quads[i];
 			}
 		}
-		assert (lins.size() == 2) : " lins.size() == 2";
+		assert (nLins == 2) : " lins.size() == 2";
 
 		// TODO: pick the solution appraoch with the best numerical stability.
 		// call all three permutations
@@ -46,9 +53,9 @@ public class QLLSolver extends Solver {
 		// x and y in terms of t
 		// y and t in terms of x
 		// t and x in terms of y
-		qllSolver(lins, 0, 1, 2, quads.get(0), k3, slns);
-		qllSolver(lins, 2, 0, 1, quads.get(0), k3, slns);
-		qllSolver(lins, 1, 2, 0, quads.get(0), k3, slns);
+		qllSolver(lins, 0, 1, 2, quads[0], k3, slns);
+		qllSolver(lins, 2, 0, 1, quads[0], k3, slns);
+		qllSolver(lins, 1, 2, 0, quads[0], k3, slns);
 
 		return slns.size();
 	}
@@ -66,17 +73,16 @@ public class QLLSolver extends Solver {
 	 *              {@code (u, v, t)}
 	 * @return number of solutions found
 	 */
-	private int qllSolver(List<Eq> lins, int xi, int yi, int ti, Eq quad, double k3, List<Solution> solns) {
-		assert (lins.size() == 2) : " lins.size() == 2 ";
-		var ai = lins.get(0).get(xi); // first linear
-		var bi = lins.get(0).get(yi);
-		var ki = lins.get(0).get(ti);
-		var ci = lins.get(0).c;
+	private int qllSolver(Eq[] lins, int xi, int yi, int ti, Eq quad, double k3, List<Solution> solns) {
+		var ai = lins[0].get(xi); // first linear
+		var bi = lins[0].get(yi);
+		var ki = lins[0].get(ti);
+		var ci = lins[0].c;
 
-		var aj = lins.get(1).get(xi); // second linear
-		var bj = lins.get(1).get(yi);
-		var kj = lins.get(1).get(ti);
-		var cj = lins.get(1).c;
+		var aj = lins[1].get(xi); // second linear
+		var bj = lins[1].get(yi);
+		var kj = lins[1].get(ti);
+		var cj = lins[1].c;
 
 		var d = chop(ai * bj - aj * bi); // chop! (determinant for 2 linear eqns (?))
 		if (d == 0) {

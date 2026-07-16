@@ -30,30 +30,41 @@ public class LLLSolver extends Solver {
 //  Cramers rule x_i = det(A_i)/det(A)
 //  where A_i is A with column i replaced by b
 
+	// reusable per-solve scratch; solver instances are used single-threaded
+	// (see VertexPositioner.solutionsBuffer for the same reasoning)
+	private final Eq[] eq = { new Eq(), new Eq(), new Eq() };
+	private final Site[] sites = new Site[3];
+	private final double[] kvals = new double[3];
+	private final LLLPARASolver paraSolver = new LLLPARASolver();
+	private final List<Solution> paraSolutions = new ArrayList<>();
+
 	@Override
 	public int solve(Site s1, double k1, Site s2, double k2, Site s3, double k3, List<Solution> slns) {
 
 		assert (s1.isLine() && s2.isLine() && s3.isLine()) : " s1.isLine() && s2.isLine() && s3.isLine() ";
 
-		List<Eq> eq = new ArrayList<>(); // equation-parameters, in quad-precision
-		var sites = new Site[] { s1, s2, s3 };
-		var kvals = new double[] { k1, k2, k3 };
+		sites[0] = s1;
+		sites[1] = s2;
+		sites[2] = s3;
+		kvals[0] = k1;
+		kvals[1] = k2;
+		kvals[2] = k3;
 		for (var i = 0; i < 3; i++) {
-			eq.add(sites[i].eqp(kvals[i]));
+			sites[i].eqp(kvals[i], eq[i]); // equation-parameters, in quad-precision
 		}
 
 		int i = 0, j = 1, k = 2;
-		var d = chop(determinant(eq.get(i).a, eq.get(i).b, eq.get(i).k, eq.get(j).a, eq.get(j).b, eq.get(j).k,
-				eq.get(k).a, eq.get(k).b, eq.get(k).k));
+		var d = chop(determinant(eq[i].a, eq[i].b, eq[i].k, eq[j].a, eq[j].b, eq[j].k,
+				eq[k].a, eq[k].b, eq[k].k));
 		var det_eps = 1e-6;
 		if (Math.abs(d) > det_eps) {
-			var t = determinant(eq.get(i).a, eq.get(i).b, -eq.get(i).c, eq.get(j).a, eq.get(j).b, -eq.get(j).c,
-					eq.get(k).a, eq.get(k).b, -eq.get(k).c) / d;
+			var t = determinant(eq[i].a, eq[i].b, -eq[i].c, eq[j].a, eq[j].b, -eq[j].c,
+					eq[k].a, eq[k].b, -eq[k].c) / d;
 			if (t >= 0) {
-				var sol_x = determinant(-eq.get(i).c, eq.get(i).b, eq.get(i).k, -eq.get(j).c, eq.get(j).b, eq.get(j).k,
-						-eq.get(k).c, eq.get(k).b, eq.get(k).k) / d;
-				var sol_y = determinant(eq.get(i).a, -eq.get(i).c, eq.get(i).k, eq.get(j).a, -eq.get(j).c, eq.get(j).k,
-						eq.get(k).a, -eq.get(k).c, eq.get(k).k) / d;
+				var sol_x = determinant(-eq[i].c, eq[i].b, eq[i].k, -eq[j].c, eq[j].b, eq[j].k,
+						-eq[k].c, eq[k].b, eq[k].k) / d;
+				var sol_y = determinant(eq[i].a, -eq[i].c, eq[i].k, eq[j].a, -eq[j].c, eq[j].k,
+						eq[k].a, -eq[k].c, eq[k].k) / d;
 
 				slns.add(new Solution(new Point(sol_x, sol_y), t, k3)); // kk3 just passes through without any effect!?
 				return 1;
@@ -63,11 +74,10 @@ public class LLLSolver extends Solver {
 			// parallel edges
 			for (i = 0; i < 3; i++) {
 				j = (i + 1) % 3;
-				var delta = Math.abs(eq.get(i).a * eq.get(j).b - eq.get(j).a * eq.get(i).b);
+				var delta = Math.abs(eq[i].a * eq[j].b - eq[j].a * eq[i].b);
 				if (delta <= 1e-14) {
-					var para_solver = new LLLPARASolver();
-					List<Solution> paraSolutions = new ArrayList<>();
-					para_solver.solve(sites[i], kvals[i], sites[j], kvals[j], sites[(i + 2) % 3], kvals[(i + 2) % 3],
+					paraSolutions.clear();
+					paraSolver.solve(sites[i], kvals[i], sites[j], kvals[j], sites[(i + 2) % 3], kvals[(i + 2) % 3],
 							paraSolutions);
 					var solution_count = 0;
 					for (Solution s : paraSolutions) {

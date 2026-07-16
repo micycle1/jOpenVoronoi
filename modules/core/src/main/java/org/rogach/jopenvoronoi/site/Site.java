@@ -49,6 +49,15 @@ public abstract class Site {
 		return eq2;
 	}
 
+	// write equation parameters into an existing Eq (allocation-free variant of eqp(kk))
+	public void eqp(double kk, Eq out) {
+		out.q = eq.q;
+		out.a = eq.a;
+		out.b = eq.b;
+		out.c = eq.c;
+		out.k = eq.k * kk;
+	}
+
 	// x position
 	public double x() {
 		throw new UnsupportedOperationException();
