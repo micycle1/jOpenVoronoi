@@ -114,17 +114,28 @@ public class LineSite extends Site {
 	 */
 	@Override
 	public Point apexPoint(Point p) {
-		var s_p = p.sub(_start);
-		var s_e = _end.sub(_start);
-		var t = s_p.dot(s_e) / s_e.dot(s_e);
+		var t = projectionT(p);
 		if (t < 0) {
 			return _start;
 		}
 		if (t > 1) {
 			return _end;
 		} else {
-			return _start.add(_end.sub(_start).mult(t));
+			return new Point(_start.x + (_end.x - _start.x) * t, _start.y + (_end.y - _start.y) * t);
 		}
+	}
+
+	/**
+	 * Raw projection parameter of {@code p} onto the segment, computed on
+	 * primitives (same operand order as {@code p.sub(_start).dot(_end.sub(_start))
+	 * / ...} but without the intermediate Point allocations).
+	 */
+	private double projectionT(Point p) {
+		var spx = p.x - _start.x;
+		var spy = p.y - _start.y;
+		var sex = _end.x - _start.x;
+		var sey = _end.y - _start.y;
+		return (spx * sex + spy * sey) / (sex * sex + sey * sey);
 	}
 
 	/**
@@ -149,18 +160,12 @@ public class LineSite extends Site {
 	 */
 	@Override
 	public double inRegionT(Point p) {
-		var s_p = p.sub(_start);
-		var s_e = _end.sub(_start);
-		var t = s_p.dot(s_e) / s_e.dot(s_e);
-		return Numeric.snapUnitInterval(t);
+		return Numeric.snapUnitInterval(projectionT(p));
 	}
 
 	@Override
 	public double inRegionTRaw(Point p) {
-		var s_p = p.sub(_start);
-		var s_e = _end.sub(_start);
-		var t = s_p.dot(s_e) / s_e.dot(s_e);
-		return t;
+		return projectionT(p);
 	}
 
 	@Override
